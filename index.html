@@ -392,9 +392,17 @@ function toggleAuth(showReg) {
 async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-pass').value;
-  document.getElementById('login-err').textContent = '';
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) document.getElementById('login-err').textContent = '✗ Verkeerd e-mail of wachtwoord.';
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = 'Bezig...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { errEl.textContent = '✗ ' + error.message; return; }
+  if (!data?.user) { errEl.textContent = '✗ Geen gebruiker teruggekomen.'; return; }
+  errEl.textContent = 'Ingelogd, profiel ophalen...';
+  const { data: profile, error: pe } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+  if (pe || !profile) { errEl.textContent = '✗ Profiel fout: ' + (pe?.message || 'niet gevonden') + ' | ID: ' + data.user.id; return; }
+  currentUser = data.user;
+  currentProfile = profile;
+  showApp(profile);
 }
 
 async function doRegister() {
