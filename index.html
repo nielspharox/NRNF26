@@ -208,13 +208,11 @@ input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 8px rgba
     <div class="auth-sub">⚽ WK POOL 2026 ⚽</div>
 
     <div id="auth-login">
-      <form onsubmit="doLogin();return false;">
       <div class="form-row"><label>E-MAILADRES</label><input type="email" id="login-email" placeholder="jouw@email.nl"></div>
       <div class="form-row"><label>WACHTWOORD</label><input type="password" id="login-pass" placeholder="••••••••"></div>
-      <button type="submit" class="btn btn-green" style="width:100%;margin-top:8px">INLOGGEN ▶</button>
+      <button class="btn btn-green" style="width:100%;margin-top:8px" onclick="doLogin()">INLOGGEN ▶</button>
       <div class="auth-err" id="login-err"></div>
       <div class="auth-toggle">Nog geen account? <span onclick="toggleAuth(true)">Registreren</span></div>
-      </form>
     </div>
 
     <div id="auth-register" style="display:none">
@@ -395,17 +393,10 @@ async function doLogin() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-pass').value;
   const errEl = document.getElementById('login-err');
-  errEl.textContent = 'Bezig...';
+  errEl.textContent = '';
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { errEl.textContent = '✗ ' + error.message; return; }
-  if (!data?.user) { errEl.textContent = '✗ Geen gebruiker teruggekomen.'; return; }
-  errEl.textContent = 'Ingelogd, profiel ophalen... ID=' + data.user.id;
-  const { data: profile, error: pe } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
-  errEl.textContent = 'Profiel result: ' + JSON.stringify(profile) + ' | error: ' + JSON.stringify(pe);
-  if (pe || !profile) { errEl.textContent = '✗ Profiel fout: ' + (pe?.message || 'niet gevonden') + ' | ID: ' + data.user.id; return; }
-  currentUser = data.user;
-  currentProfile = profile;
-  showApp(profile);
+  if (error) { errEl.textContent = '✗ Verkeerd e-mail of wachtwoord.'; return; }
+  await handleUser(data.user);
 }
 
 async function doRegister() {
@@ -423,6 +414,7 @@ async function doRegister() {
   const { error: pe } = await sb.from('profiles').insert({ id: data.user.id, username });
   if (pe) { errEl.textContent = '✗ Gebruikersnaam al in gebruik.'; return; }
   showToast('Welkom ' + username + '!');
+  await handleUser(data.user);
 }
 
 async function doLogout() { await sb.auth.signOut(); location.reload(); }
@@ -726,17 +718,21 @@ function showToast(msg) {
 }
 
 // ── BOOT ─────────────────────────────────────────
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    currentUser = session.user;
-    const { data: profile, error: pe } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-    if (!profile) {
-      document.getElementById('login-err').textContent = '✗ Profiel niet gevonden (ID: ' + currentUser.id + ')';
-      return;
-    }
-    currentProfile = profile;
-    showApp(profile);
+async function handleUser(user) {
+  currentUser = user;
+  const { data: profile, error } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  if (error || !profile) {
+    document.getElementById('login-err').textContent = '✗ Profiel niet gevonden. Probeer opnieuw te registreren.';
+    await sb.auth.signOut();
+    return;
   }
+  currentProfile = profile;
+  showApp(profile);
+}
+
+// Herstel sessie bij pagina refresh
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session?.user) handleUser(session.user);
 });
 </script>
 </body>
