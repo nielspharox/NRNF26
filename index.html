@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WK Pool 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0f13;
+  --surface: #16181f;
+  --surface2: #1e2029;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f0f2;
+  --muted: #7a7d8a;
+  --accent: #d4f04a;
+  --accent2: #4af09a;
+  --accent3: #f04a7a;
+  --gold: #f5c842;
+  --silver: #a8b0be;
+  --bronze: #c87941;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  padding: 2.5rem 2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.logo {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.logo span { color: var(--accent); }
+.subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.header-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* NAV TABS */
+nav {
+  display: flex;
+  gap: 4px;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.tab {
+  padding: 8px 18px;
+  border-radius: 40px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+.tab.active { background: var(--accent); color: #0e0f13; border-color: var(--accent); font-weight: 700; }
+
+/* MAIN */
+main { max-width: 820px; margin: 0 auto; padding: 2rem; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 12px;
+}
+.card-sm {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 8px;
+}
+
+/* MATCH CARD */
+.match-meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; display: flex; gap: 8px; align-items: center; }
+.match-meta .group { background: var(--surface2); padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+.teams-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+.pick-btn {
+  padding: 12px 10px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  line-height: 1.4;
+}
+.pick-btn:hover { border-color: var(--accent); }
+.pick-btn .team-name { display: block; }
+.pick-btn .odds-label { display: block; font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 400; }
+.pick-btn .pts-label { display: block; font-size: 11px; margin-top: 3px; font-weight: 700; }
+.pick-btn.sel-home { background: rgba(212,240,74,0.12); border-color: var(--accent); }
+.pick-btn.sel-home .pts-label { color: var(--accent); }
+.pick-btn.sel-draw { background: rgba(74,240,154,0.10); border-color: var(--accent2); }
+.pick-btn.sel-draw .pts-label { color: var(--accent2); }
+.pick-btn.sel-away { background: rgba(240,74,122,0.10); border-color: var(--accent3); }
+.pick-btn.sel-away .pts-label { color: var(--accent3); }
+.draw-btn {
+  padding: 8px 6px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  line-height: 1.4;
+}
+.draw-btn:hover { border-color: var(--accent2); }
+.no-result { border-left: 3px solid var(--border2); }
+.result-home { border-left: 3px solid var(--accent); }
+.result-draw { border-left: 3px solid var(--accent2); }
+.result-away { border-left: 3px solid var(--accent3); }
+
+/* INPUTS */
+input[type=text], input[type=number], select {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus { border-color: var(--accent); }
+.form-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.form-row label { font-size: 13px; color: var(--muted); min-width: 110px; }
+.form-row input { margin: 0; }
+
+/* BUTTONS */
+.btn {
+  padding: 10px 22px;
+  border-radius: 40px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn-primary {
+  background: var(--accent);
+  color: #0e0f13;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: #c3e040; border-color: #c3e040; color: #0e0f13; }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-danger { border-color: rgba(240,74,122,0.4); color: var(--muted); }
+.btn-danger:hover { border-color: var(--accent3); color: var(--accent3); }
+
+/* SCOREBOARD */
+.sb-header { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.sb-header span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.sb-row { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.sb-row:last-child { border-bottom: none; }
+.rank-num { font-family: var(--font-head); font-size: 18px; font-weight: 800; text-align: center; }
+.r1 { color: var(--gold); }
+.r2 { color: var(--silver); }
+.r3 { color: var(--bronze); }
+.r-other { color: var(--muted); }
+.player-name { font-weight: 500; font-size: 15px; }
+.player-tips { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pts-val { font-family: var(--font-head); font-size: 22px; font-weight: 800; }
+.tip-correct { color: var(--accent); }
+.tip-wrong { color: var(--accent3); }
+.tip-open { color: var(--muted); }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; text-align: center; }
+.stat-val { font-family: var(--font-head); font-size: 26px; font-weight: 800; }
+.stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* NOTICE */
+.notice { background: rgba(212,240,74,0.07); border: 1px solid rgba(212,240,74,0.2); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.6; }
+.notice strong { color: var(--accent); }
+
+/* API CONFIG */
+.api-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.api-bar input { flex: 1; min-width: 200px; margin: 0; }
+.loading { color: var(--muted); font-size: 13px; padding: 1rem 0; }
+.err { color: var(--accent3); font-size: 13px; padding: 8px 0; }
+
+/* SECTION TITLE */
+.sec-title { font-family: var(--font-head); font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.02em; }
+.sec-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+
+/* RESULT PICKER */
+.result-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-top: 10px; }
+.result-pick {
+  padding: 8px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+}
+.result-pick:hover { color: var(--text); }
+.result-pick.sel-home { background: rgba(212,240,74,0.12); border-color: var(--accent); color: var(--accent); }
+.result-pick.sel-draw { background: rgba(74,240,154,0.10); border-color: var(--accent2); color: var(--accent2); }
+.result-pick.sel-away { background: rgba(240,74,122,0.10); border-color: var(--accent3); color: var(--accent3); }
+
+/* PLAYER NAME INPUT */
+.name-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 1.5rem; }
+.name-bar input { flex: 1; max-width: 260px; margin: 0; }
+
+@media (max-width: 600px) {
+  main { padding: 1rem; }
+  header { padding: 1.5rem 1rem 1rem; }
+  nav { padding: 0.75rem 1rem; }
+  .logo { font-size: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">WK Pool <span>2026</span></div>
+    <div class="subtitle">Onderschat de underdog niet.</div>
+  </div>
+  <div class="header-right">
+    <span id="header-status" style="font-size:12px;color:var(--muted)"></span>
+  </div>
+</header>
+
+<nav>
+  <button class="tab active" onclick="showTab('tips',this)">⚽ Tips invoeren</button>
+  <button class="tab" onclick="showTab('stand',this)">🏆 Scorebord</button>
+  <button class="tab" onclick="showTab('uitslagen',this)">✅ Uitslagen</button>
+  <button class="tab" onclick="showTab('wedstrijden',this)">⚙️ Wedstrijden</button>
+</nav>
+
+<main>
+
+<!-- TIPS -->
+<div id="sec-tips" class="section active">
+  <div class="sec-title">Jouw tips</div>
+  <div class="sec-sub">Kies per wedstrijd wie jij denkt dat wint. Hoe meer underdog, hoe meer punten.</div>
+  <div class="name-bar">
+    <input type="text" id="player-name" placeholder="Jouw naam..." style="max-width:260px;margin:0" oninput="loadPlayerTips()">
+    <button class="btn btn-primary btn-sm" onclick="saveTips()">Opslaan</button>
+  </div>
+  <div id="tips-list"></div>
+</div>
+
+<!-- STAND -->
+<div id="sec-stand" class="section">
+  <div class="sec-title">Scorebord</div>
+  <div class="sec-sub">Bijgewerkt na elke uitslagin voering.</div>
+  <div class="stats-grid" id="stats-grid"></div>
+  <div class="card" id="scoreboard-inner" style="padding: 0.5rem 1.5rem;"></div>
+</div>
+
+<!-- UITSLAGEN -->
+<div id="sec-uitslagen" class="section">
+  <div class="sec-title">Uitslagen invullen</div>
+  <div class="sec-sub">Alleen voor de beheerder. Vul de eindstand in na elke wedstrijd.</div>
+  <div id="results-list"></div>
+  <button class="btn btn-primary" onclick="saveResults()" style="margin-top:8px">Uitslagen opslaan</button>
+</div>
+
+<!-- WEDSTRIJDEN -->
+<div id="sec-wedstrijden" class="section">
+  <div class="sec-title">Wedstrijden &amp; odds</div>
+  <div class="sec-sub">Odds worden automatisch opgehaald via The Odds API. Voer je API-sleutel in om te laden.</div>
+
+  <div class="notice">
+    <strong>The Odds API</strong> — Maak een gratis account aan op <a href="https://the-odds-api.com" target="_blank" style="color:var(--accent)">the-odds-api.com</a>. Gratis tier = 500 requests/maand, ruim genoeg voor een poule. Kopieer je API key en plak hem hieronder.
+  </div>
+
+  <div class="api-bar">
+    <input type="text" id="api-key" placeholder="Jouw Odds API key..." style="max-width:340px;margin:0">
+    <select id="api-region" style="width:auto;min-width:120px;margin:0">
+      <option value="eu">Europa (EU)</option>
+      <option value="us">Amerika (US)</option>
+      <option value="uk">VK (UK)</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="fetchOdds()">Odds ophalen</button>
+  </div>
+  <div id="api-status"></div>
+
+  <div style="border-top:1px solid var(--border);margin: 1.5rem 0;padding-top:1.5rem">
+    <div style="font-size:14px;font-weight:500;margin-bottom:12px">Of voeg handmatig een wedstrijd toe</div>
+    <div class="form-row"><label>Thuisploeg</label><input type="text" id="m-home" placeholder="Nederland"></div>
+    <div class="form-row"><label>Uitploeg</label><input type="text" id="m-away" placeholder="Argentinië"></div>
+    <div class="form-row"><label>Kans thuis %</label><input type="number" id="m-ho" placeholder="40" min="1" max="98" style="max-width:80px"></div>
+    <div class="form-row"><label>Kans gelijk %</label><input type="number" id="m-dr" placeholder="25" min="1" max="98" style="max-width:80px"></div>
+    <div class="form-row"><label>Kans uit %</label><input type="number" id="m-aw" placeholder="35" min="1" max="98" style="max-width:80px"></div>
+    <button class="btn btn-sm" onclick="addMatchManual()">Wedstrijd toevoegen</button>
+  </div>
+
+  <div id="matches-settings-list" style="margin-top:1rem"></div>
+</div>
+
+</main>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let matches = JSON.parse(localStorage.getItem('wk_matches') || '[]');
+let players = JSON.parse(localStorage.getItem('wk_players') || '{}');
+let results = JSON.parse(localStorage.getItem('wk_results') || '{}');
+let currentTips = {};
+let nextId = parseInt(localStorage.getItem('wk_nextid') || '1');
+
+function save() {
+  localStorage.setItem('wk_matches', JSON.stringify(matches));
+  localStorage.setItem('wk_players', JSON.stringify(players));
+  localStorage.setItem('wk_results', JSON.stringify(results));
+  localStorage.setItem('wk_nextid', String(nextId));
+}
+
+// ── POINTS FORMULA ─────────────────────────────────────────────────────────
+function calcPts(oddsPercent) {
+  return Math.round(10000 / Math.max(oddsPercent, 1));
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function showTab(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'tips') renderTips();
+  if (id === 'stand') renderScoreboard();
+  if (id === 'uitslagen') renderResults();
+  if (id === 'wedstrijden') renderSettings();
+}
+
+// ── TIPS ───────────────────────────────────────────────────────────────────
+function loadPlayerTips() {
+  const name = document.getElementById('player-name').value.trim();
+  currentTips = name && players[name] ? { ...players[name] } : {};
+  renderTips();
+}
+
+function renderTips() {
+  const el = document.getElementById('tips-list');
+  if (!matches.length) {
+    el.innerHTML = '<div class="loading">Geen wedstrijden gevonden. Voeg wedstrijden toe via het tabblad Wedstrijden.</div>';
+    return;
+  }
+  el.innerHTML = matches.map(m => {
+    const res = results[m.id];
+    const resClass = res ? 'result-' + res : 'no-result';
+    return `<div class="card ${resClass}">
+      <div class="match-meta">
+        <span>${m.date ? new Date(m.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'}) : ''}</span>
+        ${m.group ? `<span class="group">${m.group}</span>` : ''}
+        ${res ? `<span style="color:var(--accent);font-size:11px">Uitslag bekend</span>` : ''}
+      </div>
+      <div class="teams-row">
+        <button class="pick-btn ${currentTips[m.id]==='home' ? 'sel-home' : ''}"
+          onclick="pick(${m.id},'home',this)">
+          <span class="team-name">${m.home}</span>
+          <span class="odds-label">${m.homeOdds}% kans</span>
+          <span class="pts-label">${calcPts(m.homeOdds)} pts</span>
+        </button>
+        <button class="draw-btn ${currentTips[m.id]==='draw' ? 'sel-draw' : ''}"
+          onclick="pick(${m.id},'draw',this)">
+          Gelijk<br><span style="font-size:10px">${m.drawOdds}%</span>
+        </button>
+        <button class="pick-btn ${currentTips[m.id]==='away' ? 'sel-away' : ''}"
+          onclick="pick(${m.id},'away',this)">
+          <span class="team-name">${m.away}</span>
+          <span class="odds-label">${m.awayOdds}% kans</span>
+          <span class="pts-label">${calcPts(m.awayOdds)} pts</span>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function pick(matchId, side, btn) {
+  currentTips[matchId] = side;
+  const card = btn.closest('.card');
+  card.querySelectorAll('.pick-btn').forEach(b => b.className = 'pick-btn');
+  card.querySelectorAll('.draw-btn').forEach(b => b.className = 'draw-btn');
+  const selClass = side === 'home' ? 'sel-home' : side === 'draw' ? 'sel-draw' : 'sel-away';
+  btn.classList.add(selClass);
+}
+
+function saveTips() {
+  const name = document.getElementById('player-name').value.trim();
+  if (!name) { alert('Vul eerst je naam in.'); return; }
+  players[name] = { ...currentTips };
+  save();
+  recalcAll();
+  showToast('Tips opgeslagen voor ' + name + '!');
+}
+
+// ── RESULTS ────────────────────────────────────────────────────────────────
+function renderResults() {
+  const el = document.getElementById('results-list');
+  if (!matches.length) { el.innerHTML = '<div class="loading">Geen wedstrijden.</div>'; return; }
+  el.innerHTML = matches.map(m => {
+    const r = results[m.id];
+    return `<div class="card">
+      <div style="font-size:14px;font-weight:500;margin-bottom:8px">${m.home} vs ${m.away}
+        ${m.date ? `<span style="font-size:12px;color:var(--muted);font-weight:400;margin-left:8px">${new Date(m.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'})}</span>` : ''}
+      </div>
+      <div class="result-row">
+        <button class="result-pick ${r==='home'?'sel-home':''}" onclick="setResult(${m.id},'home',this)">${m.home}</button>
+        <button class="result-pick ${r==='draw'?'sel-draw':''}" onclick="setResult(${m.id},'draw',this)">Gelijk</button>
+        <button class="result-pick ${r==='away'?'sel-away':''}" onclick="setResult(${m.id},'away',this)">${m.away}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setResult(matchId, side, btn) {
+  results[matchId] = side;
+  const card = btn.closest('.card');
+  card.querySelectorAll('.result-pick').forEach(b => {
+    b.className = 'result-pick';
+  });
+  btn.classList.add(side === 'home' ? 'sel-home' : side === 'draw' ? 'sel-draw' : 'sel-away');
+}
+
+function saveResults() {
+  save();
+  recalcAll();
+  showToast('Uitslagen opgeslagen!');
+}
+
+// ── SCORING ────────────────────────────────────────────────────────────────
+function recalcAll() {
+  // scores are computed on-the-fly in renderScoreboard
+}
+
+function getScore(name) {
+  let total = 0;
+  const tips = players[name] || {};
+  matches.forEach(m => {
+    const r = results[m.id];
+    if (r && tips[m.id] === r) {
+      const o = r === 'home' ? m.homeOdds : r === 'draw' ? m.drawOdds : m.awayOdds;
+      total += calcPts(o);
+    }
+  });
+  return total;
+}
+
+// ── SCOREBOARD ─────────────────────────────────────────────────────────────
+function renderScoreboard() {
+  const names = Object.keys(players);
+  const sorted = names.map(n => ({ name: n, pts: getScore(n) })).sort((a, b) => b.pts - a.pts);
+
+  const played = matches.filter(m => results[m.id]).length;
+  const total = matches.length;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${names.length}</div><div class="stat-lbl">Deelnemers</div></div>
+    <div class="stat-card"><div class="stat-val">${played}/${total}</div><div class="stat-lbl">Gespeeld</div></div>
+    <div class="stat-card"><div class="stat-val">${sorted[0] ? sorted[0].pts : 0}</div><div class="stat-lbl">Hoogste score</div></div>
+  `;
+
+  if (!sorted.length) {
+    document.getElementById('scoreboard-inner').innerHTML = '<div class="loading">Nog geen deelnemers.</div>';
+    return;
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  const rankClass = i => i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'r-other';
+
+  const rows = sorted.map((p, i) => {
+    const tipSummary = matches.map(m => {
+      const tip = (players[p.name] || {})[m.id];
+      if (!tip) return null;
+      const r = results[m.id];
+      const correct = r && tip === r;
+      const wrong = r && tip !== r;
+      const label = tip === 'home' ? m.home : tip === 'away' ? m.away : 'Gelijk';
+      const cls = correct ? 'tip-correct' : wrong ? 'tip-wrong' : 'tip-open';
+      const o = tip==='home'?m.homeOdds:tip==='draw'?m.drawOdds:m.awayOdds;
+      return `<span class="${cls}">${label}${correct?' +'+calcPts(o):wrong?' ✗':''}</span>`;
+    }).filter(Boolean).join('<span style="color:var(--border2)"> · </span>');
+
+    return `<div class="sb-row">
+      <div class="rank-num ${rankClass(i)}">${medals[i] || i+1}</div>
+      <div>
+        <div class="player-name">${p.name}</div>
+        <div class="player-tips">${tipSummary || 'Geen tips'}</div>
+      </div>
+      <div class="pts-val" style="color:${i===0?'var(--gold)':i===1?'var(--silver)':i===2?'var(--bronze)':'var(--text)'}">${p.pts}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('scoreboard-inner').innerHTML = `
+    <div class="sb-header">
+      <span>#</span><span>Deelnemer</span><span>Punten</span>
+    </div>
+    ${rows}
+  `;
+}
+
+// ── SETTINGS ───────────────────────────────────────────────────────────────
+function renderSettings() {
+  const el = document.getElementById('matches-settings-list');
+  if (!matches.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="font-size:13px;color:var(--muted);margin-bottom:8px">${matches.length} wedstrijd(en) geladen</div>` +
+    matches.map((m, i) => `
+      <div class="card-sm" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:13px;font-weight:500">${m.home} vs ${m.away}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">
+            Thuis ${m.homeOdds}% → ${calcPts(m.homeOdds)} pts &nbsp;|&nbsp;
+            Gelijk ${m.drawOdds}% → ${calcPts(m.drawOdds)} pts &nbsp;|&nbsp;
+            Uit ${m.awayOdds}% → ${calcPts(m.awayOdds)} pts
+          </div>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="removeMatch(${i})">Verwijder</button>
+      </div>
+    `).join('');
+}
+
+function removeMatch(i) {
+  if (!confirm('Wedstrijd verwijderen?')) return;
+  const id = matches[i].id;
+  matches.splice(i, 1);
+  delete results[id];
+  save();
+  renderSettings();
+}
+
+function addMatchManual() {
+  const home = document.getElementById('m-home').value.trim();
+  const away = document.getElementById('m-away').value.trim();
+  const ho = parseFloat(document.getElementById('m-ho').value) || 35;
+  const dr = parseFloat(document.getElementById('m-dr').value) || 25;
+  const aw = parseFloat(document.getElementById('m-aw').value) || 40;
+  if (!home || !away) { alert('Vul beide teamnamen in.'); return; }
+  matches.push({ id: nextId++, home, away, homeOdds: ho, drawOdds: dr, awayOdds: aw, date: null, group: null });
+  save();
+  ['m-home','m-away','m-ho','m-dr','m-aw'].forEach(id => document.getElementById(id).value = '');
+  renderSettings();
+}
+
+// ── ODDS API ───────────────────────────────────────────────────────────────
+async function fetchOdds() {
+  const key = document.getElementById('api-key').value.trim();
+  const region = document.getElementById('api-region').value;
+  const status = document.getElementById('api-status');
+  if (!key) { status.innerHTML = '<div class="err">Vul een API-sleutel in.</div>'; return; }
+
+  status.innerHTML = '<div class="loading">Odds ophalen...</div>';
+
+  // WK = soccer_fifa_world_cup
+  const sport = 'soccer_fifa_world_cup';
+  const url = `https://api.the-odds-api.com/v4/sports/${sport}/odds/?apiKey=${key}&regions=${region}&markets=h2h&oddsFormat=decimal`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      status.innerHTML = `<div class="err">Fout: ${err.message || res.status}. Controleer je API-sleutel.</div>`;
+      return;
+    }
+    const data = await res.json();
+    if (!data.length) {
+      status.innerHTML = '<div class="err">Geen WK-wedstrijden gevonden. Mogelijk nog niet actief in de API (WK start juni 2026).</div>';
+      return;
+    }
+
+    // Convert decimal odds to implied probability %
+    const newMatches = data.map(event => {
+      const bk = event.bookmakers[0];
+      const market = bk?.markets?.find(m => m.key === 'h2h');
+      const outcomes = market?.outcomes || [];
+
+      const homeOutcome = outcomes.find(o => o.name === event.home_team);
+      const awayOutcome = outcomes.find(o => o.name === event.away_team);
+      const drawOutcome = outcomes.find(o => o.name === 'Draw');
+
+      // Implied probability = 1/decimal odds, normalised
+      const hRaw = homeOutcome ? 1 / homeOutcome.price : 0.33;
+      const dRaw = drawOutcome ? 1 / drawOutcome.price : 0.25;
+      const aRaw = awayOutcome ? 1 / awayOutcome.price : 0.33;
+      const total = hRaw + dRaw + aRaw;
+
+      return {
+        id: nextId++,
+        home: event.home_team,
+        away: event.away_team,
+        date: event.commence_time,
+        group: null,
+        homeOdds: Math.round((hRaw / total) * 100),
+        drawOdds: Math.round((dRaw / total) * 100),
+        awayOdds: Math.round((aRaw / total) * 100),
+      };
+    });
+
+    matches = newMatches;
+    save();
+    status.innerHTML = `<div style="color:var(--accent2);font-size:13px;margin-bottom:8px">${matches.length} wedstrijden geladen ✓</div>`;
+    renderSettings();
+  } catch (e) {
+    status.innerHTML = `<div class="err">Netwerkfout: ${e.message}. Controleer CORS-instellingen of probeer een proxy.</div>`;
+  }
+}
+
+// ── TOAST ──────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0e0f13;padding:10px 24px;border-radius:40px;font-family:var(--font-head);font-weight:700;font-size:13px;z-index:9999;transition:opacity 0.3s';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity = '0', 2500);
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+renderTips();
+</script>
+</body>
+</html>
