@@ -718,8 +718,11 @@ function showToast(msg) {
 sb.auth.onAuthStateChange(async (event, session) => {
   if (session?.user) {
     currentUser = session.user;
-    const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-    if (!profile) return;
+    const { data: profile, error: pe } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (!profile) {
+      document.getElementById('login-err').textContent = '✗ Profiel niet gevonden (ID: ' + currentUser.id + ')';
+      return;
+    }
     currentProfile = profile;
     showApp(profile);
   }
