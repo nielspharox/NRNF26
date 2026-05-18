@@ -397,8 +397,9 @@ async function doLogin() {
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) { errEl.textContent = '✗ ' + error.message; return; }
   if (!data?.user) { errEl.textContent = '✗ Geen gebruiker teruggekomen.'; return; }
-  errEl.textContent = 'Ingelogd, profiel ophalen...';
+  errEl.textContent = 'Ingelogd, profiel ophalen... ID=' + data.user.id;
   const { data: profile, error: pe } = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+  errEl.textContent = 'Profiel result: ' + JSON.stringify(profile) + ' | error: ' + JSON.stringify(pe);
   if (pe || !profile) { errEl.textContent = '✗ Profiel fout: ' + (pe?.message || 'niet gevonden') + ' | ID: ' + data.user.id; return; }
   currentUser = data.user;
   currentProfile = profile;
