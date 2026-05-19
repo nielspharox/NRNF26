@@ -629,6 +629,7 @@ function calcPts(o){return Math.round(100/Math.max(o,1))}
 function isLocked(m){return m.kickoff?new Date(m.kickoff)<=new Date():false}
 const phaseLabel={group:'GROEP',r32:'1/32',r16:'1/16',qf:'1/4',sf:'HALVE',third:'3E PL.',final:'FINALE'};
 const koPhases=['r32','r16','qf','sf','third','final'];
+const teamShort={'DR Congo':'DRC','Saudi Arabia':'SAU','Cape Verde':'CPV','Czech Republic':'CZE','New Zealand':'NZL','Ivory Coast':'CIV','South Korea':'KOR','South Africa':'RSA','El Salvador':'SAL','Costa Rica':'CRC'};
 
 function getStreakInfo(n){
   let info=null;
@@ -931,9 +932,10 @@ function renderGlobalStats(){
   // Waaghals
   const waag=calcWaaghals();
   if(waag.length&&waag[0]){
+    const waagSi=getStreakInfo(waag[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('waaghals')">`
       +`<div class="stat-ticker-label">🎲 WAAGHALS VAN VANDAAG</div>`
-      +`<div class="stat-ticker-val">${waag[0].username.toUpperCase()} — gem. ${Math.round(waag[0].risk)}% kans</div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${waag[0].username.toUpperCase()}</span>${waagSi?`<span class="streak-badge">${waagSi.emoji} ${waagSi.title}</span>`:''}<span>— gem. ${Math.round(waag[0].risk)}% kans</span></div>`
       +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
       +`</div>`);
   }
@@ -945,7 +947,7 @@ function renderGlobalStats(){
     const si=getStreakInfo(s.current_streak);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('streaks')">`
       +`<div class="stat-ticker-label">🔥 HEISSESTE STREAK</div>`
-      +`<div class="stat-ticker-val">${s.username.toUpperCase()} aka ${si?si.title:"—"} — ${s.current_streak} op rij</div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${s.username.toUpperCase()}</span>${si?`<span class="streak-badge">${si.emoji} ${si.title}</span>`:''}<span>— ${s.current_streak} op rij</span></div>`
       +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
       +`</div>`);
   }
@@ -953,9 +955,10 @@ function renderGlobalStats(){
   // Odds beater
   const beaters=calcOddsBeaters();
   if(beaters.length){
+    const beatSi=getStreakInfo(beaters[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('oddsbeater')">`
       +`<div class="stat-ticker-label">🎯 ODDS BEATER</div>`
-      +`<div class="stat-ticker-val">${beaters[0].username.toUpperCase()} — ${beaters[0].oddsGap.toFixed(1)}% gem. onder favoriet</div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${beaters[0].username.toUpperCase()}</span>${beatSi?`<span class="streak-badge">${beatSi.emoji} ${beatSi.title}</span>`:''}<span>— ${beaters[0].oddsGap.toFixed(1)}% gem. onder favoriet</span></div>`
       +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
       +`</div>`);
   }
@@ -970,10 +973,15 @@ function openStatsModal(type){
     const data=calcWaaghals();
     html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🎲 WAAGHALS RANKING</div>`
       +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">Lagere gem. kans = meer risico genomen</div>`
-      +data.map((p,i)=>`<div class="stats-row-item">`
-        +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${i+1}. ${p.username.toUpperCase()}</span></div>`
-        +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">gem. ${Math.round(p.risk)}%</div>`
-        +`</div>`).join("");
+      +data.map((p,i)=>{
+        const si=getStreakInfo(p.current_streak||0);
+        return `<div class="stats-row-item">`
+          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${i+1}. ${p.username.toUpperCase()}</span>`
+          +`${si?`<span class="streak-badge" style="margin-left:8px">${si.emoji} ${si.title}</span>`:''}`
+          +`</div>`
+          +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">gem. ${Math.round(p.risk)}%</div>`
+          +`</div>`;
+      }).join("");
   } else if(type==="streaks"){
     const data=calcAllStreaks();
     html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🔥 STREAK OVERZICHT</div>`
@@ -981,8 +989,9 @@ function openStatsModal(type){
         const si=getStreakInfo(p.current_streak);
         return `<div class="stats-row-item">`
           +`<div>`
-          +`<div style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${p.username.toUpperCase()} aka ${si?si.title:"—"}</div>`
-          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${si?si.emoji:""} ${p.current_streak} op rij · langste: ${p.longest_streak}</div>`
+          +`<div style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${p.username.toUpperCase()}</div>`
+          +`${si?`<div style="margin-top:4px"><span class="streak-badge">${si.emoji} ${si.title}</span></div>`:''}`
+          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${p.current_streak} op rij · langste: ${p.longest_streak}</div>`
           +`</div>`
           +`<div style="font-family:var(--pixel);font-size:14px;color:var(--yellow)">${getStreakEmoji(p.current_streak)}</div>`
           +`</div>`;
@@ -991,11 +1000,15 @@ function openStatsModal(type){
     const data=calcOddsBeaters();
     html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🎯 ODDS BEATER RANKING</div>`
       +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">Wint terwijl ze niet op de favoriet gokken</div>`
-      +data.map((p,i)=>`<div class="stats-row-item">`
-        +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${i+1}. ${p.username.toUpperCase()}</span>`
-        +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${p.oddsCount}× raak · ${p.oddsPts} pts</div></div>`
-        +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.oddsGap.toFixed(1)}%</div>`
-        +`</div>`).join("");
+      +data.map((p,i)=>{
+        const si=getStreakInfo(p.current_streak||0);
+        return `<div class="stats-row-item">`
+          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${i+1}. ${p.username.toUpperCase()}</span>`
+          +`${si?`<span class="streak-badge" style="margin-left:8px">${si.emoji} ${si.title}</span>`:''}`
+          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${p.oddsCount}× raak · ${p.oddsPts} pts</div></div>`
+          +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.oddsGap.toFixed(1)}%</div>`
+          +`</div>`;
+      }).join("");
   }
   el.innerHTML=html||`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">Geen data.</div>`;
   document.getElementById("stats-modal").classList.add("open");
@@ -1239,7 +1252,6 @@ function renderScoreboard(){
   const medals=['🥇','🥈','🥉'];
   const rc=i=>['r1','r2','r3'][i]||'';
   // Pre-compute day groups once for all players
-  const teamShort={'DR Congo':'DRC','Saudi Arabia':'SAU','Cape Verde':'CPV','Czech Republic':'CZE','New Zealand':'NZL','Ivory Coast':'CIV','South Korea':'KOR','South Africa':'RSA','El Salvador':'SAL','Costa Rica':'CRC'};
   const playedSorted=matches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
   const dayMap={};
   for(const m of playedSorted){
@@ -1330,7 +1342,7 @@ function renderTournament(){
         <table class="group-table">
           <thead><tr><th style="text-align:left">Team</th><th>G</th><th>W</th><th>D</th><th>V</th><th>GV</th><th>GT</th><th>+/-</th><th>Pts</th></tr></thead>
           <tbody>${standings.length?standings.map((t,i)=>`<tr style="${i<2?'color:var(--green)':i===2?'color:var(--yellow)':''}">
-            <td>${flag(t.name)} ${t.name}</td>
+            <td>${flag(t.name)} ${teamShort[t.name]||t.name}</td>
             <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
             <td>${t.gf}</td><td>${t.ga}</td><td>${t.gf-t.ga>=0?'+':''}${t.gf-t.ga}</td>
             <td style="font-weight:700">${t.pts}</td>
