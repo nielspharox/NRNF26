@@ -125,9 +125,14 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .tc-home{color:var(--green)}.tc-draw{color:var(--yellow)}.tc-away{color:var(--red)}.tc-sep{color:var(--border)}
 
 /* SCOREBOARD */
-.sb-table{width:100%;border-collapse:collapse}
+.sb-table{width:100%;border-collapse:collapse;table-layout:fixed}
 .sb-table th{font-family:var(--pixel);font-size:9px;color:var(--white);padding:10px 8px;border-bottom:2px solid var(--border);text-align:left}
-.sb-table td{font-family:var(--vt);font-size:22px;padding:12px 8px;border-bottom:1px solid rgba(85,0,170,0.3);vertical-align:middle}
+.sb-table td{font-family:var(--vt);font-size:22px;padding:12px 8px;border-bottom:1px solid rgba(85,0,170,0.3);vertical-align:top}
+.sb-table col.col-rank{width:44px}
+.sb-table col.col-av{width:44px}
+.sb-table col.col-name{width:180px}
+.sb-table col.col-tips{min-width:0}
+.sb-table col.col-pts{width:80px}
 .sb-table tr:hover td{background:rgba(123,0,255,0.1)}
 .rank-cell{font-family:var(--pixel);font-size:12px;width:40px}
 .r1{color:var(--yellow);text-shadow:0 0 8px var(--yellow)}.r2{color:#ccc}.r3{color:#c87941}
@@ -340,8 +345,11 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     <button class="phase-tab" onclick="filterStand('group',this)">🏅 POULE MEISTER</button>
     <button class="phase-tab" onclick="filterStand('ko',this)">⚡ KNOCK-OUT MEISTER</button>
   </div>
-  <div class="box" style="padding:0.5rem 1rem">
+  <div class="box" style="padding:0.5rem 1rem;overflow-x:auto">
     <table class="sb-table">
+      <colgroup>
+        <col class="col-rank"><col class="col-av"><col class="col-name"><col class="col-tips"><col class="col-pts">
+      </colgroup>
       <thead><tr><th>#</th><th></th><th>SPELER</th><th>RECENTE TIPS</th><th style="text-align:right">PTS</th></tr></thead>
       <tbody id="sb-body"></tbody>
     </table>
@@ -1261,14 +1269,14 @@ function renderScoreboard(){
         const ok=side===m.result;
         const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
         const pts=ok?calcPts(o):0;
-        return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-block;width:68px;text-align:left;white-space:nowrap;font-size:14px" title="${m.home_team} vs ${m.away_team}">`
+        return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-block;width:72px;text-align:left;white-space:nowrap;font-size:14px" title="${m.home_team} vs ${m.away_team}">`
           +`<span style="font-size:16px;vertical-align:middle">${f}</span>`
           +`<span style="font-family:var(--pixel);font-size:7px;vertical-align:middle"> ${lbl}</span>`
           +(ok?`<sup style="font-family:var(--pixel);font-size:6px;color:var(--green)">+${pts}</sup>`:'')
           +`</span>`;
       }).join('');
       return`<div style="margin-bottom:4px">`
-        +`<span style="font-family:var(--pixel);font-size:6px;color:var(--border);display:inline-block;width:52px;vertical-align:middle">${day}</span>`
+        +`<span style="font-family:var(--vt);font-size:17px;color:var(--muted);display:inline-block;width:56px;vertical-align:middle">${day}</span>`
         +dayTips
         +`</div>`;
     }).join('');
@@ -1540,28 +1548,33 @@ async function clearResult(matchId){
 }
 
 async function updateStreaks(matchId,result){
-  // Need fresh data after save - reload allTips first
-  const {data:freshTips}=await sb.from('tips').select('*');
-  if(freshTips)allTips=freshTips;
+  // Fetch completely fresh data so new result is included
+  const [{data:freshMatches},{data:freshTips},{data:freshProfiles}]=await Promise.all([
+    sb.from('matches').select('*').order('kickoff',{ascending:true}),
+    sb.from('tips').select('*'),
+    sb.from('profiles').select('*'),
+  ]);
+  const fMatches=freshMatches||[];
+  const fTips=freshTips||[];
 
-  for(const profile of allProfiles){
+  for(const profile of (freshProfiles||[])){
     // Sort by kickoff descending - count back from most recent
-    const played=matches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
+    const played=fMatches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
 
     // Current streak: count backwards until first wrong tip
     let current=0;
     for(const m of played){
-      const tip=allTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
+      const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
       const side=tip?tip.tip:'draw';
       if(side===m.result)current++;
       else break;
     }
 
-    // Longest streak: scan all matches in chronological order
-    const chronological=matches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    // Longest streak: scan all matches chronologically
+    const chrono=fMatches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
     let longest=0,running=0;
-    for(const m of chronological){
-      const tip=allTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
+    for(const m of chrono){
+      const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
       const side=tip?tip.tip:'draw';
       if(side===m.result){running++;if(running>longest)longest=running;}
       else running=0;
@@ -1673,11 +1686,17 @@ async function autoFetchOddsIfRoundComplete(savedResult,matchId){
 }
 
 // ── PROFILE MODAL ────────────────────────────────────────────
-function openProfile(userId){
+async function openProfile(userId){
   const id=userId||currentUser?.id;
   if(!id)return;
-  const profile=allProfiles.find(p=>p.id===id);
+  // Always fetch fresh profile so streak is up to date
+  const {data:freshP}=await sb.from('profiles').select('*').eq('id',id).single();
+  const profile=freshP||allProfiles.find(p=>p.id===id);
   if(!profile)return;
+  // Update local cache
+  const idx=allProfiles.findIndex(p=>p.id===id);
+  if(idx>=0)allProfiles[idx]=profile;
+  if(id===currentUser?.id)currentProfile=profile;
   viewingProfile=profile;
   const isOwn=id===currentUser.id;
   const avgRisk=getAvgRisk(id);
