@@ -176,9 +176,10 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-bottom:1.5rem;padding:1rem 0}
 .podium-place{text-align:center;flex:1;max-width:140px}
 .podium-block{border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:12px 8px 8px;position:relative}
-.podium-1{height:140px;border-color:var(--yellow);background:rgba(255,230,0,0.08)}
-.podium-2{height:110px;border-color:#ccc;background:rgba(200,200,200,0.05)}
-.podium-3{height:85px;border-color:#c87941;background:rgba(200,120,65,0.05)}
+.podium-figure{position:absolute;top:-75px;left:50%;transform:translateX(-50%);width:56px;height:70px}
+.podium-1{height:150px;border-color:var(--yellow);background:rgba(255,230,0,0.08)}
+.podium-2{height:120px;border-color:#ccc;background:rgba(200,200,200,0.05)}
+.podium-3{height:100px;border-color:#c87941;background:rgba(200,120,65,0.05)}
 .podium-avatar{width:48px;height:48px;border:3px solid;overflow:hidden;background:var(--bg3);position:absolute;top:-28px;left:50%;transform:translateX(-50%)}
 .podium-avatar img{width:100%;height:100%;object-fit:cover}
 .podium-1 .podium-avatar{border-color:var(--yellow)}
@@ -191,9 +192,9 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 
 .stat-ticker{background:var(--bg2);border:2px solid var(--border);padding:12px 16px;margin-bottom:12px;cursor:pointer;transition:border-color 0.15s}
 .stat-ticker:hover{border-color:var(--green)}
-.stat-ticker-label{font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px}
+.stat-ticker-label{font-family:var(--pixel);font-size:9px;color:var(--yellow);margin-bottom:6px}
 .stat-ticker-val{font-family:var(--vt);font-size:24px;color:var(--green)}
-.stat-ticker-hint{font-family:var(--pixel);font-size:7px;color:var(--border);margin-top:4px}
+.stat-ticker-hint{font-family:var(--pixel);font-size:7px;color:var(--muted);margin-top:4px}
 
 /* COMPLOT */
 .complot-card{background:var(--bg2);border:2px solid var(--purple);padding:1rem;margin-bottom:10px;position:relative}
@@ -448,7 +449,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="profile-box">
     <button class="profile-close" onclick="closeProfile()">✕ SLUITEN</button>
     <div style="text-align:center;margin-bottom:1rem">
-      <div class="profile-avatar-wrap" onclick="triggerAvatarUpload()">
+      <div id="profile-avatar-wrap" class="profile-avatar-wrap" onclick="triggerAvatarUpload()">
         <img id="profile-avatar-img" src="" alt="">
       </div>
       <input type="file" id="avatar-upload" accept="image/*" style="display:none" onchange="uploadAvatar(event)">
