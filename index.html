@@ -304,6 +304,9 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="phase-tabs">
     <button class="phase-tab active" onclick="filterPhase('all',this)">ALLES</button>
     <button class="phase-tab" onclick="filterPhase('group',this)">GROEPSFASE</button>
+    <button class="phase-tab" onclick="filterPhase('group1',this)">RONDE 1</button>
+    <button class="phase-tab" onclick="filterPhase('group2',this)">RONDE 2</button>
+    <button class="phase-tab" onclick="filterPhase('group3',this)">RONDE 3</button>
     <button class="phase-tab" onclick="filterPhase('r32',this)">1/32</button>
     <button class="phase-tab" onclick="filterPhase('r16',this)">1/16</button>
     <button class="phase-tab" onclick="filterPhase('qf',this)">1/4</button>
@@ -338,7 +341,8 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="sec-title">▶ TOERNOOIOVERZICHT</div>
   <div class="sec-sub">Groepsfase · Knockout · Standen &amp; uitslagen</div>
   <div class="phase-tabs">
-    <button class="phase-tab active" onclick="filterTournament('group',this)">GROEPSFASE</button>
+    <button class="phase-tab active" onclick="filterTournament('group_standings',this)">STANDEN</button>
+    <button class="phase-tab" onclick="filterTournament('group_matches',this)">WEDSTRIJDEN</button>
     <button class="phase-tab" onclick="filterTournament('ko',this)">KNOCKOUT</button>
   </div>
   <div id="tournament-view"><div class="loading">Laden...</div></div>
@@ -445,6 +449,11 @@ const SUPABASE_URL = 'https://soonpwnwrvxmariaqdfb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// Nederlandse tijd (CEST = UTC+2 tijdens WK)
+function nlTime(kickoff,opts){if(!kickoff)return "";var d=new Date(kickoff);var def={timeZone:"Europe/Amsterdam",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"};return d.toLocaleString("nl-NL",Object.assign({},def,opts||{}));}
+function nlDate(kickoff){if(!kickoff)return "";return new Date(kickoff).toLocaleDateString("nl-NL",{timeZone:"Europe/Amsterdam",day:"numeric",month:"short"});}
+function nlTimeOnly(kickoff){if(!kickoff)return "";return new Date(kickoff).toLocaleTimeString("nl-NL",{timeZone:"Europe/Amsterdam",hour:"2-digit",minute:"2-digit"});}
+
 const STREAKS = [
   {n:3,title:'PAUL',emoji:'🐙'},
   {n:6,title:'EL JEFE',emoji:'🌵🤠'},
@@ -467,7 +476,7 @@ let currentUser=null, currentProfile=null;
 let matches=[], allTips=[], allProfiles=[];
 let myTips={}, pendingTips={};
 let complotGroups=[], complotMembers=[];
-let currentPhaseFilter='all', currentStandFilter='total', currentTournamentFilter='group';
+let currentPhaseFilter='all', currentStandFilter='total', currentTournamentFilter='group_standings';
 let viewingProfile=null;
 
 // ── HELPERS ──────────────────────────────────────────────────
@@ -832,14 +841,14 @@ function filterPhase(phase,btn){
 
 function renderTips(){
   const el=document.getElementById('tips-list');
-  const filtered=currentPhaseFilter==='all'?matches:matches.filter(m=>m.phase===currentPhaseFilter);
+  const filtered=currentPhaseFilter==='all'?matches:currentPhaseFilter==='group1'?matches.filter(m=>m.phase==='group'&&m.round===1):currentPhaseFilter==='group2'?matches.filter(m=>m.phase==='group'&&m.round===2):currentPhaseFilter==='group3'?matches.filter(m=>m.phase==='group'&&m.round===3):matches.filter(m=>m.phase===currentPhaseFilter);
   if(!filtered.length){el.innerHTML='<div class="loading">Geen wedstrijden in deze fase.</div>';return;}
 
   el.innerHTML=filtered.map(m=>{
     const locked=isLocked(m);
     const tip=pendingTips[m.id]||'draw';
     const res=m.result;
-    const ko=m.kickoff?new Date(m.kickoff).toLocaleString('nl-NL',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+    const ko=m.kickoff?nlTime(m.kickoff):'';
 
     // Tip counts per outcome
     const matchTips=allTips.filter(t=>t.match_id===m.id);
@@ -999,29 +1008,47 @@ function calcGroupStandings(groupName){
 
 function renderTournament(){
   const el=document.getElementById('tournament-view');
-  if(currentTournamentFilter==='group'){
-    const groupNames=[...new Set(matches.filter(m=>m.phase==='group'&&m.group_name).map(m=>m.group_name))].sort();
+  const groupNames=[...new Set(matches.filter(m=>m.phase==='group'&&m.group_name).map(m=>m.group_name))].sort();
+
+  if(currentTournamentFilter==='group_standings'){
     if(!groupNames.length){el.innerHTML='<div class="loading">Geen groepswedstrijden.</div>';return;}
-    el.innerHTML=`<div class="group-grid">`+groupNames.map(g=>{
+    el.innerHTML='<div class="group-grid">'+groupNames.map(g=>{
       const standings=calcGroupStandings(g);
-      const gMatches=matches.filter(m=>m.phase==='group'&&m.group_name===g);
       return`<div class="group-card">
         <div class="group-title">GROEP ${g}</div>
-        ${standings.length?`<table class="group-table" style="margin-bottom:8px">
-          <thead><tr><th style="text-align:left">Team</th><th>G</th><th>W</th><th>D</th><th>V</th><th>+/-</th><th>Pts</th></tr></thead>
-          <tbody>${standings.map(t=>`<tr>
-            <td>${t.name}</td><td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
-            <td>${t.gf-t.ga}</td><td style="font-weight:700;color:var(--green)">${t.pts}</td>
-          </tr>`).join('')}</tbody>
-        </table>`:''}
+        <table class="group-table">
+          <thead><tr><th style="text-align:left">Team</th><th>G</th><th>W</th><th>D</th><th>V</th><th>GV</th><th>GT</th><th>+/-</th><th>Pts</th></tr></thead>
+          <tbody>${standings.length?standings.map((t,i)=>`<tr style="${i<2?'color:var(--green)':''}">
+            <td>${i===0?'🥇':i===1?'🥈':i===2?'🥉':''} ${t.name}</td>
+            <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+            <td>${t.gf}</td><td>${t.ga}</td><td>${t.gf-t.ga>=0?'+':''}${t.gf-t.ga}</td>
+            <td style="font-weight:700">${t.pts}</td>
+          </tr>`).join(''):'<tr><td colspan="9" style="color:var(--muted)">Nog geen uitslagen</td></tr>'}</tbody>
+        </table>
+      </div>`;
+    }).join('')+'</div>';
+
+  } else if(currentTournamentFilter==='group_matches'){
+    if(!groupNames.length){el.innerHTML='<div class="loading">Geen groepswedstrijden.</div>';return;}
+    el.innerHTML='<div class="group-grid">'+groupNames.map(g=>{
+      const gMatches=matches.filter(m=>m.phase==='group'&&m.group_name===g).sort((a,b)=>a.round-b.round||(new Date(a.kickoff)-new Date(b.kickoff)));
+      return`<div class="group-card">
+        <div class="group-title">GROEP ${g}</div>
         ${gMatches.map(m=>{
           const r=m.result;
           const score=(m.home_score!==null&&m.away_score!==null)?` ${m.home_score}-${m.away_score}`:'';
-          const pill=r?`<span class="rp rp-${r}">${r==='home'?m.home_team.slice(0,3):r==='away'?m.away_team.slice(0,3):'GLK'}${score}</span>`:'<span style="color:var(--muted);font-size:13px">—</span>';
-          return`<div class="group-match"><span style="font-size:14px">${m.home_team} - ${m.away_team}</span>${pill}</div>`;
+          const pill=r?`<span class="rp rp-${r}">${r==='home'?m.home_team.slice(0,3).toUpperCase():r==='away'?m.away_team.slice(0,3).toUpperCase():'GLK'}${score}</span>`:'<span style="color:var(--muted);font-size:13px">—</span>';
+          const timeStr=m.kickoff?`<span style="font-family:var(--pixel);font-size:5px;color:var(--muted)">${nlDate(m.kickoff)} ${nlTimeOnly(m.kickoff)}</span>`:'';
+          return`<div class="group-match" style="flex-direction:column;align-items:flex-start;gap:2px">
+            ${timeStr}
+            <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
+              <span style="font-size:14px">${m.home_team} - ${m.away_team}</span>${pill}
+            </div>
+          </div>`;
         }).join('')}
       </div>`;
     }).join('')+'</div>';
+
   } else {
     const phases=[
       {key:'r32',label:'RONDE VAN 32'},{key:'r16',label:'RONDE VAN 16'},
@@ -1029,24 +1056,115 @@ function renderTournament(){
       {key:'third',label:'3E PLAATS'},{key:'final',label:'FINALE'},
     ];
     const html=phases.map(ph=>{
-      const ms=matches.filter(m=>m.phase===ph.key);
+      const ms=matches.filter(m=>m.phase===ph.key).sort((a,b)=>a.bracket_pos-b.bracket_pos||(new Date(a.kickoff)-new Date(b.kickoff)));
       if(!ms.length)return'';
       return`<div class="ko-round"><div class="ko-title">${ph.label}</div><div class="ko-grid">
         ${ms.map(m=>{
           const r=m.result;
           const score=(m.home_score!==null&&m.away_score!==null)?` (${m.home_score}-${m.away_score})`:'';
           const winner=r==='home'?m.home_team:r==='away'?m.away_team:r==='draw'?'Verlengd':null;
+          const timeStr=m.kickoff?`${nlDate(m.kickoff)} · ${nlTimeOnly(m.kickoff)}${m.venue?' · '+m.venue:''}`:m.venue||'';
           return`<div class="ko-match ${r?'has-result':''}">
             <div style="font-family:var(--oswald);font-weight:700;font-size:15px">${m.home_team}</div>
             <div style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin:3px 0">VS</div>
             <div style="font-family:var(--oswald);font-weight:700;font-size:15px">${m.away_team}</div>
             ${r?`<div style="margin-top:6px;font-family:var(--pixel);font-size:7px;color:var(--green)">▶ ${winner}${score}</div>`:'<div style="font-size:14px;color:var(--muted);margin-top:6px">Nog niet gespeeld</div>'}
-            ${m.kickoff?`<div style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-top:3px">${new Date(m.kickoff).toLocaleDateString('nl-NL',{day:'numeric',month:'short'})} · ${m.venue||''}</div>`:''}
+            ${timeStr?`<div style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-top:4px">${timeStr}</div>`:''}
           </div>`;
         }).join('')}
       </div></div>`;
     }).join('');
     el.innerHTML=html||'<div class="loading">Nog geen knockoutwedstrijden.</div>';
+  }
+}
+
+// ── AUTO BRACKET ─────────────────────────────────────────────
+async function updateBracket(){
+  // Stap 1: Vul nummers 1 en 2 per groep in R32
+  const groupNames=[...new Set(matches.filter(m=>m.phase==='group'&&m.group_name).map(m=>m.group_name))].sort();
+  const groupResults={};
+  for(const g of groupNames){
+    const standings=calcGroupStandings(g);
+    // Only fill if all 3 group rounds are played (6 matches with result)
+    const played=matches.filter(m=>m.phase==='group'&&m.group_name===g&&m.result).length;
+    if(played>=6){
+      groupResults[g]={first:standings[0]?.name,second:standings[1]?.name};
+    } else if(played>0){
+      groupResults[g]={first:standings[0]?.name,second:standings[1]?.name};
+    }
+  }
+
+  // Update R32 matches where home_team or away_team contains "1st Group X" or "2nd Group X"
+  for(const m of matches.filter(m=>m.phase==='r32')){
+    let newHome=m.home_team, newAway=m.away_team;
+    for(const g of groupNames){
+      if(!groupResults[g])continue;
+      if(m.home_team===`1st Group ${g}`)newHome=groupResults[g].first||m.home_team;
+      if(m.home_team===`2nd Group ${g}`)newHome=groupResults[g].second||m.home_team;
+      if(m.away_team===`1st Group ${g}`)newAway=groupResults[g].first||m.away_team;
+      if(m.away_team===`2nd Group ${g}`)newAway=groupResults[g].second||m.away_team;
+    }
+    if(newHome!==m.home_team||newAway!==m.away_team){
+      await sb.from('matches').update({home_team:newHome,away_team:newAway}).eq('id',m.id);
+    }
+  }
+
+  // Stap 2: Vul winnaars door in volgende ronde
+  const phaseOrder=['r32','r16','qf','sf'];
+  const nextPhase={r32:'r16',r16:'qf',qf:'sf',sf:'final'};
+  const loserPhase={sf:'third'};
+
+  for(const phase of phaseOrder){
+    const phaseMatches=matches.filter(m=>m.phase===phase&&m.result);
+    for(const m of phaseMatches){
+      const winner=m.result==='home'?m.home_team:m.away_team;
+      const loser=m.result==='home'?m.away_team:m.home_team;
+      const winLabel=`Winner M${m.match_number}`;
+      const ruLabel=`Loser M${m.match_number}`;
+
+      // Find next matches that reference this match
+      const nextMatches=matches.filter(nm=>nm.home_team===winLabel||nm.away_team===winLabel);
+      for(const nm of nextMatches){
+        const update={};
+        if(nm.home_team===winLabel)update.home_team=winner;
+        if(nm.away_team===winLabel)update.away_team=winner;
+        if(Object.keys(update).length)await sb.from('matches').update(update).eq('id',nm.id);
+      }
+
+      // Fill third place match with losers
+      const ruMatches=matches.filter(nm=>nm.home_team===ruLabel||nm.away_team===ruLabel);
+      for(const nm of ruMatches){
+        const update={};
+        if(nm.home_team===ruLabel)update.home_team=loser;
+        if(nm.away_team===ruLabel)update.away_team=loser;
+        if(Object.keys(update).length)await sb.from('matches').update(update).eq('id',nm.id);
+      }
+
+      // Also handle Winner R32-X / Winner R16-X labels
+      const slotLabels=[
+        `Winner R32-${m.bracket_pos}`,`Winner R16-${m.bracket_pos}`,
+        `Winner QF-${m.bracket_pos}`,`Winner SF-${m.bracket_pos}`,
+      ];
+      for(const lbl of slotLabels){
+        const slotMatches=matches.filter(nm=>nm.home_team===lbl||nm.away_team===lbl);
+        for(const nm of slotMatches){
+          const update={};
+          if(nm.home_team===lbl)update.home_team=winner;
+          if(nm.away_team===lbl)update.away_team=winner;
+          if(Object.keys(update).length)await sb.from('matches').update(update).eq('id',nm.id);
+        }
+      }
+      const loserSlotLabels=[`Loser SF-${m.bracket_pos}`];
+      for(const lbl of loserSlotLabels){
+        const slotMatches=matches.filter(nm=>nm.home_team===lbl||nm.away_team===lbl);
+        for(const nm of slotMatches){
+          const update={};
+          if(nm.home_team===lbl)update.home_team=loser;
+          if(nm.away_team===lbl)update.away_team=loser;
+          if(Object.keys(update).length)await sb.from('matches').update(update).eq('id',nm.id);
+        }
+      }
+    }
   }
 }
 
@@ -1079,7 +1197,7 @@ function renderAdminResults(){
     <div class="box" style="margin-bottom:8px;padding:0.75rem 1rem">
       <div style="font-family:var(--oswald);font-weight:700;font-size:15px;margin-bottom:8px">
         ${m.home_team} vs ${m.away_team}
-        ${m.kickoff?`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-left:8px">${new Date(m.kickoff).toLocaleDateString('nl-NL',{day:'numeric',month:'short'})}</span>`:''}
+        ${m.kickoff?`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-left:8px">${nlDate(m.kickoff)}</span>`:''}
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
         <input type="number" placeholder="Thuis" id="hs-${m.id}" value="${m.home_score??''}" style="width:60px;padding:4px 6px;font-size:16px">
@@ -1105,6 +1223,7 @@ async function saveScore(matchId){
   const {error}=await sb.from('matches').update({home_score:hs,away_score:as,result}).eq('id',matchId);
   if(error){showToast('Fout: '+error.message);return;}
   await updateStreaks(matchId,result);
+  await updateBracket();
   showToast('Score & uitslag opgeslagen!');
   await loadAll();
 }
@@ -1113,6 +1232,7 @@ async function setResult(matchId,side){
   const {error}=await sb.from('matches').update({result:side}).eq('id',matchId);
   if(error){showToast('Fout: '+error.message);return;}
   await updateStreaks(matchId,side);
+  await updateBracket();
   showToast('Uitslag opgeslagen!');
   await loadAll();
 }
