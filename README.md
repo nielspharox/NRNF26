@@ -1,78 +1,136 @@
-# NRNF26
-No risk no fun 
-# WK Pool 2026
+# NO RISK NO FUN — WK Pool 2026 🐙
 
-Odds-gebaseerde WK-poule. Hoe meer underdog je tipt, hoe meer punten.
+> *Onderschat de underdog niet.*
 
-## Puntenformule
-
-```
-punten = 10.000 / kans (%)
-```
-
-Voorbeeld:
-- Favoriet op 70% → 143 punten bij goede tip
-- Underdog op 15% → 667 punten bij goede tip
-- Grote verrassing op 5% → 2000 punten bij goede tip
+Een retro-styled WK-voetbalpool waar risico nemen beloond wordt. Hoe meer underdog je tipt, hoe meer punten je scoort.
 
 ---
 
-## Live zetten via GitHub Pages
+## Live
 
-### Stap 1 — Repository aanmaken
-1. Ga naar [github.com](https://github.com) en maak een nieuw **public** repository aan.
-2. Geef het een naam, bijv. `wk-pool-2026`.
+**[nielspharox.github.io/NRNF26](https://nielspharox.github.io/NRNF26/)**
 
-### Stap 2 — Bestanden uploaden
-Upload `index.html` naar de root van de repository.
+---
 
-### Stap 3 — GitHub Pages inschakelen
-1. Ga naar **Settings → Pages**
-2. Onder *Source*: kies **Deploy from a branch**
-3. Branch: `main`, map: `/ (root)`
-4. Klik **Save**
+## Puntensysteem
 
-Na ~1 minuut is je pool live op:
 ```
-https://<jouw-gebruikersnaam>.github.io/wk-pool-2026/
+punten = 100 / kans (%)
 ```
 
-Stuur die link naar je collega's.
+| Gekozen kans | Punten bij goede tip |
+|---|---|
+| 70% (favoriet) | 14 pts |
+| 33% (gelijkspel) | 30 pts |
+| 15% (underdog) | 67 pts |
+| 5% (grote verrassing) | 200 pts |
+
+Geen tip ingevoerd = automatisch gelijkspel.
+Tips worden vergrendeld op het moment van aftrap.
+Knockoutwedstrijden: uitslag na 120 minuten (inclusief verlenging).
 
 ---
 
-## Odds API instellen
+## Features
 
-1. Maak een gratis account op [the-odds-api.com](https://the-odds-api.com)
-2. Kopieer je API-sleutel (gratis tier = 500 requests/maand)
-3. Open de pool → tabblad **Wedstrijden**
-4. Plak je key en klik **Odds ophalen**
+### Klassementen
+- **Totaalstand** — alle wedstrijden
+- **Poule Meister** — alleen groepsfase
+- **Knock-out Meister** — alleen knockoutfases
+- Per **Complotgroepje** een eigen klassement
 
-De odds worden automatisch omgezet naar impliciete kansen (%) en de punten worden berekend.
+### Gamification
+- 🔥 **Killstreak titels** voor aaneengesloten correcte tips:
 
-> **Let op**: The Odds API toont WK-wedstrijden pas als ze in hun systeem zijn (doorgaans een paar weken voor het toernooi). Tot die tijd kun je wedstrijden handmatig toevoegen.
+| Streak | Titel | Emoji |
+|---|---|---|
+| 3 | PAUL | 🐙 |
+| 6 | EL JEFE | 🌵🤠 |
+| 9 | THE CHOSEN ONE | ⚡ |
+| 12 | SITTING BULL | 🦬 |
+| 15 | THE DEEP STATE | 🕵️ |
+| 18 | THE ORACLE | 🔮 |
+| 21 | PAUL WAS AN AMATEUR | 🐙💀 |
+
+- 🎲 **Waaghals van de dag** — wie nam vandaag het meeste risico?
+- 🎯 **Odds Beater** — wie wint terwijl ze niet op de favoriet gokken?
+- 📊 **Risico profiel** per speler:
+
+| Profiel | Gem. kans |
+|---|---|
+| 📁 De Bureaucraat | 55–100% |
+| 🖊️ De Ambtenaar | 40–55% |
+| 🤫 De Informant | 28–40% |
+| 🎭 De Stroman | 18–28% |
+| ✊ De Rebel | 0–18% |
+
+### Complotgroepjes 🐓
+Maak je eigen besloten poule aan. De maker is het **Haantje** en heeft speciale powers:
+- 🐑 Schapen uitnodigen (via gebruikersnaam of invite link)
+- 😴 Leden laten slapen (verwijderen)
+- 🐓👑 Iemand ook Haantje maken
+
+### Toernooioverzicht
+- Live groepsstanden met punten, doelsaldo en doelpunten
+- Knockout bracket met vaste posities
+- Speelsteden en tijden zichtbaar
 
 ---
 
-## Gebruik
+## Bestanden in deze repo
 
-| Rol | Actie |
-|-----|-------|
-| Beheerder | Odds ophalen / Wedstrijden toevoegen / Uitslagen invullen |
-| Deelnemers | Naam invullen → Tips opslaan |
-| Iedereen | Scorebord bekijken |
-
-Alle data wordt opgeslagen in `localStorage` van de browser van de beheerder. Tips van deelnemers worden opgeslagen in hun eigen browser.
-
-### Tips van collega's verzamelen
-Omdat GitHub Pages geen server-side opslag heeft, zijn er twee opties:
-
-**Optie A (simpel):** Deelnemers sturen hun tips naar jou, jij voert ze in als beheerder.
-
-**Optie B (zelfstandig):** Voeg een gratis backend toe via [Supabase](https://supabase.com) of [Firebase](https://firebase.google.com) — vraag gerust om hulp hierbij.
+| Bestand | Omschrijving |
+|---|---|
+| `index.html` | De volledige app |
+| `invite.html` | Invite pagina voor complotgroepjes |
+| `mascot.png` | De Condor — onze mascotte |
+| `setup_final.sql` | Database setup (eenmalig uitvoeren) |
+| `fix_complot.sql` | Complot tabellen fix |
 
 ---
 
-## Lokaal testen
+## Technische stack
 
-Open `index.html` direct in je browser. Geen server nodig.
+- **Frontend:** Vanilla HTML/CSS/JS — geen framework, één bestand
+- **Backend:** [Supabase](https://supabase.com) — database, auth, storage
+- **Hosting:** GitHub Pages
+- **Odds:** [The Odds API](https://the-odds-api.com) — gratis tier
+
+---
+
+## Setup (voor de beheerder)
+
+### 1. Supabase database
+```sql
+-- Eerst leegmaken:
+delete from public.tips;
+delete from public.matches;
+```
+Dan `setup_final.sql` runnen, dan `fix_complot.sql` runnen.
+
+### 2. Storage bucket voor avatars
+- Supabase → Storage → New bucket
+- Naam: `avatars`, Public: **aan**
+- Policy: "Give users access to only their own top level folder named as uid"
+
+### 3. Jezelf admin maken
+```sql
+update public.profiles set is_admin = true where username = 'jouw-username';
+```
+
+### 4. Odds ophalen
+- Gratis account op [the-odds-api.com](https://the-odds-api.com)
+- In de app: Admin → Odds API → key invullen → Odds ophalen
+- Per speelronde apart ophalen zodat kansen actueel blijven
+
+---
+
+## Beheer tijdens het toernooi
+
+- **Uitslagen invoeren:** Admin tabblad → score invullen (x–y) → automatisch resultaat + punten
+- **Odds bijwerken:** Admin → Odds API → per ronde ophalen
+- **Knockout teams bijwerken:** pas teamnamen aan via Supabase Table Editor zodra bekend is wie er doorging
+
+---
+
+*Built with ❤️ and 🐙 energy*
