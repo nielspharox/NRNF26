@@ -189,9 +189,11 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .podium-1 .podium-pts{color:var(--yellow)}.podium-2 .podium-pts{color:#ccc}.podium-3 .podium-pts{color:#c87941}
 .podium-rank{font-family:var(--pixel);font-size:17px;margin-top:2px}
 
-.stat-ticker{background:var(--bg2);border:2px solid var(--border);padding:12px 16px;margin-bottom:12px}
-.stat-ticker-label{font-family:var(--pixel);font-size:7px;color:var(--muted);margin-bottom:4px}
-.stat-ticker-val{font-family:var(--vt);font-size:22px;color:var(--green)}
+.stat-ticker{background:var(--bg2);border:2px solid var(--border);padding:12px 16px;margin-bottom:12px;cursor:pointer;transition:border-color 0.15s}
+.stat-ticker:hover{border-color:var(--green)}
+.stat-ticker-label{font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px}
+.stat-ticker-val{font-family:var(--vt);font-size:24px;color:var(--green)}
+.stat-ticker-hint{font-family:var(--pixel);font-size:7px;color:var(--border);margin-top:4px}
 
 /* COMPLOT */
 .complot-card{background:var(--bg2);border:2px solid var(--purple);padding:1rem;margin-bottom:10px;position:relative}
@@ -206,6 +208,13 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 /* PROFILE MODAL */
 #profile-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem}
 #profile-modal.open{display:flex}
+#stats-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem}
+#stats-modal.open{display:flex}
+.stats-modal-box{background:var(--bg2);border:4px solid var(--purple);box-shadow:8px 8px 0 #000;padding:1.5rem;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;position:relative}
+.stats-modal-close{position:absolute;top:12px;right:12px;font-family:var(--pixel);font-size:8px;background:transparent;border:2px solid var(--border);color:var(--muted);padding:4px 8px;cursor:pointer}
+.stats-modal-close:hover{border-color:var(--red);color:var(--red)}
+.stats-row-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(85,0,170,0.3)}
+.stats-row-item:last-child{border-bottom:none}
 .profile-box{background:var(--bg2);border:4px solid var(--purple);box-shadow:8px 8px 0 #000;padding:1.5rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;position:relative}
 .profile-close{position:absolute;top:12px;right:12px;font-family:var(--pixel);font-size:8px;background:transparent;border:2px solid var(--border);color:var(--muted);padding:4px 8px;cursor:pointer}
 .profile-close:hover{border-color:var(--red);color:var(--red)}
@@ -425,6 +434,14 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 </div>
 
 </main>
+
+<!-- STATS MODAL -->
+<div id="stats-modal">
+  <div class="stats-modal-box">
+    <button class="stats-modal-close" onclick="closeStatsModal()">✕ SLUITEN</button>
+    <div id="stats-modal-content"></div>
+  </div>
+</div>
 
 <!-- PROFILE MODAL -->
 <div id="profile-modal">
@@ -651,88 +668,209 @@ function calcDayPts(userId,dayMatches){
   return pts;
 }
 
+function pixelFigure(color, avatarUrl){
+  // Pixel art figure: head (with avatar), body, arms, legs
+  const headContent = avatarUrl
+    ? `<image href="${avatarUrl}" x="16" y="0" width="24" height="24" clip-path="url(#headclip)"/>`
+    : `<rect x="18" y="2" width="20" height="20" fill="${color}" opacity="0.8"/>
+       <rect x="22" y="8" width="4" height="4" fill="#000" opacity="0.5"/>
+       <rect x="30" y="8" width="4" height="4" fill="#000" opacity="0.5"/>
+       <rect x="24" y="16" width="8" height="2" fill="#000" opacity="0.4"/>`;
+  return `<svg viewBox="0 0 56 70" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+      <clipPath id="headclip"><rect x="16" y="0" width="24" height="24" rx="2"/></clipPath>
+    </defs>
+    <!-- Head -->
+    <rect x="14" y="0" width="28" height="28" rx="2" fill="${color}" opacity="0.3"/>
+    ${headContent}
+    <rect x="14" y="0" width="28" height="28" rx="2" fill="none" stroke="${color}" stroke-width="2"/>
+    <!-- Neck -->
+    <rect x="24" y="28" width="8" height="4" fill="${color}" opacity="0.6"/>
+    <!-- Body -->
+    <rect x="14" y="32" width="28" height="20" rx="2" fill="${color}" opacity="0.4"/>
+    <rect x="14" y="32" width="28" height="20" rx="2" fill="none" stroke="${color}" stroke-width="1.5"/>
+    <!-- Arms -->
+    <rect x="2" y="33" width="12" height="6" rx="2" fill="${color}" opacity="0.5"/>
+    <rect x="42" y="33" width="12" height="6" rx="2" fill="${color}" opacity="0.5"/>
+    <!-- Legs -->
+    <rect x="16" y="52" width="10" height="14" rx="2" fill="${color}" opacity="0.5"/>
+    <rect x="30" y="52" width="10" height="14" rx="2" fill="${color}" opacity="0.5"/>
+    <!-- Feet -->
+    <rect x="13" y="62" width="14" height="6" rx="1" fill="${color}" opacity="0.7"/>
+    <rect x="27" y="62" width="14" height="6" rx="1" fill="${color}" opacity="0.7"/>
+  </svg>`;
+}
+
+function pixelFigure(col,av){
+  const cid=col.replace(/[^a-z0-9]/gi,"");
+  const head=av
+    ?`<image href="${av}" x="16" y="0" width="24" height="24" clip-path="url(#hc${cid})"/>`
+    :`<rect x="18" y="2" width="20" height="20" fill="${col}" opacity="0.8"/>`
+      +`<rect x="22" y="8" width="4" height="4" fill="#000" opacity="0.5"/>`
+      +`<rect x="30" y="8" width="4" height="4" fill="#000" opacity="0.5"/>`
+      +`<rect x="24" y="15" width="8" height="2" fill="#000" opacity="0.4"/>`;
+  return `<svg viewBox="0 0 56 70" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="image-rendering:pixelated">`
+    +`<defs><clipPath id="hc${cid}"><rect x="16" y="0" width="24" height="24" rx="2"/></clipPath></defs>`
+    +`<rect x="14" y="0" width="28" height="28" rx="2" fill="${col}" opacity="0.2"/>`
+    +head
+    +`<rect x="14" y="0" width="28" height="28" rx="2" fill="none" stroke="${col}" stroke-width="2"/>`
+    +`<rect x="24" y="28" width="8" height="4" fill="${col}" opacity="0.6"/>`
+    +`<rect x="14" y="32" width="28" height="20" rx="2" fill="${col}" opacity="0.35"/>`
+    +`<rect x="14" y="32" width="28" height="20" rx="2" fill="none" stroke="${col}" stroke-width="1.5"/>`
+    +`<rect x="2" y="33" width="12" height="6" rx="2" fill="${col}" opacity="0.5"/>`
+    +`<rect x="42" y="33" width="12" height="6" rx="2" fill="${col}" opacity="0.5"/>`
+    +`<rect x="16" y="52" width="10" height="14" rx="2" fill="${col}" opacity="0.5"/>`
+    +`<rect x="30" y="52" width="10" height="14" rx="2" fill="${col}" opacity="0.5"/>`
+    +`<rect x="13" y="62" width="14" height="6" rx="1" fill="${col}" opacity="0.7"/>`
+    +`<rect x="27" y="62" width="14" height="6" rx="1" fill="${col}" opacity="0.7"/>`
+    +`</svg>`;
+}
+
 function renderPodium(){
-  const el=document.getElementById('podium-wrap');
+  const el=document.getElementById("podium-wrap");
   const ranked=allProfiles.map(p=>{
     const {pts,day}=getYesterdayPts(p.id);
     return{...p,dayPts:pts,day};
   }).sort((a,b)=>b.dayPts-a.dayPts).slice(0,3);
-
   if(!ranked.length||ranked[0].dayPts===0){
-    el.innerHTML='<div style="font-family:var(--vt);font-size:20px;color:var(--muted);padding:1rem 0">Nog geen wedstrijden gespeeld.</div>';
+    el.innerHTML='<div style="font-family:var(--vt);font-size:22px;color:var(--muted);padding:1rem 0">Nog geen wedstrijden gespeeld.</div>';
     return;
   }
-
-  const order=[1,0,2]; // silver, gold, bronze visual order
-  const heights=['110px','140px','85px'];
-  const colors=['#ccc','var(--yellow)','#c87941'];
-  const medals=['🥈','🥇','🥉'];
-
+  const order=[1,0,2];
+  const colorHex=["#cccccc","#ffe600","#c87941"];
+  const colorVar=["#ccc","var(--yellow)","#c87941"];
+  const medals=["🥈","🥇","🥉"];
+  const blockClass=["podium-2","podium-1","podium-3"];
   el.innerHTML=`<div class="podium">${order.map((ri,vi)=>{
     const p=ranked[ri];
-    if(!p)return'';
+    if(!p)return"";
     const av=avatarUrl(p);
-    const avHTML=av?`<img src="${av}" style="width:100%;height:100%;object-fit:cover">`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--pixel);font-size:10px;color:${colors[vi]}">${p.username.slice(0,2).toUpperCase()}</div>`;
-    return`<div class="podium-place" onclick="openProfile('${p.id}')">
-      <div class="podium-block" style="height:${heights[vi]};border-color:${colors[vi]}">
-        <div class="podium-avatar" style="border-color:${colors[vi]}">${avHTML}</div>
-        <div class="podium-name" style="color:${colors[vi]}">${p.username.toUpperCase()}</div>
-        <div class="podium-pts" style="color:${colors[vi]}">${p.dayPts} PTS</div>
-        <div class="podium-rank">${medals[vi]}</div>
-      </div>
-    </div>`;
-  }).join('')}</div>`;
+    const si=getStreakInfo(p.current_streak||0);
+    return`<div class="podium-place" onclick="openProfile('${p.id}')">`
+      +`<div class="podium-block ${blockClass[vi]}" style="border-color:${colorVar[vi]}">`
+      +`<div class="podium-figure">${pixelFigure(colorHex[vi],av)}</div>`
+      +`<div class="podium-name" style="color:${colorVar[vi]}">${p.username.toUpperCase()}</div>`
+      +(si?`<div style="font-family:var(--pixel);font-size:9px;color:${colorVar[vi]};margin-top:2px">${si.emoji} ${si.title}</div>`:"")
+      +`<div class="podium-pts" style="color:${colorVar[vi]}">${p.dayPts} PTS</div>`
+      +`<div class="podium-rank">${medals[vi]}</div>`
+      +`</div></div>`;
+  }).join("")}</div>`;
 }
 
-function renderGlobalStats(){
-  const el=document.getElementById('global-stats-wrap');
-  const stats=[];
-
-  // Waaghals van de dag
+// ── STATS HELPERS ───────────────────────────────────────────
+function calcAllStreaks(){
+  return allProfiles.map(p=>({
+    ...p,
+    streakInfo:getStreakInfo(p.current_streak||0),
+    streakEmoji:getStreakEmoji(p.current_streak||0)
+  })).filter(p=>p.current_streak>=1).sort((a,b)=>b.current_streak-a.current_streak);
+}
+function calcWaaghals(){
   const today=new Date().toISOString().slice(0,10);
-  const todayMatches=matches.filter(m=>m.kickoff&&m.kickoff.slice(0,10)===today);
-  if(todayMatches.length){
-    const waaghalzen=allProfiles.map(p=>{
-      let totalRisk=0;
-      todayMatches.forEach(m=>{
-        const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
-        const side=tip?tip.tip:'draw';
-        const o=side==='home'?m.home_odds:side==='draw'?m.draw_odds:m.away_odds;
-        totalRisk+=o;
-      });
-      return{...p,risk:totalRisk};
-    }).sort((a,b)=>a.risk-b.risk);
-    if(waaghalzen[0]){
-      stats.push(`<div class="stat-ticker"><div class="stat-ticker-label">🎲 WAAGHALS VAN VANDAAG</div><div class="stat-ticker-val">${waaghalzen[0].username.toUpperCase()} (gem. ${Math.round(waaghalzen[0].risk/todayMatches.length)}% kans)</div></div>`);
-    }
-  }
-
-  // Streaks
-  const streakers=allProfiles.filter(p=>p.current_streak>=3).sort((a,b)=>b.current_streak-a.current_streak).slice(0,3);
-  if(streakers.length){
-    const s=streakers[0];
-    const si=getStreakInfo(s.current_streak);
-    stats.push(`<div class="stat-ticker"><div class="stat-ticker-label">🔥 HEISSESTE STREAK</div><div class="stat-ticker-val">${s.username.toUpperCase()} — ${s.current_streak} OP RIJ ${si?si.emoji:''} ${si?si.title:''}</div></div>`);
-  }
-
-  // Odds beater
-  const oddsBeaters=allProfiles.map(p=>{
-    let totalGap=0;let count=0;
+  const dayMatches=matches.filter(m=>m.kickoff&&m.result&&m.kickoff.slice(0,10)===today);
+  const src=dayMatches.length?dayMatches:matches.filter(m=>m.result);
+  return allProfiles.map(p=>{
+    let risk=0,cnt=0;
+    src.forEach(m=>{
+      const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
+      const side=tip?tip.tip:"draw";
+      risk+=(side==="home"?m.home_odds:side==="draw"?m.draw_odds:m.away_odds);
+      cnt++;
+    });
+    return{...p,risk:cnt?risk/cnt:50};
+  }).sort((a,b)=>a.risk-b.risk);
+}
+function calcOddsBeaters(){
+  return allProfiles.map(p=>{
+    let totalGap=0,count=0,totalPts=0;
     matches.filter(m=>m.result).forEach(m=>{
       const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
       if(!tip)return;
       const minOdds=Math.min(m.home_odds,m.draw_odds,m.away_odds);
-      const chosenOdds=tip.tip==='home'?m.home_odds:tip.tip==='draw'?m.draw_odds:m.away_odds;
-      if(chosenOdds!==minOdds&&tip.tip===m.result){totalGap+=(minOdds-chosenOdds);count++;}
+      const chosenOdds=tip.tip==="home"?m.home_odds:tip.tip==="draw"?m.draw_odds:m.away_odds;
+      if(chosenOdds!==minOdds&&tip.tip===m.result){totalGap+=(minOdds-chosenOdds);count++;totalPts+=calcPts(chosenOdds);}
     });
-    return{...p,oddsGap:count>0?totalGap/count:0,count};
-  }).filter(p=>p.count>0).sort((a,b)=>b.oddsGap-a.oddsGap);
-  if(oddsBeaters[0]){
-    stats.push(`<div class="stat-ticker"><div class="stat-ticker-label">🎯 ODDS BEATER</div><div class="stat-ticker-val">${oddsBeaters[0].username.toUpperCase()} (gem. ${oddsBeaters[0].oddsGap.toFixed(1)}% onder favoriet)</div></div>`);
+    return{...p,oddsGap:count?totalGap/count:0,oddsCount:count,oddsPts:totalPts};
+  }).filter(p=>p.oddsCount>0).sort((a,b)=>b.oddsGap-a.oddsGap);
+}
+
+function renderGlobalStats(){
+  const el=document.getElementById("global-stats-wrap");
+  const stats=[];
+
+  // Waaghals
+  const waag=calcWaaghals();
+  if(waag.length&&waag[0]){
+    stats.push(`<div class="stat-ticker" onclick="openStatsModal('waaghals')">`
+      +`<div class="stat-ticker-label">🎲 WAAGHALS VAN VANDAAG</div>`
+      +`<div class="stat-ticker-val">${waag[0].username.toUpperCase()} — gem. ${Math.round(waag[0].risk)}% kans</div>`
+      +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
+      +`</div>`);
   }
 
-  el.innerHTML=stats.length?stats.join(''):'<div style="font-family:var(--vt);font-size:20px;color:var(--muted)">Stats beschikbaar na de eerste speeldag.</div>';
+  // Streaks
+  const streakers=calcAllStreaks();
+  if(streakers.length){
+    const s=streakers[0];
+    const si=getStreakInfo(s.current_streak);
+    stats.push(`<div class="stat-ticker" onclick="openStatsModal('streaks')">`
+      +`<div class="stat-ticker-label">🔥 HEISSESTE STREAK</div>`
+      +`<div class="stat-ticker-val">${s.username.toUpperCase()} aka ${si?si.title:"—"} — ${s.current_streak} op rij</div>`
+      +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
+      +`</div>`);
+  }
+
+  // Odds beater
+  const beaters=calcOddsBeaters();
+  if(beaters.length){
+    stats.push(`<div class="stat-ticker" onclick="openStatsModal('oddsbeater')">`
+      +`<div class="stat-ticker-label">🎯 ODDS BEATER</div>`
+      +`<div class="stat-ticker-val">${beaters[0].username.toUpperCase()} — ${beaters[0].oddsGap.toFixed(1)}% gem. onder favoriet</div>`
+      +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
+      +`</div>`);
+  }
+
+  el.innerHTML=stats.length?stats.join(""):`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">Stats beschikbaar na de eerste speeldag.</div>`;
 }
+
+function openStatsModal(type){
+  const el=document.getElementById("stats-modal-content");
+  let html="";
+  if(type==="waaghals"){
+    const data=calcWaaghals();
+    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🎲 WAAGHALS RANKING</div>`
+      +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">Lagere gem. kans = meer risico genomen</div>`
+      +data.map((p,i)=>`<div class="stats-row-item">`
+        +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${i+1}. ${p.username.toUpperCase()}</span></div>`
+        +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">gem. ${Math.round(p.risk)}%</div>`
+        +`</div>`).join("");
+  } else if(type==="streaks"){
+    const data=calcAllStreaks();
+    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🔥 STREAK OVERZICHT</div>`
+      +data.map((p,i)=>{
+        const si=getStreakInfo(p.current_streak);
+        return `<div class="stats-row-item">`
+          +`<div>`
+          +`<div style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${p.username.toUpperCase()} aka ${si?si.title:"—"}</div>`
+          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${si?si.emoji:""} ${p.current_streak} op rij · langste: ${p.longest_streak}</div>`
+          +`</div>`
+          +`<div style="font-family:var(--pixel);font-size:14px;color:var(--yellow)">${getStreakEmoji(p.current_streak)}</div>`
+          +`</div>`;
+      }).join("");
+  } else if(type==="oddsbeater"){
+    const data=calcOddsBeaters();
+    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🎯 ODDS BEATER RANKING</div>`
+      +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">Wint terwijl ze niet op de favoriet gokken</div>`
+      +data.map((p,i)=>`<div class="stats-row-item">`
+        +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${i+1}. ${p.username.toUpperCase()}</span>`
+        +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${p.oddsCount}× raak · ${p.oddsPts} pts</div></div>`
+        +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.oddsGap.toFixed(1)}%</div>`
+        +`</div>`).join("");
+  }
+  el.innerHTML=html||`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">Geen data.</div>`;
+  document.getElementById("stats-modal").classList.add("open");
+}
+function closeStatsModal(){document.getElementById("stats-modal").classList.remove("open");}
 
 function renderComplotHome(){
   const el=document.getElementById('complot-home-wrap');
@@ -973,16 +1111,18 @@ function renderScoreboard(){
   document.getElementById('sb-body').innerHTML=ranked.map((p,i)=>{
     const streakInfo=getStreakInfo(p.current_streak||0);
     const streakEmoji=getStreakEmoji(p.current_streak||0);
-    const tips=matches.filter(m=>m.result).slice(0,8).map(m=>{
+    const last10=matches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff)).slice(0,10);
+    const tips=last10.map(m=>{
       const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
       const side=tip?tip.tip:'draw';
       const teamName=side==='home'?m.home_team:side==='away'?m.away_team:null;
-      const lbl=teamName?flag(teamName)+' '+teamName.slice(0,3).toUpperCase():'= GLK';
+      const f=teamName?flag(teamName):'=';
+      const lbl=teamName?teamName.slice(0,3).toUpperCase():'GLK';
       const ok=side===m.result;
       const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
       const pts=ok?calcPts(o):0;
-      return`<span class="${ok?'tip-ok':'tip-fail'}" title="${m.home_team} vs ${m.away_team}">${lbl}${ok?'<sup style=\'font-size:10px\'>+'+pts+'</sup>':''}</span>`;
-    }).join('<span style="color:var(--border)"> · </span>');
+      return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-block;width:54px;text-align:left" title="${m.home_team} vs ${m.away_team}"><span style="font-size:15px">${f}</span><span style="font-family:var(--pixel);font-size:7px"> ${lbl}</span>${ok?`<sup style="font-family:var(--pixel);font-size:6px;color:var(--green)">+${pts}</sup>`:''}</span>`;
+    }).join('');
     return`<tr>
       <td class="rank-cell ${rc(i)}">${medals[i]||i+1}</td>
       <td>${avatarHTML(p,32,`onclick="openProfile('${p.id}')"`)} </td>
@@ -1098,94 +1238,81 @@ function renderTournament(){
 
 // ── AUTO BRACKET ─────────────────────────────────────────────
 async function updateBracket(){
-  // Stap 1: Vul nummers 1 en 2 per groep in R32
+  // Stap 1: Groepswinnaars en nummers 2 invullen in R32
   const groupNames=[...new Set(matches.filter(m=>m.phase==='group'&&m.group_name).map(m=>m.group_name))].sort();
   const groupResults={};
   for(const g of groupNames){
-    const standings=calcGroupStandings(g);
-    // Only fill if all 3 group rounds are played (6 matches with result)
     const played=matches.filter(m=>m.phase==='group'&&m.group_name===g&&m.result).length;
-    if(played>=6){
-      groupResults[g]={first:standings[0]?.name,second:standings[1]?.name};
-    } else if(played>0){
+    if(played>0){
+      const standings=calcGroupStandings(g);
       groupResults[g]={first:standings[0]?.name,second:standings[1]?.name};
     }
   }
-
-  // Update R32 matches where home_team or away_team contains "1st Group X" or "2nd Group X"
   for(const m of matches.filter(m=>m.phase==='r32')){
-    let newHome=m.home_team, newAway=m.away_team;
+    let nh=m.home_team,na=m.away_team;
     for(const g of groupNames){
       if(!groupResults[g])continue;
-      if(m.home_team===`1st Group ${g}`)newHome=groupResults[g].first||m.home_team;
-      if(m.home_team===`2nd Group ${g}`)newHome=groupResults[g].second||m.home_team;
-      if(m.away_team===`1st Group ${g}`)newAway=groupResults[g].first||m.away_team;
-      if(m.away_team===`2nd Group ${g}`)newAway=groupResults[g].second||m.away_team;
+      if(m.home_team===`1st Group ${g}`)nh=groupResults[g].first||nh;
+      if(m.home_team===`2nd Group ${g}`)nh=groupResults[g].second||nh;
+      if(m.away_team===`1st Group ${g}`)na=groupResults[g].first||na;
+      if(m.away_team===`2nd Group ${g}`)na=groupResults[g].second||na;
     }
-    if(newHome!==m.home_team||newAway!==m.away_team){
-      await sb.from('matches').update({home_team:newHome,away_team:newAway}).eq('id',m.id);
-    }
+    if(nh!==m.home_team||na!==m.away_team)
+      await sb.from('matches').update({home_team:nh,away_team:na}).eq('id',m.id);
   }
 
-  // Stap 2: Vul winnaars door in volgende ronde
-  const phaseOrder=['r32','r16','qf','sf'];
-  const nextPhase={r32:'r16',r16:'qf',qf:'sf',sf:'final'};
-  const loserPhase={sf:'third'};
+  // Stap 2: Knockout winnaars/verliezers doorschuiven via match_number
+  const winMap={},losMap={};
+  for(const m of matches.filter(m=>m.result&&['r32','r16','qf','sf'].includes(m.phase))){
+    winMap[m.match_number]=m.result==='home'?m.home_team:m.away_team;
+    losMap[m.match_number]=m.result==='home'?m.away_team:m.home_team;
+  }
 
-  for(const phase of phaseOrder){
-    const phaseMatches=matches.filter(m=>m.phase===phase&&m.result);
-    for(const m of phaseMatches){
-      const winner=m.result==='home'?m.home_team:m.away_team;
-      const loser=m.result==='home'?m.away_team:m.home_team;
-      const winLabel=`Winner M${m.match_number}`;
-      const ruLabel=`Loser M${m.match_number}`;
+  const needUpdate=matches.filter(m=>['r16','qf','sf','third','final'].includes(m.phase)&&!m.result);
+  for(const m of needUpdate){
+    let nh=m.home_team,na=m.away_team;
 
-      // Find next matches that reference this match
-      const nextMatches=matches.filter(nm=>nm.home_team===winLabel||nm.away_team===winLabel);
-      for(const nm of nextMatches){
-        const update={};
-        if(nm.home_team===winLabel)update.home_team=winner;
-        if(nm.away_team===winLabel)update.away_team=winner;
-        if(Object.keys(update).length)await sb.from('matches').update(update).eq('id',nm.id);
-      }
+    // Pattern: "Winner M73"
+    const hWM=m.home_team.match(/^Winner M(\d+)$/);
+    const aWM=m.away_team.match(/^Winner M(\d+)$/);
+    if(hWM&&winMap[+hWM[1]])nh=winMap[+hWM[1]];
+    if(aWM&&winMap[+aWM[1]])na=winMap[+aWM[1]];
 
-      // Fill third place match with losers
-      const ruMatches=matches.filter(nm=>nm.home_team===ruLabel||nm.away_team===ruLabel);
-      for(const nm of ruMatches){
-        const update={};
-        if(nm.home_team===ruLabel)update.home_team=loser;
-        if(nm.away_team===ruLabel)update.away_team=loser;
-        if(Object.keys(update).length)await sb.from('matches').update(update).eq('id',nm.id);
-      }
+    // Pattern: "Loser M73" or "Loser SF-1"
+    const hLM=m.home_team.match(/^Loser M(\d+)$/);
+    const aLM=m.away_team.match(/^Loser M(\d+)$/);
+    if(hLM&&losMap[+hLM[1]])nh=losMap[+hLM[1]];
+    if(aLM&&losMap[+aLM[1]])na=losMap[+aLM[1]];
 
-      // Also handle Winner R32-X / Winner R16-X labels
-      const slotLabels=[
-        `Winner R32-${m.bracket_pos}`,`Winner R16-${m.bracket_pos}`,
-        `Winner QF-${m.bracket_pos}`,`Winner SF-${m.bracket_pos}`,
-      ];
-      for(const lbl of slotLabels){
-        const slotMatches=matches.filter(nm=>nm.home_team===lbl||nm.away_team===lbl);
-        for(const nm of slotMatches){
-          const update={};
-          if(nm.home_team===lbl)update.home_team=winner;
-          if(nm.away_team===lbl)update.away_team=winner;
-          if(Object.keys(update).length)await sb.from('matches').update(update).eq('id',nm.id);
-        }
-      }
-      const loserSlotLabels=[`Loser SF-${m.bracket_pos}`];
-      for(const lbl of loserSlotLabels){
-        const slotMatches=matches.filter(nm=>nm.home_team===lbl||nm.away_team===lbl);
-        for(const nm of slotMatches){
-          const update={};
-          if(nm.home_team===lbl)update.home_team=loser;
-          if(nm.away_team===lbl)update.away_team=loser;
-          if(Object.keys(update).length)await sb.from('matches').update(update).eq('id',nm.id);
-        }
-      }
+    // Pattern: "Winner R32-1", "Winner R16-1", "Winner QF-1", "Winner SF-1"
+    const phMap={'R32':'r32','R16':'r16','QF':'qf','SF':'sf'};
+    const hRP=m.home_team.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i);
+    const aRP=m.away_team.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i);
+    if(hRP){
+      const src=matches.find(x=>x.phase===phMap[hRP[1].toUpperCase()]&&x.bracket_pos===+hRP[2]&&x.result);
+      if(src)nh=src.result==='home'?src.home_team:src.away_team;
     }
+    if(aRP){
+      const src=matches.find(x=>x.phase===phMap[aRP[1].toUpperCase()]&&x.bracket_pos===+aRP[2]&&x.result);
+      if(src)na=src.result==='home'?src.home_team:src.away_team;
+    }
+
+    // Pattern: "Loser SF-1"
+    const hLS=m.home_team.match(/^Loser SF-(\d+)$/i);
+    const aLS=m.away_team.match(/^Loser SF-(\d+)$/i);
+    if(hLS){
+      const src=matches.find(x=>x.phase==='sf'&&x.bracket_pos===+hLS[1]&&x.result);
+      if(src)nh=src.result==='home'?src.away_team:src.home_team;
+    }
+    if(aLS){
+      const src=matches.find(x=>x.phase==='sf'&&x.bracket_pos===+aLS[1]&&x.result);
+      if(src)na=src.result==='home'?src.away_team:src.home_team;
+    }
+
+    if(nh!==m.home_team||na!==m.away_team)
+      await sb.from('matches').update({home_team:nh,away_team:na}).eq('id',m.id);
   }
 }
-
 // ── ADMIN ────────────────────────────────────────────────────
 async function adminAddMatch(){
   const home=document.getElementById('a-home').value.trim();
