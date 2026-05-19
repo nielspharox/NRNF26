@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NO RISK NO FUN — Complotgroepje uitnodiging</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #1a0033; --bg2: #2a0050; --bg3: #0f001f;
+  --purple: #7b00ff; --green: #00ff66; --green-dark: #00cc44;
+  --yellow: #ffe600; --red: #ff2244; --white: #f0e6ff; --muted: #9966cc;
+  --border: #5500aa; --pixel: 'Press Start 2P', monospace; --vt: 'VT323', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--white); font-family: var(--vt);
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 1px, transparent 1px, transparent 3px);
+  pointer-events: none; z-index: 9999;
+}
+.wrap { width: 100%; max-width: 440px; padding: 1.5rem; }
+.card {
+  background: var(--bg2); border: 4px solid var(--green);
+  box-shadow: 8px 8px 0 #000; padding: 2rem; text-align: center;
+}
+.logo { font-family: var(--pixel); font-size: 11px; color: var(--green); text-shadow: 3px 3px 0 #004422; line-height: 1.5; margin-bottom: 4px; }
+.sub { font-family: var(--vt); font-size: 22px; color: var(--yellow); margin-bottom: 1.5rem; }
+.invite-label { font-family: var(--pixel); font-size: 8px; color: var(--muted); margin-bottom: 8px; }
+.group-name { font-family: var(--pixel); font-size: 14px; color: var(--green); text-shadow: 2px 2px 0 #004422; margin-bottom: 6px; min-height: 24px; }
+.group-meta { font-family: var(--vt); font-size: 18px; color: var(--muted); margin-bottom: 1.5rem; min-height: 28px; }
+.divider { border: none; border-top: 2px solid var(--border); margin: 1.5rem 0; }
+.form-row { margin-bottom: 12px; text-align: left; }
+.form-row label { font-family: var(--pixel); font-size: 7px; color: var(--muted); display: block; margin-bottom: 4px; }
+input[type=text], input[type=email], input[type=password] {
+  background: var(--bg3); border: 2px solid var(--border); color: var(--green);
+  font-family: var(--vt); font-size: 20px; padding: 8px 12px; width: 100%; outline: none;
+}
+input:focus { border-color: var(--green); }
+.btn {
+  font-family: var(--pixel); font-size: 9px; padding: 10px 16px; border: 3px solid;
+  cursor: pointer; box-shadow: 4px 4px 0 #000; display: inline-block; width: 100%;
+  transition: transform 0.05s;
+}
+.btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 #000; }
+.btn-green { background: var(--green); color: #000; border-color: var(--green-dark); }
+.btn-green:hover { background: #44ffaa; }
+.btn-ghost { background: transparent; color: var(--muted); border-color: var(--border); margin-top: 8px; }
+.btn-ghost:hover { color: var(--white); border-color: var(--white); }
+.err { font-family: var(--vt); font-size: 18px; color: var(--red); margin-top: 8px; min-height: 24px; }
+.success { font-family: var(--vt); font-size: 20px; color: var(--green); margin-top: 8px; }
+.toggle { font-family: var(--vt); font-size: 18px; color: var(--muted); margin-top: 12px; }
+.toggle span { color: var(--green); text-decoration: underline; cursor: pointer; }
+.loading { font-family: var(--vt); font-size: 20px; color: var(--muted); padding: 1rem 0; }
+.members { font-family: var(--vt); font-size: 16px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="logo">NO RISK NO FUN</div>
+    <div class="sub">⚽ WK POOL 2026 ⚽</div>
+
+    <div id="loading-group" class="loading">Complot laden...</div>
+
+    <div id="group-info" style="display:none">
+      <div class="invite-label">JE BENT UITGENODIGD VOOR</div>
+      <div class="group-name" id="group-name-display">—</div>
+      <div class="group-meta" id="group-meta-display">—</div>
+    </div>
+
+    <div id="err-group" class="err" style="display:none">Ongeldige uitnodigingslink.</div>
+
+    <hr class="divider">
+
+    <!-- Al ingelogd: toon join knop -->
+    <div id="block-join" style="display:none">
+      <div style="font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:12px">
+        Ingelogd als <span id="logged-username" style="color:var(--green)">—</span>
+      </div>
+      <button class="btn btn-green" onclick="joinGroup()">🐑 LID WORDEN ▶</button>
+      <div class="err" id="join-err"></div>
+      <div class="success" id="join-success"></div>
+      <button class="btn btn-ghost" onclick="window.location.href='index.html'">TERUG NAAR DE POOL</button>
+    </div>
+
+    <!-- Niet ingelogd: login of registreer -->
+    <div id="block-auth" style="display:none">
+      <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:12px">
+        LOG IN OF REGISTREER OM LID TE WORDEN
+      </div>
+
+      <div id="auth-login-block">
+        <form onsubmit="doLogin();return false;">
+          <div class="form-row"><label>E-MAILADRES</label><input type="email" id="inv-email" placeholder="jouw@email.nl"></div>
+          <div class="form-row"><label>WACHTWOORD</label><input type="password" id="inv-pass" placeholder="••••••••"></div>
+          <button type="submit" class="btn btn-green">INLOGGEN & LID WORDEN ▶</button>
+        </form>
+        <div class="err" id="login-err"></div>
+        <div class="toggle">Geen account? <span onclick="toggleAuth(true)">Registreren</span></div>
+      </div>
+
+      <div id="auth-reg-block" style="display:none">
+        <form onsubmit="doRegister();return false;">
+          <div class="form-row"><label>GEBRUIKERSNAAM</label><input type="text" id="inv-username" placeholder="jouw naam"></div>
+          <div class="form-row"><label>E-MAILADRES</label><input type="email" id="inv-reg-email" placeholder="jouw@email.nl"></div>
+          <div class="form-row"><label>WACHTWOORD</label><input type="password" id="inv-reg-pass" placeholder="min. 6 tekens"></div>
+          <button type="submit" class="btn btn-green">REGISTREREN & LID WORDEN ▶</button>
+        </form>
+        <div class="err" id="reg-err"></div>
+        <div class="toggle">Al een account? <span onclick="toggleAuth(false)">Inloggen</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://soonpwnwrvxmariaqdfb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let inviteCode = null;
+let groupData = null;
+let currentUser = null;
+let currentProfile = null;
+
+// Get invite code from URL
+function getInviteCode() {
+  const path = window.location.pathname;
+  const parts = path.split('/');
+  const idx = parts.indexOf('invite');
+  if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+  // Also check ?code= param
+  const params = new URLSearchParams(window.location.search);
+  return params.get('code');
+}
+
+async function init() {
+  inviteCode = getInviteCode();
+  if (!inviteCode) {
+    document.getElementById('loading-group').style.display = 'none';
+    document.getElementById('err-group').style.display = 'block';
+    return;
+  }
+
+  // Load group info
+  const { data: group, error } = await sb.from('complot_groups')
+    .select('*, complot_members(count)')
+    .eq('invite_code', inviteCode)
+    .single();
+
+  document.getElementById('loading-group').style.display = 'none';
+
+  if (error || !group) {
+    document.getElementById('err-group').style.display = 'block';
+    return;
+  }
+
+  groupData = group;
+  document.getElementById('group-info').style.display = 'block';
+  document.getElementById('group-name-display').textContent = group.name.toUpperCase();
+
+  // Get member count
+  const { count } = await sb.from('complot_members').select('*', { count: 'exact', head: true }).eq('group_id', group.id);
+  document.getElementById('group-meta-display').textContent = `${count || 0} lid${count === 1 ? '' : 'en'}`;
+
+  // Check auth
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (profile) {
+      currentProfile = profile;
+      document.getElementById('logged-username').textContent = profile.username;
+      document.getElementById('block-join').style.display = 'block';
+
+      // Check already member
+      const { data: existing } = await sb.from('complot_members')
+        .select('id').eq('group_id', group.id).eq('user_id', currentUser.id).single();
+      if (existing) {
+        document.getElementById('join-success').textContent = 'Je zit al in dit complot!';
+        document.querySelector('#block-join .btn-green').disabled = true;
+      }
+    }
+  } else {
+    document.getElementById('block-auth').style.display = 'block';
+  }
+}
+
+function toggleAuth(showReg) {
+  document.getElementById('auth-login-block').style.display = showReg ? 'none' : 'block';
+  document.getElementById('auth-reg-block').style.display = showReg ? 'block' : 'none';
+}
+
+async function joinGroup() {
+  if (!groupData || !currentUser) return;
+  const errEl = document.getElementById('join-err');
+  const sucEl = document.getElementById('join-success');
+  errEl.textContent = '';
+
+  const { error } = await sb.from('complot_members').insert({
+    group_id: groupData.id, user_id: currentUser.id, is_haantje: false
+  });
+
+  if (error) {
+    if (error.code === '23505') { sucEl.textContent = 'Je zit al in dit complot!'; return; }
+    errEl.textContent = '✗ ' + error.message; return;
+  }
+  sucEl.textContent = '✔ Je bent lid van ' + groupData.name + '!';
+  setTimeout(() => window.location.href = 'index.html', 1500);
+}
+
+async function doLogin() {
+  const email = document.getElementById('inv-email').value.trim();
+  const pass = document.getElementById('inv-pass').value;
+  const errEl = document.getElementById('login-err');
+  errEl.textContent = '';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { errEl.textContent = '✗ Verkeerd e-mail of wachtwoord.'; return; }
+  currentUser = data.user;
+  const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  if (!profile) { errEl.textContent = '✗ Profiel niet gevonden.'; return; }
+  currentProfile = profile;
+  await joinGroup();
+}
+
+async function doRegister() {
+  const username = document.getElementById('inv-username').value.trim().toLowerCase();
+  const email = document.getElementById('inv-reg-email').value.trim();
+  const pass = document.getElementById('inv-reg-pass').value;
+  const errEl = document.getElementById('reg-err');
+  errEl.textContent = '';
+  if (username.length < 2) { errEl.textContent = '✗ Gebruikersnaam te kort.'; return; }
+  if (pass.length < 6) { errEl.textContent = '✗ Wachtwoord min. 6 tekens.'; return; }
+
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  if (error) { errEl.textContent = '✗ ' + error.message; return; }
+
+  const { error: pe } = await sb.from('profiles').insert({ id: data.user.id, username });
+  if (pe) { errEl.textContent = '✗ Gebruikersnaam al in gebruik.'; return; }
+
+  currentUser = data.user;
+  currentProfile = { id: data.user.id, username };
+  await joinGroup();
+}
+
+init();
+</script>
+</body>
+</html>
