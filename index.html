@@ -123,6 +123,10 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 /* TIP COUNTS */
 .tip-counts{display:flex;gap:6px;margin-top:10px;font-family:var(--pixel);font-size:9px}
 .tc-home{color:var(--green)}.tc-draw{color:var(--yellow)}.tc-away{color:var(--red)}.tc-sep{color:var(--border)}
+.tc-home,.tc-draw,.tc-away{cursor:pointer;user-select:none}
+#tip-tooltip{display:none;position:fixed;z-index:9999;background:#120026;border:2px solid var(--purple);padding:8px 12px;pointer-events:none;box-shadow:3px 3px 0 rgba(123,0,255,.5)}
+#tip-tooltip .tt-lbl{font-family:var(--pixel);font-size:7px;letter-spacing:1px;margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid rgba(123,0,255,.4)}
+#tip-tooltip .tt-usr{font-family:var(--vt);font-size:16px;color:var(--muted);line-height:1.3}
 
 /* SCOREBOARD */
 .sb-table{width:100%;border-collapse:collapse}
@@ -211,12 +215,12 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 #profile-modal.open{display:flex}
 #stats-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;padding:1rem}
 #stats-modal.open{display:flex}
-.stats-modal-box{background:var(--bg2);border:4px solid var(--purple);box-shadow:8px 8px 0 #000;padding:1.5rem;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;position:relative}
+.stats-modal-box{background:var(--bg2);border:4px solid var(--purple);box-shadow:8px 8px 0 #000;padding:1.5rem;width:95vw;max-width:640px;max-height:85vh;overflow-y:auto;position:relative}
 .stats-modal-close{position:absolute;top:12px;right:12px;font-family:var(--pixel);font-size:8px;background:transparent;border:2px solid var(--border);color:var(--muted);padding:4px 8px;cursor:pointer}
 .stats-modal-close:hover{border-color:var(--red);color:var(--red)}
 .stats-row-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(85,0,170,0.3)}
 .stats-row-item:last-child{border-bottom:none}
-.profile-box{background:var(--bg2);border:4px solid var(--purple);box-shadow:8px 8px 0 #000;padding:1.5rem;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;position:relative}
+.profile-box{background:var(--bg2);border:4px solid var(--purple);box-shadow:8px 8px 0 #000;padding:1.5rem;width:95vw;max-width:560px;max-height:90vh;overflow-y:auto;position:relative}
 .profile-close{position:absolute;top:12px;right:12px;font-family:var(--pixel);font-size:8px;background:transparent;border:2px solid var(--border);color:var(--muted);padding:4px 8px;cursor:pointer}
 .profile-close:hover{border-color:var(--red);color:var(--red)}
 .profile-avatar-wrap{width:80px;height:80px;border:3px solid var(--green);overflow:hidden;background:var(--bg3);margin:0 auto 1rem;cursor:pointer;position:relative}
@@ -232,6 +236,30 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .err{font-family:var(--vt);font-size:20px;color:var(--red);padding:8px 0}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;font-family:var(--pixel);font-size:9px;padding:10px 20px;border:3px solid var(--green-dark);box-shadow:4px 4px 0 #000;z-index:9998;opacity:0;transition:opacity 0.3s;white-space:nowrap}
 @media(max-width:600px){main{padding:0.75rem}.form-grid{grid-template-columns:1fr}.logo-title{font-size:9px}}
+
+/* COMPLOT TOOLTIPS */
+.tt-wrap{position:relative;display:inline-block}
+.tt-text{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg3);border:2px solid var(--purple);color:var(--white);font-family:var(--vt);font-size:18px;white-space:nowrap;padding:4px 12px;z-index:200;pointer-events:none;box-shadow:3px 3px 0 #000}
+.tt-wrap:hover .tt-text{display:block}
+
+/* COMPLOT MODALS */
+#invite-modal,#complot-modal{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:700;display:none;align-items:center;justify-content:center;padding:1rem}
+#invite-modal.open,#complot-modal.open{display:flex}
+.invite-box{background:var(--bg2);border:4px solid var(--purple);box-shadow:8px 8px 0 #000;padding:1.5rem;width:95vw;max-width:480px}
+.complot-badges-placeholder{min-height:0}
+
+/* H2H MODAL */
+#h2h-modal{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:600;display:none;align-items:center;justify-content:center;padding:1rem}
+#h2h-modal.open{display:flex}
+.h2h-box{background:var(--bg2);border:4px solid var(--purple);box-shadow:8px 8px 0 #000;padding:1.5rem;width:95vw;max-width:780px;max-height:90vh;overflow-y:auto;position:relative}
+.h2h-close{position:absolute;top:12px;right:12px;font-family:var(--pixel);font-size:8px;background:transparent;border:2px solid var(--border);color:var(--muted);padding:4px 8px;cursor:pointer}
+.h2h-close:hover{border-color:var(--red);color:var(--red)}
+.h2h-tabs{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 6px}
+.h2h-tab{font-family:var(--pixel);font-size:7px;padding:4px 7px;border:2px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
+.h2h-tab.active,.h2h-tab:hover{border-color:var(--purple);color:var(--white);background:rgba(123,0,255,.2)}
+.h2h-match-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(85,0,170,.3)}
+.h2h-match-row:last-child{border-bottom:none}
+.h2h-match-info{text-align:center}
 </style>
 </head>
 <body>
@@ -399,16 +427,16 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   </div>
 
   <div class="box" style="margin-bottom:16px">
-    <div style="font-family:var(--pixel);font-size:10px;color:var(--yellow);margin-bottom:12px">🔥 KILLSTREAKS</div>
-    <div style="font-family:var(--vt);font-size:18px;color:var(--muted);margin-bottom:10px">Voorspel wedstrijden op rij goed en verdien een titel. Één foute tip en je streak reset naar nul.</div>
-    <table style="width:100%;border-collapse:collapse;font-family:var(--vt);font-size:18px">
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--yellow)">3 op rij</td><td style="padding:5px">🐙 PAUL</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--yellow)">6 op rij</td><td style="padding:5px">🌵🤠 EL JEFE</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--yellow)">9 op rij</td><td style="padding:5px">⚡ THE CHOSEN ONE</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--yellow)">12 op rij</td><td style="padding:5px">🦬 SITTING BULL</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--yellow)">15 op rij</td><td style="padding:5px">🕵️ THE DEEP STATE</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--yellow)">18 op rij</td><td style="padding:5px">🔮 THE ORACLE</td></tr>
-      <tr><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--yellow)">21 op rij</td><td style="padding:5px">🐙💀 PAUL WAS AN AMATEUR</td></tr>
+    <div style="font-family:var(--pixel);font-size:10px;color:var(--yellow);margin-bottom:12px">🔥 STREAKS</div>
+    <div style="font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:10px">Voorspel wedstrijden op rij goed en verdien een titel.<br>Eén foute tip en je gaat terug naar start.</div>
+    <table style="width:100%;border-collapse:collapse;font-family:var(--vt);font-size:20px">
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">2 op rij</td><td style="padding:6px">🐙 PAUL</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">4 op rij</td><td style="padding:6px">🌵🤠 EL JEFE</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">6 op rij</td><td style="padding:6px">⚡ THE CHOSEN ONE</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">8 op rij</td><td style="padding:6px">🦬 SITTING BULL</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">10 op rij</td><td style="padding:6px">🕵️ THE DEEP STATE</td></tr>
+      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">12 op rij</td><td style="padding:6px">🔮 THE ORACLE</td></tr>
+      <tr><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">14 op rij</td><td style="padding:6px">🐙💀 PAUL WAS AN AMATEUR</td></tr>
     </table>
   </div>
 
@@ -434,13 +462,20 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 
   <div class="box" style="margin-bottom:16px">
     <div style="font-family:var(--pixel);font-size:10px;color:var(--purple-light);margin-bottom:12px">🐓 COMPLOTGROEPJES</div>
-    <div style="font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.7">
-      Maak je eigen besloten poule aan. De maker is het <span style="color:var(--yellow)">Haantje</span>.<br><br>
-      <span style="color:var(--yellow)">🐑 Schaap uitnodigen</span> — voeg iemand toe via gebruikersnaam of invite link.<br>
-      <span style="color:var(--yellow)">😴 Laten slapen</span> — verwijder een lid uit je groepje.<br>
-      <span style="color:var(--yellow)">🐓👑 Haantje maken</span> — geef iemand ook Haantje-rechten.<br><br>
-      Een Haantje kan pas vertrekken als er een ander Haantje in het groepje zit.<br>
-      Tips zijn altijd globaal — je kunt niet per complot anders tippen.
+    <div style="font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.8;margin-bottom:16px">
+      Bouw je eigen waarheid. Ontsnap aan de matrix.<br>
+      Start je eigen complotgroepje en bepaal zelf wie de rode pil krijgt.<br>
+      De oprichter is het <span style="color:var(--green)">Haantje</span> — de enige die weet wat er écht speelt.
+    </div>
+    <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:10px">HAANTJE POWERS</div>
+    <div style="font-family:var(--vt);font-size:20px;color:var(--white);line-height:2;margin-bottom:16px">
+      <span style="font-size:22px">🐑</span> <span style="color:var(--green)">Slaper wakker maken</span> — Geef iemand de rode pil. Hij weet nog van niets.<br>
+      <span style="font-size:22px">😴</span> <span style="color:var(--green)">Laten slapen</span> — Stuur een lid terug de matrix in. Ze herinneren zich niets.<br>
+      <span style="font-size:22px">🐓👑</span> <span style="color:var(--green)">Kronen</span> — Geef iemand de macht over de waarheid.
+    </div>
+    <div style="font-family:var(--vt);font-size:20px;color:var(--muted);line-height:1.8">
+      Een Haantje kan het complot pas verlaten als er een ander Haantje de fakkel overneemt. De waarheid moet voortbestaan.<br>
+      Binnen het complot zie je wie dezelfde waarheid deelt — en wie nog slaapt.
     </div>
   </div>
 
@@ -568,6 +603,34 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   </div>
 </div>
 
+<div id="h2h-modal">
+  <div class="h2h-box">
+    <button class="h2h-close" onclick="closeH2H()">✕ SLUITEN</button>
+    <div style="font-family:var(--pixel);font-size:10px;color:var(--yellow);margin-bottom:1rem">⚔️ HEAD-TO-HEAD</div>
+    <div id="h2h-content"></div>
+  </div>
+</div>
+
+<div id="invite-modal">
+  <div class="invite-box">
+    <div style="font-family:var(--pixel);font-size:9px;color:var(--green);margin-bottom:1rem">MAAK EEN SLAPER WAKKER 🐑</div>
+    <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">Gebruikersnaam van de slaapkop:</div>
+    <input id="invite-username-input" type="text" placeholder="gebruikersnaam..." style="width:100%;box-sizing:border-box;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:8px 10px;margin-bottom:8px" onkeypress="if(event.key==='Enter')confirmInvite()">
+    <div id="invite-error" style="font-family:var(--vt);font-size:20px;color:var(--red);margin-bottom:8px;display:none"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-purple" style="padding:8px 14px" onclick="confirmInvite()">💊 RODE PIL GEVEN ▶</button>
+      <button class="btn btn-ghost" style="padding:8px 14px" onclick="closeInviteModal()">✕ ANNULEER</button>
+    </div>
+  </div>
+</div>
+
+<div id="complot-modal">
+  <div class="h2h-box" style="max-width:600px;width:95vw">
+    <button class="h2h-close" onclick="closeComplotModal()">✕ SLUITEN</button>
+    <div id="complot-modal-content"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -600,13 +663,13 @@ const FLAGS = {
 function flag(team){return FLAGS[team]||'🏳️';}
 
 const STREAKS = [
-  {n:3,title:'PAUL',emoji:'🐙'},
-  {n:6,title:'EL JEFE',emoji:'🌵🤠'},
-  {n:9,title:'THE CHOSEN ONE',emoji:'⚡'},
-  {n:12,title:'SITTING BULL',emoji:'🦬'},
-  {n:15,title:'THE DEEP STATE',emoji:'🕵️'},
-  {n:18,title:'THE ORACLE',emoji:'🔮'},
-  {n:21,title:'PAUL WAS AN AMATEUR',emoji:'🐙💀'},
+  {n:2,title:'PAUL',emoji:'🐙'},
+  {n:4,title:'EL JEFE',emoji:'🌵🤠'},
+  {n:6,title:'THE CHOSEN ONE',emoji:'⚡'},
+  {n:8,title:'SITTING BULL',emoji:'🦬'},
+  {n:10,title:'THE DEEP STATE',emoji:'🕵️'},
+  {n:12,title:'THE ORACLE',emoji:'🔮'},
+  {n:14,title:'PAUL WAS AN AMATEUR',emoji:'🐙💀'},
 ];
 const RISK_PROFILES = [
   {min:55,max:100,title:'De Bureaucraat',emoji:'📁',sub:'Speelt alleen op papieren zekerheden. Favoriet wint? Aangevinkt.'},
@@ -637,13 +700,14 @@ function getStreakInfo(n){
   return info;
 }
 function getStreakEmoji(n){
-  if(n>=21)return '🔥🔥🔥🔥🔥🔥🔥';
-  if(n>=18)return '🔥🔥🔥🔥🔥🔥';
-  if(n>=15)return '🔥🔥🔥🔥🔥';
-  if(n>=12)return '🔥🔥🔥🔥';
-  if(n>=9)return '🔥🔥🔥';
-  if(n>=6)return '🔥🔥';
-  if(n>=3)return '🔥';
+  const b='<img src="banana.gif" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:middle">';
+  if(n>=14)return b.repeat(7);
+  if(n>=12)return b.repeat(6);
+  if(n>=10)return b.repeat(5);
+  if(n>=8)return b.repeat(4);
+  if(n>=6)return b.repeat(3);
+  if(n>=4)return b.repeat(2);
+  if(n>=2)return b;
   return '';
 }
 function getRiskProfile(avgOdds){
@@ -935,7 +999,7 @@ function renderGlobalStats(){
     const waagSi=getStreakInfo(waag[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('waaghals')">`
       +`<div class="stat-ticker-label">🎲 WAAGHALS VAN VANDAAG</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${waag[0].username.toUpperCase()}</span>${waagSi?`<span class="streak-badge">${waagSi.emoji} ${waagSi.title}</span>`:''}<span>— gem. ${Math.round(waag[0].risk)}% kans</span></div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${waag[0].id}')">${waag[0].username.toUpperCase()}</span>${waagSi?`<span class="streak-badge">${waagSi.emoji} ${waagSi.title}</span>`:''}<span>— gem. ${Math.round(waag[0].risk)}% kans</span></div>`
       +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
       +`</div>`);
   }
@@ -947,7 +1011,7 @@ function renderGlobalStats(){
     const si=getStreakInfo(s.current_streak);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('streaks')">`
       +`<div class="stat-ticker-label">🔥 HEISSESTE STREAK</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${s.username.toUpperCase()}</span>${si?`<span class="streak-badge">${si.emoji} ${si.title}</span>`:''}<span>— ${s.current_streak} op rij</span></div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${s.id}')">${s.username.toUpperCase()}</span>${si?`<span class="streak-badge">${si.emoji} ${si.title}</span>`:''}<span>— ${s.current_streak} op rij</span></div>`
       +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
       +`</div>`);
   }
@@ -958,7 +1022,7 @@ function renderGlobalStats(){
     const beatSi=getStreakInfo(beaters[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('oddsbeater')">`
       +`<div class="stat-ticker-label">🎯 ODDS BEATER</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span>${beaters[0].username.toUpperCase()}</span>${beatSi?`<span class="streak-badge">${beatSi.emoji} ${beatSi.title}</span>`:''}<span>— ${beaters[0].oddsGap.toFixed(1)}% gem. onder favoriet</span></div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${beaters[0].id}')">${beaters[0].username.toUpperCase()}</span>${beatSi?`<span class="streak-badge">${beatSi.emoji} ${beatSi.title}</span>`:''}<span>— ${beaters[0].oddsGap.toFixed(1)}% gem. onder favoriet</span></div>`
       +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
       +`</div>`);
   }
@@ -976,7 +1040,7 @@ function openStatsModal(type){
       +data.map((p,i)=>{
         const si=getStreakInfo(p.current_streak||0);
         return `<div class="stats-row-item">`
-          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${i+1}. ${p.username.toUpperCase()}</span>`
+          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${p.username.toUpperCase()}</span>`
           +`${si?`<span class="streak-badge" style="margin-left:8px">${si.emoji} ${si.title}</span>`:''}`
           +`</div>`
           +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">gem. ${Math.round(p.risk)}%</div>`
@@ -989,7 +1053,7 @@ function openStatsModal(type){
         const si=getStreakInfo(p.current_streak);
         return `<div class="stats-row-item">`
           +`<div>`
-          +`<div style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${p.username.toUpperCase()}</div>`
+          +`<div style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${p.username.toUpperCase()}</div>`
           +`${si?`<div style="margin-top:4px"><span class="streak-badge">${si.emoji} ${si.title}</span></div>`:''}`
           +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${p.current_streak} op rij · langste: ${p.longest_streak}</div>`
           +`</div>`
@@ -1003,7 +1067,7 @@ function openStatsModal(type){
       +data.map((p,i)=>{
         const si=getStreakInfo(p.current_streak||0);
         return `<div class="stats-row-item">`
-          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"}">${i+1}. ${p.username.toUpperCase()}</span>`
+          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${p.username.toUpperCase()}</span>`
           +`${si?`<span class="streak-badge" style="margin-left:8px">${si.emoji} ${si.title}</span>`:''}`
           +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${p.oddsCount}× raak · ${p.oddsPts} pts</div></div>`
           +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.oddsGap.toFixed(1)}%</div>`
@@ -1050,36 +1114,47 @@ function renderComplotGroup(group){
   const memberProfiles=members.map(m=>({...allProfiles.find(p=>p.id===m.user_id),...m})).filter(Boolean);
   const isHaantje=members.find(m=>m.user_id===currentUser.id&&m.is_haantje);
   const inviteUrl=`${window.location.origin}${window.location.pathname.replace('index.html','')}invite.html?code=${group.invite_code}`;
-
-  // Mini klassement van het groepje
-  const ranked=memberProfiles.map(p=>({...p,pts:getScore(p.id,'all')})).sort((a,b)=>b.pts-a.pts);
-
-  let html=`<div class="complot-card">
-    <div class="complot-name">🐓 ${group.name.toUpperCase()}</div>
-    <div style="font-family:var(--vt);font-size:16px;color:var(--muted);margin-bottom:10px">${members.length} leden</div>
-    <div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-bottom:8px">KLASSEMENT</div>
-    ${ranked.map((p,i)=>`<div class="member-row">
-      ${avatarHTML(p,28,`onclick="openProfile('${p.id}')"`)}
-      <div style="flex:1;font-family:var(--oswald);font-weight:700;font-size:16px">
-        ${['🥇','🥈','🥉'][i]||i+1} ${p.username}
-        ${p.is_haantje?'<span class="haantje-badge">🐓 HAANTJE</span>':''}
-      </div>
-      <div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.pts}</div>
-    </div>`).join('')}`;
-
+  const ranked=memberProfiles.map(p=>({...p,pts:getScore(p.id,'all').pts})).sort((a,b)=>b.pts-a.pts);
+  const playedSorted=matches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
+  const lastDayStr=playedSorted.length?nlDate(playedSorted[0].kickoff):null;
+  const lastDayMatches=lastDayStr?playedSorted.filter(m=>nlDate(m.kickoff)===lastDayStr):[];
+  const rankedHtml=ranked.map((p,i)=>{
+    const tipsHtml=lastDayMatches.map(m=>{
+      const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
+      const side=tip?tip.tip:'draw';
+      const teamName=side==='home'?m.home_team:side==='away'?m.away_team:null;
+      const f=teamName?flag(teamName):'=';
+      const lbl=teamName?(teamShort[teamName]||teamName.slice(0,3).toUpperCase()):'GLK';
+      const ok=side===m.result;
+      const pts=ok?calcPts(side==='home'?m.home_odds:side==='draw'?m.draw_odds:m.away_odds):0;
+      return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-flex;align-items:center;gap:1px;white-space:nowrap" title="${m.home_team} vs ${m.away_team}">`
+        +`<span style="font-size:14px;line-height:1">${f}</span>`
+        +`<span style="font-family:var(--pixel);font-size:6px">${lbl}${ok?'<sup style="color:var(--green)">+'+pts+'</sup>':''}</span>`
+        +`</span>`;
+    }).join('');
+    return`<div class="member-row">`
+      +avatarHTML(p,28,`onclick="openProfile('${p.id}')"`)
+      +`<div style="flex:1">`
+      +`<div style="font-family:var(--oswald);font-weight:700;font-size:16px">${['🥇','🥈','🥉'][i]||i+1} ${p.username}${p.is_haantje?'<span class="haantje-badge">🐓 HAANTJE</span>':''}</div>`
+      +(tipsHtml?`<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:2px">${tipsHtml}</div>`:'')
+      +`<div class="complot-badges-placeholder"></div>`
+      +`</div>`
+      +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.pts}</div>`
+      +`</div>`;
+  }).join('');
+  let html=`<div class="complot-card">`
+    +`<div class="complot-name">🐓 ${group.name.toUpperCase()}</div>`
+    +`<div style="font-family:var(--vt);font-size:16px;color:var(--muted);margin-bottom:10px">${members.length} leden</div>`
+    +`<div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-bottom:8px">KLASSEMENT</div>`
+    +rankedHtml;
   if(isHaantje){
-    html+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-      <div style="font-family:var(--pixel);font-size:7px;color:var(--yellow);margin-bottom:8px">🐓 HAANTJE POWERS</div>
-      <div style="font-family:var(--vt);font-size:16px;color:var(--muted);margin-bottom:8px;word-break:break-all">
-        Invite link: <span style="color:var(--green);cursor:pointer" onclick="copyInvite('${inviteUrl}')">${inviteUrl}</span>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-sm btn-purple" onclick="showInviteByUsername('${group.id}')">🐑 UITNODIGEN</button>
-        <button class="btn btn-sm btn-ghost" onclick="manageMembers('${group.id}')">👥 LEDEN BEHEREN</button>
-      </div>
-    </div>`;
+    html+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">`
+      +`<div style="font-family:var(--pixel);font-size:7px;color:var(--yellow);margin-bottom:8px">🐓 HAANTJE POWERS</div>`
+      +`<div style="display:flex;gap:6px;flex-wrap:wrap">`
+      +`<button class="btn btn-sm btn-purple" onclick="showInviteByUsername('${group.id}')">🐑 Slaper wakker maken</button>`
+      +`<button class="btn btn-sm btn-ghost" onclick="manageMembers('${group.id}')">🐓 Complot beheren</button>`
+      +`</div></div>`;
   }
-
   html+=`</div>`;
   return html;
 }
@@ -1103,10 +1178,27 @@ async function createComplot(name){
   await loadAll();
 }
 
+let _inviteGroupId=null;
 function showInviteByUsername(groupId){
-  const username=prompt('Gebruikersnaam van het schaap:');
+  _inviteGroupId=groupId;
+  document.getElementById('invite-username-input').value='';
+  document.getElementById('invite-error').style.display='none';
+  document.getElementById('invite-modal').classList.add('open');
+}
+function closeInviteModal(){document.getElementById('invite-modal').classList.remove('open');}
+async function confirmInvite(){
+  const username=document.getElementById('invite-username-input').value.trim().toLowerCase();
   if(!username)return;
-  inviteByUsername(groupId,username.trim().toLowerCase());
+  const errEl=document.getElementById('invite-error');
+  errEl.style.display='none';
+  const profile=allProfiles.find(p=>p.username===username);
+  if(!profile){errEl.textContent='Deze slaapkop bestaat niet in de matrix.';errEl.style.display='block';return;}
+  const {error}=await sb.from('complot_members').insert({group_id:_inviteGroupId,user_id:profile.id,is_haantje:false});
+  if(error&&error.code==='23505'){errEl.textContent=username+' zit al in het complot.';errEl.style.display='block';return;}
+  if(error){errEl.textContent='Fout: '+error.message;errEl.style.display='block';return;}
+  closeInviteModal();
+  showToast(username+' is ontwaakt. Welkom in het complot.');
+  await loadAll();
 }
 
 async function inviteByUsername(groupId,username){
@@ -1119,15 +1211,74 @@ async function inviteByUsername(groupId,username){
   await loadAll();
 }
 
-async function manageMembers(groupId){
-  // Simple: show list and allow removing or promoting
-  const members=complotMembers.filter(m=>m.group_id===groupId);
-  const list=members.map(m=>{
-    const p=allProfiles.find(pr=>pr.id===m.user_id);
-    if(!p)return'';
-    return`${p.username}${m.is_haantje?' (Haantje)':''} — `;
-  }).join('\n');
-  showToast('Gebruik de SQL editor voor nu om leden te beheren. UI volgt!');
+let _complotManageId=null;
+function manageMembers(groupId){
+  _complotManageId=groupId;
+  document.getElementById('complot-modal').classList.add('open');
+  renderComplotModal();
+}
+function closeComplotModal(){document.getElementById('complot-modal').classList.remove('open');}
+function renderComplotModal(){
+  const group=complotGroups.find(g=>g.id===_complotManageId);
+  if(!group){document.getElementById('complot-modal-content').innerHTML='';return;}
+  const members=complotMembers.filter(m=>m.group_id===_complotManageId);
+  const mProfiles=members.map(m=>({...allProfiles.find(p=>p.id===m.user_id),...m})).filter(Boolean);
+  const inviteUrl=`${window.location.origin}${window.location.pathname.replace('index.html','')}invite.html?code=${group.invite_code}`;
+  const memberRows=mProfiles.map(p=>{
+    const isMe=p.user_id===currentUser.id;
+    return`<div class="member-row" style="padding:8px 0;border-bottom:1px solid rgba(85,0,170,.3)">`
+      +avatarHTML(p,28,`onclick="openProfile('${p.id}')"`)
+      +`<div style="flex:1;font-family:var(--oswald);font-weight:700;font-size:16px">${p.username}${p.is_haantje?'<span class="haantje-badge">🐓 HAANTJE</span>':''}</div>`
+      +(!isMe?`<div style="display:flex;gap:6px;flex-wrap:wrap">`
+        +(!p.is_haantje?`<div class="tt-wrap"><button class="btn btn-purple" style="padding:8px 14px;font-size:9px" onclick="makeHaantje('${_complotManageId}','${p.user_id}','${p.username}')">🐓👑 Kronen</button><div class="tt-text">Maak dit lid ook Haantje</div></div>`:'')
+        +`<div class="tt-wrap"><button class="btn btn-red" style="padding:8px 14px;font-size:9px" onclick="kickMember('${_complotManageId}','${p.user_id}','${p.username}')">😴 Laten slapen</button><div class="tt-text">Stuur terug de matrix in</div></div>`
+        +`</div>`:'')
+      +`</div>`;
+  }).join('');
+  document.getElementById('complot-modal-content').innerHTML=`
+    <div style="font-family:var(--pixel);font-size:10px;color:var(--green);margin-bottom:1rem">BEHEER HET COMPLOT 🐓</div>
+    <div style="margin-bottom:1rem">${memberRows}</div>
+    <div class="box" style="margin-bottom:10px">
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">INVITE LINK</div>
+      <div style="font-family:var(--vt);font-size:18px;color:var(--green);cursor:pointer;word-break:break-all;margin-bottom:8px" onclick="copyInvite('${inviteUrl}')">${inviteUrl}</div>
+      <button class="btn btn-ghost" style="padding:8px 14px" onclick="copyInvite('${inviteUrl}')">📋 KOPIEER LINK</button>
+    </div>
+    <div class="box">
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">🐑 SCHAAP REKRUTEREN</div>
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">Gebruikersnaam van de slaapkop:</div>
+      <div style="display:flex;gap:6px">
+        <input id="complot-invite-input" type="text" placeholder="gebruikersnaam..." style="flex:1;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:6px 8px" onkeypress="if(event.key==='Enter')complotInviteFromModal()">
+        <button class="btn btn-purple" style="padding:8px 14px" onclick="complotInviteFromModal()">💊 WAKKER MAKEN</button>
+      </div>
+      <div id="complot-invite-error" style="font-family:var(--vt);font-size:20px;color:var(--red);margin-top:6px;display:none"></div>
+    </div>
+  `;
+}
+async function kickMember(groupId,userId,username){
+  await sb.from('complot_members').delete().eq('group_id',groupId).eq('user_id',userId);
+  showToast(username+' slaapt weer. De matrix heeft hem terug.');
+  await loadAll();
+  renderComplotModal();
+}
+async function makeHaantje(groupId,userId,username){
+  await sb.from('complot_members').update({is_haantje:true}).eq('group_id',groupId).eq('user_id',userId);
+  showToast('👑 '+(username||'').toUpperCase()+' IS NU DE WAARHEID.');
+  await loadAll();
+  renderComplotModal();
+}
+async function complotInviteFromModal(){
+  const username=document.getElementById('complot-invite-input').value.trim().toLowerCase();
+  if(!username)return;
+  const errEl=document.getElementById('complot-invite-error');
+  errEl.style.display='none';
+  const profile=allProfiles.find(p=>p.username===username);
+  if(!profile){errEl.textContent='Deze slaapkop bestaat niet in de matrix.';errEl.style.display='block';return;}
+  const {error}=await sb.from('complot_members').insert({group_id:_complotManageId,user_id:profile.id,is_haantje:false});
+  if(error&&error.code==='23505'){errEl.textContent=username+' zit al in het complot.';errEl.style.display='block';return;}
+  if(error){errEl.textContent='Fout: '+error.message;errEl.style.display='block';return;}
+  showToast(username+' is ontwaakt. Welkom in het complot.');
+  await loadAll();
+  renderComplotModal();
 }
 
 // ── TIPS ─────────────────────────────────────────────────────
@@ -1151,10 +1302,15 @@ function renderTips(){
 
     // Tip counts per outcome
     const matchTips=allTips.filter(t=>t.match_id===m.id);
-    const cHome=matchTips.filter(t=>t.tip==='home').length;
-    const cDraw=matchTips.filter(t=>t.tip==='draw').length;
-    const cAway=matchTips.filter(t=>t.tip==='away').length;
+    const homeTips=matchTips.filter(t=>t.tip==='home');
+    const drawTips=matchTips.filter(t=>t.tip==='draw');
+    const awayTips=matchTips.filter(t=>t.tip==='away');
+    const cHome=homeTips.length,cDraw=drawTips.length,cAway=awayTips.length;
     const total=cHome+cDraw+cAway;
+    const getName=t=>{const p=allProfiles.find(pr=>pr.id===t.user_id);return p?p.username:'?';};
+    const uHome=JSON.stringify(homeTips.map(getName)).replace(/'/g,'&#39;');
+    const uDraw=JSON.stringify(drawTips.map(getName)).replace(/'/g,'&#39;');
+    const uAway=JSON.stringify(awayTips.map(getName)).replace(/'/g,'&#39;');
 
     return`<div class="match-card ${res?'res-'+res:''}">
       <div class="match-meta">
@@ -1179,13 +1335,35 @@ function renderTips(){
         </button>
       </div>
       ${total>0?`<div class="tip-counts">
-        <span class="tc-home">${cHome}×</span><span class="tc-sep"> · </span>
-        <span class="tc-draw">${cDraw}×</span><span class="tc-sep"> · </span>
-        <span class="tc-away">${cAway}×</span>
+        <span class="tc-home" data-users='${uHome}' data-team="${m.home_team}" onmouseenter="showTipTooltip(event,this,'home')" onmouseleave="closeTipTooltip()" onclick="showTipTooltip(event,this,'home')">${cHome}×</span><span class="tc-sep"> · </span>
+        <span class="tc-draw" data-users='${uDraw}' onmouseenter="showTipTooltip(event,this,'draw')" onmouseleave="closeTipTooltip()" onclick="showTipTooltip(event,this,'draw')">${cDraw}×</span><span class="tc-sep"> · </span>
+        <span class="tc-away" data-users='${uAway}' data-team="${m.away_team}" onmouseenter="showTipTooltip(event,this,'away')" onmouseleave="closeTipTooltip()" onclick="showTipTooltip(event,this,'away')">${cAway}×</span>
       </div>`:''}
     </div>`;
   }).join('');
 }
+
+let _ttBound=false;
+function showTipTooltip(e,el,side){
+  e.stopPropagation();
+  const users=JSON.parse(el.dataset.users||'[]');
+  let tt=document.getElementById('tip-tooltip');
+  if(!tt){tt=document.createElement('div');tt.id='tip-tooltip';document.body.appendChild(tt);}
+  if(!_ttBound){
+    document.addEventListener('click',function(ev){if(!ev.target.closest('.tip-counts'))closeTipTooltip();});
+    _ttBound=true;
+  }
+  if(!users.length){closeTipTooltip();return;}
+  const team=el.dataset.team||'';
+  const lbl=side==='draw'?'= GELIJK':(flag(team)+' '+team);
+  const col=side==='home'?'var(--green)':side==='draw'?'var(--yellow)':'var(--red)';
+  tt.innerHTML=`<div class="tt-lbl" style="color:${col}">${lbl}</div>`+users.map(u=>`<div class="tt-usr">${u}</div>`).join('');
+  const r=el.getBoundingClientRect();
+  let lx=r.left,ty=r.bottom+4;
+  if(lx+164>window.innerWidth)lx=window.innerWidth-168;
+  tt.style.left=lx+'px';tt.style.top=ty+'px';tt.style.display='block';
+}
+function closeTipTooltip(){const tt=document.getElementById('tip-tooltip');if(tt)tt.style.display='none';}
 
 function pickTip(matchId,side,btn){
   pendingTips[matchId]=side;
@@ -1694,6 +1872,108 @@ async function autoFetchOddsIfRoundComplete(savedResult,matchId){
 }
 
 // ── PROFILE MODAL ────────────────────────────────────────────
+// ── HEAD-TO-HEAD ─────────────────────────────────────────────
+let h2hP2Id=null,h2hFilter='all';
+const H2H_FILTERS=[
+  {id:'g1',lbl:'RONDE 1'},{id:'g2',lbl:'RONDE 2'},{id:'g3',lbl:'RONDE 3'},
+  {id:'r32',lbl:'R32'},{id:'r16',lbl:'R16'},{id:'qf',lbl:'1/4'},
+  {id:'sf',lbl:'HALVE'},{id:'third',lbl:'3E PLAATS'},{id:'final',lbl:'FINALE'},
+  {id:'group',lbl:'GROEPSFASE'},{id:'ko',lbl:'KNOCKOUT'},{id:'all',lbl:'ALLES'}
+];
+function openH2H(userId){
+  const p1id=currentUser?.id;
+  const others=allProfiles.filter(p=>p.id!==p1id);
+  h2hP2Id=(userId&&userId!==p1id)?userId:(others[0]?.id||null);
+  h2hFilter='all';
+  document.getElementById('h2h-modal').classList.add('open');
+  renderH2H();
+}
+function closeH2H(){document.getElementById('h2h-modal').classList.remove('open');}
+function setH2HP2(id){h2hP2Id=id;renderH2H();}
+function setH2HFilter(f){h2hFilter=f;renderH2H();}
+function renderH2H(){
+  const p1=allProfiles.find(p=>p.id===currentUser?.id);
+  const p2=h2hP2Id?allProfiles.find(p=>p.id===h2hP2Id):null;
+  if(!p1){document.getElementById('h2h-content').innerHTML='<div class="loading">Niet ingelogd.</div>';return;}
+  let filtered;
+  switch(h2hFilter){
+    case 'g1':filtered=matches.filter(m=>m.phase==='group'&&m.round===1);break;
+    case 'g2':filtered=matches.filter(m=>m.phase==='group'&&m.round===2);break;
+    case 'g3':filtered=matches.filter(m=>m.phase==='group'&&m.round===3);break;
+    case 'group':filtered=matches.filter(m=>m.phase==='group');break;
+    case 'ko':filtered=matches.filter(m=>koPhases.includes(m.phase));break;
+    case 'all':filtered=matches;break;
+    default:filtered=matches.filter(m=>m.phase===h2hFilter);
+  }
+  const played=filtered.filter(m=>m.result);
+  let p1c=0,p1w=0,p1pts=0,p2c=0,p2w=0,p2pts=0;
+  played.forEach(m=>{
+    const t1=allTips.find(t=>t.user_id===p1.id&&t.match_id===m.id);
+    const s1=t1?t1.tip:'draw';
+    const t2=p2?allTips.find(t=>t.user_id===p2.id&&t.match_id===m.id):null;
+    const s2=t2?t2.tip:'draw';
+    const o=s=>s==='home'?m.home_odds:s==='draw'?m.draw_odds:m.away_odds;
+    if(s1===m.result){p1c++;p1pts+=calcPts(o(s1));}else{p1w++;}
+    if(p2){if(s2===m.result){p2c++;p2pts+=calcPts(o(s2));}else{p2w++;}}
+  });
+  const tipBadge=(side,m,align)=>{
+    const ok=side===m.result;
+    const teamName=side==='home'?m.home_team:side==='away'?m.away_team:null;
+    const f=teamName?flag(teamName):'=';
+    const lbl=teamName?(teamShort[teamName]||teamName.slice(0,3).toUpperCase()):'GLK';
+    const pts=ok?calcPts(side==='home'?m.home_odds:side==='draw'?m.draw_odds:m.away_odds):0;
+    const col=ok?'var(--green)':'var(--red)';
+    const pStr=ok?`<span style="font-family:var(--vt);font-size:18px;opacity:0.85">+${pts}</span>`:'';
+    return align==='right'
+      ?`<span style="color:${col};font-family:var(--vt);font-size:22px">${pStr}${pStr?' ':''}${lbl} ${f}</span>`
+      :`<span style="color:${col};font-family:var(--vt);font-size:22px">${f} ${lbl}${pStr?' ':''  }${pStr}</span>`;
+  };
+  const matchRows=played.map(m=>{
+    const t1=allTips.find(t=>t.user_id===p1.id&&t.match_id===m.id);
+    const s1=t1?t1.tip:'draw';
+    const t2=p2?allTips.find(t=>t.user_id===p2.id&&t.match_id===m.id):null;
+    const s2=t2?t2.tip:'draw';
+    const score=m.home_score!=null?`${m.home_score}-${m.away_score}`:'';
+    const mid=`${flag(m.home_team)} ${m.home_team}`
+      +(score
+        ?` <span style="font-family:var(--pixel);font-size:10px;color:var(--yellow);vertical-align:middle">${score}</span> `
+        :`<span style="color:var(--muted);font-family:var(--vt);font-size:22px"> — </span>`)
+      +`${m.away_team} ${flag(m.away_team)}`;
+    return`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">`
+      +`<div style="flex:0 0 120px;text-align:left">${tipBadge(s1,m,'left')}</div>`
+      +`<div style="flex:1;text-align:center;font-family:var(--vt);font-size:22px;line-height:1.4;padding:0 6px">${mid}</div>`
+      +`<div style="flex:0 0 120px;text-align:right">${p2?tipBadge(s2,m,'right'):'<span style="color:var(--muted);font-family:var(--vt);font-size:22px">—</span>'}</div>`
+      +`</div>`;
+  }).join('');
+  let verdict='';
+  if(p2&&played.length>0){
+    if(p1pts===p2pts){
+      verdict=`<span style="color:var(--white)">${p1.username}</span> en <span style="color:var(--white)">${p2.username}</span> staan volledig gelijk. Nog geen winnaar.`;
+    }else{
+      const winner=p1pts>p2pts?p1:p2,loser=p1pts>p2pts?p2:p1;
+      verdict=`<span style="color:var(--green)">${winner.username}</span> troeft <span style="color:var(--red)">${loser.username}</span> genadeloos af met <span style="color:var(--yellow)">${Math.abs(p1pts-p2pts)}</span> punten verschil.`;
+    }
+  }
+  const others=allProfiles.filter(p=>p.id!==p1.id);
+  const dropOpts=others.map(p=>`<option value="${p.id}"${p.id===h2hP2Id?' selected':''}>${p.username}</option>`).join('');
+  document.getElementById('h2h-content').innerHTML=`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <span style="font-family:var(--pixel);font-size:9px;color:var(--green)">${p1.username}</span>
+      <span style="font-family:var(--pixel);font-size:10px">⚔️</span>
+      <select onchange="setH2HP2(this.value)" style="font-family:var(--vt);font-size:20px;background:var(--bg2);color:var(--white);border:2px solid var(--purple);padding:2px 8px;cursor:pointer">${dropOpts}</select>
+    </div>
+    ${p2&&played.length>0?`<div class="box" style="margin-bottom:10px">
+      <div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-bottom:8px">SAMENVATTING · ${played.length} WEDSTRIJD${played.length!==1?'EN':''}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--pixel);font-size:8px;margin-bottom:8px">
+        <div><div style="color:var(--green);margin-bottom:4px">${p1.username}</div><div style="color:var(--white)">${p1c} goed · ${p1w} fout</div><div style="color:var(--green);margin-top:4px">${p1pts} PTS</div></div>
+        <div><div style="color:var(--green);margin-bottom:4px">${p2.username}</div><div style="color:var(--white)">${p2c} goed · ${p2w} fout</div><div style="color:var(--green);margin-top:4px">${p2pts} PTS</div></div>
+      </div>
+      ${verdict?`<div style="font-family:var(--pixel);font-size:8px;line-height:1.8">${verdict}</div>`:''}</div>`:''}
+    <div class="h2h-tabs">${H2H_FILTERS.map(f=>`<button class="h2h-tab${h2hFilter===f.id?' active':''}" onclick="setH2HFilter('${f.id}')">${f.lbl}</button>`).join('')}</div>
+    ${played.length===0?`<div class="loading">Geen gespeelde wedstrijden.</div>`:`<div>${matchRows}</div>`}
+  `;
+}
+
 async function openProfile(userId){
   const id=userId||currentUser?.id;
   if(!id)return;
@@ -1748,6 +2028,7 @@ async function openProfile(userId){
       </div>
     </div>
     ${isOwn?`<button class="btn btn-sm btn-ghost" style="width:100%" onclick="triggerAvatarUpload()">📷 AVATAR WIJZIGEN</button>`:''}
+    <button class="btn btn-purple btn-sm" style="width:100%;margin-top:8px" onclick="openH2H('${profile.id}')">⚔️ HEAD-TO-HEAD</button>
   `;
   document.getElementById('profile-modal').classList.add('open');
 }
