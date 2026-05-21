@@ -1410,7 +1410,7 @@ async function saveTips(){
   });
   if(!toSave.length){showToast('Niets op te slaan.');return;}
   const {error}=await sb.from('tips').upsert(toSave,{onConflict:'user_id,match_id'});
-  if(error){showToast('Fout: '+error.message);return;}
+  if(error){showToast(error.message.includes('security')||error.message.includes('policy')?'⏰ CHEATERT! — wedstrijd is al begonnen!':'Fout: '+error.message);return;}
   myTips={...pendingTips};
   const {data}=await sb.from('tips').select('*');
   allTips=data||[];
