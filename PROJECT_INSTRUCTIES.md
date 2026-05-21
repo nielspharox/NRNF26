@@ -18,7 +18,7 @@ Een WK voetbalpool webapp waar risico nemen beloond wordt. Hoe meer underdog je 
 - **Claude Code starten met:** `lees CONTEXT.md en index.html`
 - **Na elke werkende versie:** `git add . && git commit -m "beschrijving" && git push`
 - **Terugzetten:** `git revert HEAD`
-- **CHANGELOG.md** bijhouden aan het einde van elke sessie
+- **Sessie afsluiten:** altijd CONTEXT.md, PROJECT_INSTRUCTIES.md, CHANGELOG.md en spelregels in de app updaten
 
 ---
 
@@ -148,16 +148,23 @@ Beide namen: Oswald bold 26px (winnaar groen, verliezer rood).
 - [ ] **Custom streak namen per complotgroepje** — Haantje kan titels + emojis aanpassen, alleen zichtbaar binnen groepje. Nieuwe DB tabel: `complot_streak_names (group_id, streak_level, title, emoji)`
 
 ### Middel prioriteit
-- [ ] **Meertaligheid NL/EN/DE** — volledige UI vertaling, taalvoorkeur in `profiles`
+- [ ] **Meertaligheid NL/EN/DE** — volledige UI vertaling, taalvoorkeur in `profiles`. Streak titels + risicoprofielnamen ook vertaald. Subpoule-specifieke namen gaan mee met algemene taalinstellingen.
 - [ ] **Paul drempel → 8** — eerbetoon aan Paul de Octopus (8 correcte voorspellingen). Nu nog 2.
+- [ ] **Risicografiek** — horizontaal de dagen, verticaal risicoscore. Globaal op home (gemiddelde alle spelers). Per complotgroepje: meerdere spelers tegelijk.
+- [ ] **Profielpagina uitbreiden** — risicografiek per speler, odds beater score, complotgroepjes overzicht.
 
 ### Later / nog te brainstormen
-- [ ] **Bonus/nerf systeem** — superkrachten via streaks, punten vermenigvuldigen of andermans punten negatief beïnvloeden, tips verbergen. Nog uitwerken.
-- [ ] **Complotgroepje subpoule** — eigen klassement al aanwezig, custom streak namen volgt
+- [ ] **Bonus/nerf systeem** — superkrachten via streaks of random. Ideeën: punten vermenigvuldigen (factor >1), andermans punten negatief beïnvloeden (factor <1), tips verbergen. Spelbalans eerst uitwerken voordat we bouwen.
+- [ ] **Platform uitbouwen** — bij succes uitbouwen naar algemeen poule platform met eigen domein (nrnf.com of generiekere naam).
+- [ ] **Notificaties** — als tips vergrendeld worden, uitslag bekend is, streak dreigt te breken.
+- [ ] **Waaghals per ronde** — nu alleen per dag, ook per fase bijhouden.
 
 ### Technische bugs
 - [ ] Streak badge in profielmodal toont soms `0` (cached `allProfiles` data)
 - [ ] Auto-odds fetch edge cases finetunen
+- [ ] Complotklassement puntentelling — gefixed maar nog niet volledig getest
+- [ ] Head-to-head paars glow bij 12+ streaks nog niet sterk genoeg
+- [ ] Complot ledenbeheer (laten slapen / kronen) — nog niet volledig getest
 
 ---
 
@@ -171,6 +178,8 @@ Beide namen: Oswald bold 26px (winnaar groen, verliezer rood).
 | Beste nummers 3 handmatig | Te complex om volledig te automatiseren (FIFA heeft 4096 combinaties) |
 | Streak telt terug | Voelt logischer — huidige form is wat telt |
 | Geen groepsfase/knockout/alles filter in H2H | Teveel, ronde-gebaseerde filters zijn overzichtelijker |
+| Geen design token systeem | Weinig meerwaarde voor dit project, typografie standaarden in CONTEXT.md voldoen |
+| Claude Code voor kleine fixes | Tokens gaan snel bij grote bestanden — gebruik gericht per functie |
 
 ---
 
