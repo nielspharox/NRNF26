@@ -20,10 +20,11 @@ punten = 100 / kans (%)
 
 | Gekozen kans | Punten bij goede tip |
 |---|---|
-| 70% (favoriet) | 14 pts |
-| 33% (gelijkspel) | 30 pts |
-| 15% (underdog) | 67 pts |
-| 5% (grote verrassing) | 200 pts |
+| 70% (favoriet) | 1 pt |
+| 33% (gelijkspel) | 3 pts |
+| 20% (underdog) | 5 pts |
+| 10% (grote verrassing) | 10 pts |
+| 5% (ultieme gok) | 20 pts |
 
 Geen tip ingevoerd = automatisch gelijkspel.
 Tips worden vergrendeld op het moment van aftrap.
@@ -36,21 +37,21 @@ Knockoutwedstrijden: uitslag na 120 minuten (inclusief verlenging).
 ### Klassementen
 - **Totaalstand** — alle wedstrijden
 - **Poule Meister** — alleen groepsfase
-- **Knock-out Meister** — alleen knockoutfases
+- **Knock-out Meister** — alleen knockoutfase
 - Per **Complotgroepje** een eigen klassement
 
 ### Gamification
-- 🔥 **Killstreak titels** voor aaneengesloten correcte tips:
+- 🍌 **Streaks** voor aaneengesloten correcte tips:
 
 | Streak | Titel | Emoji |
 |---|---|---|
-| 3 | PAUL | 🐙 |
-| 6 | EL JEFE | 🌵🤠 |
-| 9 | THE CHOSEN ONE | ⚡ |
-| 12 | SITTING BULL | 🦬 |
-| 15 | THE DEEP STATE | 🕵️ |
-| 18 | THE ORACLE | 🔮 |
-| 21 | PAUL WAS AN AMATEUR | 🐙💀 |
+| 2 | PAUL | 🐙 |
+| 4 | EL JEFE | 🌵🤠 |
+| 6 | THE CHOSEN ONE | ⚡ |
+| 8 | SITTING BULL | 🦬 |
+| 10 | THE DEEP STATE | 🕵️ |
+| 12 | THE ORACLE | 🔮 |
+| 14 | PAUL WAS AN AMATEUR | 🐙💀 |
 
 - 🎲 **Waaghals van de dag** — wie nam vandaag het meeste risico?
 - 🎯 **Odds Beater** — wie wint terwijl ze niet op de favoriet gokken?
@@ -65,27 +66,38 @@ Knockoutwedstrijden: uitslag na 120 minuten (inclusief verlenging).
 | ✊ De Rebel | 0–18% |
 
 ### Complotgroepjes 🐓
-Maak je eigen besloten poule aan. De maker is het **Haantje** en heeft speciale powers:
-- 🐑 Schapen uitnodigen (via gebruikersnaam of invite link)
-- 😴 Leden laten slapen (verwijderen)
-- 🐓👑 Iemand ook Haantje maken
+Bouw je eigen waarheid. Ontsnap aan de matrix. De maker is het **Haantje**:
+- 🐑 Slaper wakker maken — nodig iemand uit via gebruikersnaam of invite link
+- 😴 Laten slapen — stuur een lid terug de matrix in
+- 🐓👑 Kronen — geef iemand ook Haantje-rechten
+
+### Head-to-Head ⚔️
+Vergelijk jezelf direct met een andere speler — per ronde, per wedstrijd.
 
 ### Toernooioverzicht
 - Live groepsstanden met punten, doelsaldo en doelpunten
 - Knockout bracket met vaste posities
-- Speelsteden en tijden zichtbaar
+- Speelsteden en Nederlandse tijden zichtbaar
 
 ---
 
-## Bestanden in deze repo
+## Bestanden
 
 | Bestand | Omschrijving |
 |---|---|
 | `index.html` | De volledige app |
 | `invite.html` | Invite pagina voor complotgroepjes |
 | `mascot.png` | De Condor — onze mascotte |
+| `banana.gif` | De dansende banaan — streak indicator |
 | `setup_final.sql` | Database setup (eenmalig uitvoeren) |
 | `fix_complot.sql` | Complot tabellen fix |
+| `testdata.sql` | Testdata voor ontwikkeling |
+| `cleanup.sql` | Reset voor het echte toernooi |
+| `beste_nummers_3.sql` | Welke 8 nummers 3 gaan door |
+| `nummers3_invullen.sql` | Vul beste nummers 3 in R32 bracket |
+| `CONTEXT.md` | Context voor Claude Code sessies |
+| `PROJECT_INSTRUCTIES.md` | Projectinstructies en openstaande items |
+| `CHANGELOG.md` | Dagelijkse voortgang |
 
 ---
 
@@ -102,7 +114,6 @@ Maak je eigen besloten poule aan. De maker is het **Haantje** en heeft speciale 
 
 ### 1. Supabase database
 ```sql
--- Eerst leegmaken:
 delete from public.tips;
 delete from public.matches;
 ```
@@ -121,15 +132,19 @@ update public.profiles set is_admin = true where username = 'jouw-username';
 ### 4. Odds ophalen
 - Gratis account op [the-odds-api.com](https://the-odds-api.com)
 - In de app: Admin → Odds API → key invullen → Odds ophalen
-- Per speelronde apart ophalen zodat kansen actueel blijven
+- Key wordt opgeslagen — eenmalig invullen
 
 ---
 
-## Beheer tijdens het toernooi
+## Deploy
 
-- **Uitslagen invoeren:** Admin tabblad → score invullen (x–y) → automatisch resultaat + punten
-- **Odds bijwerken:** Admin → Odds API → per ronde ophalen
-- **Knockout teams bijwerken:** pas teamnamen aan via Supabase Table Editor zodra bekend is wie er doorging
+```bash
+git add .
+git commit -m "beschrijving"
+git push
+```
+
+GitHub Pages deploy duurt ~1 minuut. Hard refresh: `Cmd+Shift+R`.
 
 ---
 
