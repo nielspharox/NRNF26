@@ -529,6 +529,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     <button class="phase-tab" onclick="filterTournament('ko',this)">KNOCKOUT</button>
   </div>
   <div id="tournament-view"><div class="loading">Laden...</div></div>
+  <div id="bracket-view"></div>
 </div>
 
 <!-- ADMIN -->
@@ -664,6 +665,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 <div id="toast"></div>
 
 <script src="pixel-player.js"></script>
+<script src="bracket.js"></script>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
 const SUPABASE_URL = 'https://soonpwnwrvxmariaqdfb.supabase.co';
