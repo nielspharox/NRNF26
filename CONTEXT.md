@@ -1,4 +1,4 @@
-# NO RISK NO FUN 2026 — Project Context v2
+# NO RISK NO FUN 2026 — Project Context v3
 
 > Lees dit altijd eerst voordat je iets aanpast.
 > Volg de typografie standaarden ALTIJD — geen uitzonderingen.
@@ -17,7 +17,7 @@ Een WK voetbalpool webapp waar risico nemen beloond wordt. Hoe meer underdog je 
 
 ## Stack
 
-- **Frontend:** Vanilla HTML/CSS/JS — alles in één bestand (`index.html`)
+- **Frontend:** Vanilla HTML/CSS/JS — alles in één bestand (`index.html`) + `pixel-player.js`
 - **Backend:** Supabase (PostgreSQL + Auth + Storage)
 - **Hosting:** GitHub Pages
 - **Odds:** The Odds API (the-odds-api.com)
@@ -102,8 +102,6 @@ const STREAKS = [
 ];
 ```
 
-**Opmerking:** Paul drempel wordt later 8 (eerbetoon aan Paul de Octopus met 8 correcte voorspellingen). Nu nog 2.
-
 ### Streak badge kleuren per niveau
 | Niveau | Streaks | Border/tekst kleur | Box shadow |
 |--------|---------|-------------------|------------|
@@ -112,12 +110,12 @@ const STREAKS = [
 | Paars glow | 12+ | `var(--purple-light)` | `0 0 12px var(--purple-light), 0 0 24px rgba(170,68,255,0.4)` |
 
 ### Streak telt TERUG
-Vanaf de meest recente gespeelde wedstrijd terug tellen. Één foute tip = reset naar 0. Geen tip ingevoerd = automatisch gelijkspel (telt mee voor streak).
+Vanaf de meest recente gespeelde wedstrijd terug tellen. Één foute tip = reset naar 0. Geen tip = automatisch gelijkspel (telt mee voor streak).
 
 ### Streak indicator
-Dansende banaan GIF (`banana.gif`) als indicator. Aantal bananen = streak niveau:
+Dansende banaan GIF (`banana.gif`). Aantal bananen = streak niveau:
 - 1 banaan bij streak 2-4
-- 2 bananen bij streak 6-10  
+- 2 bananen bij streak 6-10
 - 3+ bananen bij streak 12+
 
 ---
@@ -140,7 +138,7 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 
 | Tabel | Inhoud |
 |-------|--------|
-| `profiles` | id, username, is_admin, avatar_url, current_streak, longest_streak |
+| `profiles` | id, username, is_admin, avatar_url, current_streak, longest_streak, **day_wins** |
 | `matches` | id, match_number, home_team, away_team, home_odds, draw_odds, away_odds, phase, group_name, round, kickoff, venue, result, home_score, away_score, bracket_pos |
 | `tips` | id, user_id, match_id, tip (home/draw/away), chosen_odds, max_odds, points_scored |
 | `complot_groups` | id, name, invite_code, created_by |
@@ -148,58 +146,136 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 | `bracket_slots` | phase, slot, home_label, away_label, home_from_phase/slot, away_from_phase/slot |
 | `settings` | key, value (bijv. odds_api_key) |
 
+**`day_wins`** (INT, default 0) — aantal keer dagwinnaar geweest. Bij gelijke dagstand krijgen alle gedeelde winnaars +1. Wordt opgehoogd in de admin bij het invoeren van een uitslag.
+
 **Fases:** `group`, `r32`, `r16`, `qf`, `sf`, `third`, `final`
 **Speelrondes groep:** round 1, 2, 3
+
+### RLS (Row Level Security) op `tips`
+Tips kunnen alleen worden opgeslagen als `kickoff > now()` — server-side geblokkeerd via Supabase RLS policies. Foutmelding in de UI: "⏰ Te laat — wedstrijd is al begonnen!"
 
 ---
 
 ## APP STRUCTUUR (tabs)
 
-1. **HOME** — Podium dagwinnaars (pixel-art poppetjes), stats (waaghals/streak/odds beater klikbaar → popup), complotgroepjes
+1. **HOME** — Podium dagwinnaars (voetbalkaarten + pixel-art poppetjes), stats (waaghals/streak/odds beater klikbaar → popup), complotgroepjes
 2. **TIPS** — Wedstrijden tippen per fase/ronde, tip-tellingen met tooltip wie wat tipte
 3. **STAND** — Klassement (totaal/poule/knockout + per complot), laatste 3 speeldagen tips gegroepeerd per dag
 4. **SPELREGELS** — Uitleg puntensysteem, streaks, risicoprofielen, complotgroepjes
-5. **TOERNOOI** — Groepsstanden, wedstrijden, knockout bracket
+5. **TOERNOOI** — Groepsstanden, wedstrijden, knockout bracket (visueel op desktop)
 6. **ADMIN** — Alleen voor admin: wedstrijden toevoegen, uitslagen/scores, Odds API
+
+---
+
+## PIXEL-ART SPELER GENERATOR (`pixel-player.js`)
+
+> **Belangrijk:** Gebruik altijd `pixel-player.js` voor avatars — nooit zelf SVG tekenen.
+> De generator is deterministisch: dezelfde username → altijd dezelfde kaart.
+
+### Bestand
+- `pixel-player.js` — staat in de repo root, geladen via `<script src="pixel-player.js"></script>`
+
+### Drie gebruikswijzen
+
+**1. Web component (aanbevolen voor nieuwe code):**
+```html
+<pixel-player name="niels"></pixel-player>
+<pixel-player name="niels" mini></pixel-player>
+<pixel-player name="niels" size="80"></pixel-player>
+<pixel-player name="niels" kit="GK_PINK" position="GK"></pixel-player>
+```
+
+**2. Plain JS:**
+```js
+const player = NRNFPixelPlayer.generatePlayer('niels');
+el.innerHTML = NRNFPixelPlayer.renderPlayerSVG(player, { size: 96 });
+el.innerHTML = NRNFPixelPlayer.renderPlayerSVG(player, { size: 48, mini: true });
+```
+
+**3. `generatePlayer(username, opts)` opties:**
+```js
+// opts zijn optioneel — zonder opts volledig hash-based
+{ kit: 'GK_PINK', position: 'GK' }
+```
+
+### Beschikbare kits
+
+**Outfield (12):** NED, FRA, BRA, GER, ITA, ESP, ARG, ENG, POR, CRO, BEL, MAR
+
+**Throwback (6):** NED_88, BRA_70, ENG_66, GER_90, ITA_82, DEN_86
+
+**Keeper (10):** GK_NEON, GK_PURPLE, GK_YELLOW, GK_PINK, GK_TEAL, GK_ORANGE, GK_LIME, GK_BLACK, GK_RED, GK_CYAN
+- Keepers krijgen automatisch: lange mouwen + witte handschoenen + positie GK (geel chip) + rugnummer 1/12/22/32
+- 15% kans op keeper kit via hash
+
+### Varianten
+- **11 haarstijlen:** SHORT, MULLET, CURLY, BALD, AFRO, BUZZCUT, LONG, UNDERCUT, PONYTAIL, BUN, HEADBAND
+- **7 haarkleuren:** black, brown, blonde, ginger, grey, platinum, bleach
+- **5 huidtinten:** light → deep
+- **5 gezichtshaar opties:** none, stubble, moustache, goatee, full beard
+
+---
+
+## PODIUM (dag winnaars)
+
+Gerenderd via `renderPodium()` → `renderPodiumCard(player, rank)` + `renderStreakBadge(streak)`.
+
+**Layout:** Drie voetbalkaarten naast elkaar — goud (#1) in het midden iets hoger, zilver (#2) links, brons (#3) rechts.
+
+**Dag winsten sterren op de kaart:**
+- 0-5 wins: altijd 5 sterposities zichtbaar — ★ gevuld (goud), ☆ leeg
+- 6-10 wins: sterren verdwijnen, alleen het getal in dezelfde kleur/grootte
+- Desktop: tooltip bij hover "[X] dagwinsten junge!"
+- Mobiel: getal altijd zichtbaar
+
+**`day_wins` ophogen:** In de admin, na het invoeren van een uitslag, wordt de dagwinnaar(s) berekend en `day_wins + 1` uitgevoerd. Bij gelijke dagpunten krijgen alle gedeelde winnaars +1.
+
+---
+
+## KNOCKOUT BRACKET
+
+**Desktop:** Visuele bracket in de Toernooi tab. Alleen zichtbaar op `min-width: 900px`.
+**Mobiel:** Huidige lijst-weergave blijft intact, bracket verborgen.
+
+**Structuur (van buiten naar binnen):**
+```
+Links:  R32 → R16 → QF → SF
+Midden: FINALE (groot) + 3E PLAATS (klein, eronder)
+Rechts: SF → QF → R16 → R32 (gespiegeld)
+```
+
+**R32 slots — WK 2026 vaste indeling:**
+- Links: A1-B2, C1-D2, E1-F2, G1-H2, I1-J2, K1-L2 + 2 beste nummers 3
+- Rechts: B1-A2, D1-C2, F1-E2, H1-G2, J1-I2, L1-K2 + 2 beste nummers 3
+- Zolang teams onbekend: groeplabel tonen in muted kleur
+- Zodra `home_team`/`away_team` ingevuld: echte teamnaam + vlag
+
+**Winnaars:** Automatisch visueel doorgeschoven op basis van `m.result` — wordt niet teruggeschreven naar DB, realtime berekend.
+
+**Klikbaar:** Elke wedstrijd in de bracket opent de bestaande match-card (tips, odds, uitslag).
 
 ---
 
 ## COMPLOTGROEPJES — MATRIX THEMA
 
-**Terminologie (consistent gebruiken):**
-| Actie | Knoptitel | Omschrijving |
-|-------|-----------|--------------|
-| Lid toevoegen | 🐑 Slaper wakker maken | Geef iemand de rode pil. Hij weet nog van niets. |
-| Lid verwijderen | 😴 Laten slapen | Stuur een lid terug de matrix in. Ze herinneren zich niets. |
-| Haantje maken | 🐓👑 Kronen | Laat iemand zijn eigen waarheid creëren. |
+| Actie | Knoptitel |
+|-------|-----------|
+| Lid toevoegen | 🐑 Slaper wakker maken |
+| Lid verwijderen | 😴 Laten slapen |
+| Haantje maken | 🐓👑 Kronen |
 
-**Invite modal teksten:**
-- Titel: "MAAK EEN SLAPER WAKKER 🐑"
-- Label: "Gebruikersnaam van de slaapkop:"
-- Knop: "💊 RODE PIL GEVEN ▶"
-- Succes: "[naam] is ontwaakt. Welkom in het complot."
-- Fout: "Deze slaapkop bestaat niet in de matrix."
-
-**Complot beheren modal teksten:**
-- Titel: "BEHEER HET COMPLOT 🐓"
-- Laten slapen bevestiging: "[naam] slaapt weer. De matrix heeft hem terug."
-- Kronen bevestiging: "👑 [naam] IS NU DE WAARHEID."
+**Invite modal:** "💊 RODE PIL GEVEN", succes: "[naam] is ontwaakt. Welkom in het complot."
+**Kronen:** "👑 [naam] IS NU DE WAARHEID."
+**Laten slapen:** "[naam] slaapt weer. De matrix heeft hem terug."
 
 ---
 
 ## KLASSEMENT TIP CHIPS
 
 Per dag één flex-rij: datum label (44px vast, pixel 6px) + tip chips naast elkaar.
+Elke chip: 62px breed, `display:inline-flex`, vlag (16px) + 3-letter code (pixel 7px) + punten superscript (pixel 6px, groen).
 
-```html
-<!-- Per chip: altijd 62px breed, vlag + 3-letter code + punten superscript -->
-<span class="tip-ok/tip-fail" style="display:inline-flex;align-items:center;width:62px;flex-shrink:0;white-space:nowrap">
-  <span style="font-size:16px">🇳🇱</span>
-  <span style="font-family:var(--pixel);font-size:7px"> NET<sup style="color:var(--green);font-size:6px">+22</sup></span>
-</span>
-```
-
-**Teamnaam afkortingen (3 letters):**
+**Teamnaam afkortingen:**
 ```js
 const teamShort = {
   'DR Congo':'DRC', 'Saudi Arabia':'SAU', 'Cape Verde':'CPV',
@@ -213,23 +289,15 @@ const teamShort = {
 
 ## HEAD-TO-HEAD MODAL
 
-**Layout per wedstrijdrij (3 kolommen flex):**
-```
-LINKS (130px):  tip speler 1 — vlag + 3letters + pts superscript
-MID (flex:1):   vlag + volledige teamnaam + score (pixel 10px) + vlag + teamnaam  
-RECHTS (130px): tip speler 2 — zelfde opmaak
-```
-
-**Samenvatting:**
-- Beide gebruikersnamen: Oswald bold 26px (winnaar groen, verliezer rood)
-- Winnaar regel: "[NAAM] troeft [NAAM] genadeloos af met [X] punten verschil."
-- Puntenverschil: var(--yellow)
-- Bij gelijke stand: "[NAAM1] en [NAAM2] staan volledig gelijk."
+**Layout:** 3 kolommen flex per wedstrijdrij.
+- Links (130px): tip speler 1 — vlag + 3letters + pts
+- Midden (flex:1): vlag + teamnaam + score + vlag + teamnaam
+- Rechts (130px): tip speler 2
 
 **Filter tabs:** RONDE 1 · RONDE 2 · RONDE 3 · R32 · R16 · 1/4 · HALVE · 3E PLAATS · FINALE
-(GROEPSFASE, KNOCKOUT en ALLES zijn verwijderd)
 
-**Speler selector:** Custom dropdown in NRNF stijl met naam + streak info per optie.
+**Winnaar tekst:** "[NAAM] troeft [NAAM] genadeloos af met [X] punten verschil."
+Beide namen: Oswald bold 26px (winnaar groen, verliezer rood).
 
 ---
 
@@ -249,19 +317,18 @@ const RISK_PROFILES = [
 
 ## GAMIFICATION STATISTIEKEN
 
-**Gebruik altijd de helper functies:**
 - `calcWaaghals()` — laagste gem. gekozen kans = meeste risico
 - `calcAllStreaks()` — alle spelers met streak >= 1, gesorteerd
 - `calcOddsBeaters()` — wie wint terwijl ze niet op favoriet gokken
 - `getAvgRisk(userId)` — gemiddelde gekozen kans per speler
 
-**Stats zijn klikbaar op homepagina** → `openStatsModal('waaghals'/'streaks'/'oddsbeater')`
+Stats zijn klikbaar op homepagina → `openStatsModal('waaghals'/'streaks'/'oddsbeater')`
 
 ---
 
 ## BRACKET LOGICA
 
-- Groepswinnaars + nummers 2 → automatisch R32 na groepsfase via `updateBracket()`
+- Groepswinnaars + nummers 2 → automatisch R32 via `updateBracket()`
 - Beste nummers 3 → handmatig via `nummers3_invullen.sql`
 - Knockout winnaars → automatisch doorgeschoven na elke uitslag
 - `updateBracket()` herkent: `Winner M73`, `Winner R32-1`, `Loser SF-1` etc.
@@ -273,16 +340,6 @@ const RISK_PROFILES = [
 - Key opgeslagen in `settings` tabel (`key = 'odds_api_key'`)
 - Automatisch laden bij openen Admin tab via `loadOddsKey()`
 - Na laatste wedstrijd speelronde: automatisch odds voor volgende ronde via `autoFetchOddsIfRoundComplete()`
-- Validatie: foutmelding als niet alle wedstrijden van de ronde gevuld zijn
-
----
-
-## PIXEL-ART PODIUM POPPETJES
-
-- `pixelFigure(pos, avatarUrl)` — pos: 0=goud, 1=zilver, 2=brons
-- Random tenues via seeded random op basis van datum + positie
-- Medaille kleur: goud `#ffe600`, zilver `#cccccc`, brons `#c87941`
-- Avatar als hoofd van het poppetje
 
 ---
 
@@ -295,7 +352,6 @@ git push
 ```
 
 GitHub Pages deploy ~1 minuut. Hard refresh: `Cmd+Shift+R`.
-
 **Altijd committen voor grote wijzigingen!** Terugzetten: `git revert HEAD`
 
 ---
@@ -303,19 +359,20 @@ GitHub Pages deploy ~1 minuut. Hard refresh: `Cmd+Shift+R`.
 ## OPENSTAANDE ITEMS (niet bouwen tenzij gevraagd)
 
 1. **Prijzenkast in profielmodal** — behaalde streaks + hoe vaak, dagwinsten, medailles
-2. **Custom streak namen per complotgroepje** — Haantje kan titels + emojis aanpassen
-   - Nieuwe DB tabel nodig: `complot_streak_names (group_id, streak_level, title, emoji)`
+2. **Custom streak namen per complotgroepje** — nieuwe DB tabel: `complot_streak_names (group_id, streak_level, title, emoji)`
 3. **Meertaligheid NL/EN/DE** — volledige UI vertaling, taalvoorkeur in `profiles`
 4. **Bonus/nerf systeem** — superkrachten via streaks, nog te brainstormen
-5. **Paul drempel → 8** — eerbetoon aan Paul de Octopus (8 correcte voorspellingen)
-6. **Streak badge in profielmodal** — toont soms nog niet correct (cached data issue)
+5. **Paul drempel → 8** — eerbetoon aan Paul de Octopus
+6. **Streak badge in profielmodal** — toont soms niet correct (cached data issue)
 7. **Auto-odds fetch finetunen** — edge cases afvangen
 
 ---
 
-## TESTDATA
+## TESTDATA & SQL SCRIPTS
 
 - `testdata.sql` — 5 dummy spelers + alle 72 groepsuitslagen
 - `cleanup.sql` — reset alles voor het echte toernooi
 - `beste_nummers_3.sql` — welke 8 nummers 3 gaan door
 - `nummers3_invullen.sql` — vul beste nummers 3 in R32 bracket
+- `setup_final.sql` — complete database setup (eenmalig)
+- `fix_complot.sql` — complot tabellen fix
