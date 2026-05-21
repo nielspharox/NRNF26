@@ -1,0 +1,154 @@
+/* ============================================================================
+   NO RISK NO FUN — Foundations
+   Retro 1999/2000 internet aesthetic (Hyves, early FIFA games, GeoCities).
+   ============================================================================ */
+
+/* ----- FONTS (Google Fonts) --------------------------------------------------
+   Press Start 2P → pixel font for labels, titles, badges.
+   VT323          → retro body / numerals.
+   Oswald 700     → team names, player names, condensed display.
+---------------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Oswald:wght@400;700&display=swap');
+
+:root {
+  /* ----- BASE COLORS (raw) ----- */
+  --bg:           #1a0033;   /* deep purple background */
+  --bg2:          #2a0050;   /* card / section background */
+  --bg3:          #0f001f;   /* inputs, darkest plane */
+
+  --purple:       #7b00ff;   /* primary action / brand */
+  --purple-light: #aa44ff;   /* accents, hover, glow */
+  --border:       #5500aa;   /* default border tone */
+
+  --green:        #00ff66;   /* success, active, correct tip */
+  --green-dark:   #00cc44;   /* button border / pressed */
+
+  --yellow:       #ffe600;   /* streak, warning, gold rank */
+  --red:          #ff2244;   /* error, danger, wrong tip */
+
+  --white:        #f0e6ff;   /* primary text */
+  --muted:        #d4bef5;   /* secondary text */
+
+  /* ranked medals */
+  --gold:         #ffe600;
+  --silver:       #cccccc;
+  --bronze:       #c87941;
+
+  /* ----- SEMANTIC: TEXT ----- */
+  --fg-1:         var(--white);
+  --fg-2:         var(--muted);
+  --fg-success:   var(--green);
+  --fg-warn:      var(--yellow);
+  --fg-danger:    var(--red);
+
+  /* ----- SEMANTIC: SURFACES ----- */
+  --surface-0:    var(--bg);
+  --surface-1:    var(--bg2);
+  --surface-2:    var(--bg3);
+
+  /* ----- FONT FAMILIES ----- */
+  --pixel:  'Press Start 2P', monospace;
+  --vt:     'VT323', monospace;
+  --oswald: 'Oswald', sans-serif;
+
+  /* ----- TYPE SIZE TOKENS (strict — never go below these floors) ----- */
+  --px-section-title: 13px; /* Press Start 2P — ▶ TIPS, ▶ STAND */
+  --px-modal-head:    11px; /* Press Start 2P — modal headings */
+  --px-button:         9px; /* Press Start 2P — button labels, table headers */
+  --px-badge:          8px; /* Press Start 2P — streak, phase, locked badges */
+  --px-label:          7px; /* Press Start 2P — absolute minimum */
+
+  --vt-body:          22px; /* VT323 — body copy, descriptions */
+  --vt-meta:          20px; /* VT323 — dates, meta info */
+  --vt-secondary:     18px; /* VT323 — absolute minimum */
+
+  --os-name-modal:    26px; /* Oswald 700 — player names in modals (H2H etc.) */
+  --os-name-board:    18px; /* Oswald 700 — players/teams in leaderboard */
+  --os-team:          18px; /* Oswald 700 — team names on match cards */
+  --os-code:          13px; /* Oswald 700 — 3-letter country codes */
+
+  /* ----- SPACING (informal — borders + offset shadows drive most rhythm) ----- */
+  --space-1:  4px;
+  --space-2:  6px;
+  --space-3: 10px;
+  --space-4: 14px;
+  --space-5: 20px;
+  --space-6: 28px;
+
+  /* ----- SHADOWS — hard-edged "press start" drop shadows, no blur ----- */
+  --shadow-card:    4px 4px 0 #000;   /* on raised cards and buttons */
+  --shadow-modal:   8px 8px 0 #000;   /* on modal containers */
+  --shadow-sm:      2px 2px 0 #000;   /* tiny chips, badges */
+  --shadow-purple:  3px 3px 0 rgba(123,0,255,.5);
+  --glow-purple:    0 0 12px var(--purple-light), 0 0 24px rgba(170,68,255,0.4);
+  --glow-yellow:    0 0 8px var(--yellow);
+  --glow-green:     0 0 8px rgba(0,255,102,0.25);
+
+  /* ----- BORDERS / RADII ----- */
+  /* The brand uses HARD, SQUARED corners. Radius is essentially zero.       */
+  --radius: 0;
+  --border-thin:  2px solid var(--border);
+  --border-card:  3px solid var(--border);
+  --border-modal: 4px solid var(--purple);
+  --border-auth:  4px solid var(--green);
+}
+
+/* ============================================================================
+   BASE / PAGE
+   ============================================================================ */
+html, body { background: var(--bg); color: var(--white); }
+body {
+  font-family: var(--vt);
+  font-size: var(--vt-meta);
+  min-height: 100vh;
+  /* Subtle horizontal scanlines — part of the retro vibe. */
+  background-image: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+}
+/* Second scanline pass — finer, sits above content but is pointer-transparent. */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 1px,
+    transparent 1px, transparent 3px);
+}
+
+/* ============================================================================
+   SEMANTIC TYPE PRIMITIVES
+   Use these directly, OR replicate the rules inline (the codebase does both).
+   ============================================================================ */
+.t-section-title {
+  font-family: var(--pixel); font-size: var(--px-section-title);
+  color: var(--green); text-shadow: 3px 3px 0 #004422;
+  line-height: 1.5;
+}
+.t-section-sub {
+  font-family: var(--vt); font-size: var(--vt-meta); color: var(--muted);
+}
+.t-modal-head {
+  font-family: var(--pixel); font-size: var(--px-modal-head);
+  color: var(--green); text-shadow: 2px 2px 0 #004422;
+}
+.t-button { font-family: var(--pixel); font-size: var(--px-button); letter-spacing: .04em; }
+.t-badge  { font-family: var(--pixel); font-size: var(--px-badge); }
+.t-label  { font-family: var(--pixel); font-size: var(--px-label); color: var(--muted); }
+
+.t-body       { font-family: var(--vt); font-size: var(--vt-body); line-height: 1.6; }
+.t-meta       { font-family: var(--vt); font-size: var(--vt-meta); color: var(--muted); }
+.t-secondary  { font-family: var(--vt); font-size: var(--vt-secondary); color: var(--muted); }
+
+.t-name       { font-family: var(--oswald); font-weight: 700; font-size: var(--os-name-board); }
+.t-name-lg    { font-family: var(--oswald); font-weight: 700; font-size: var(--os-name-modal); }
+.t-team       { font-family: var(--oswald); font-weight: 700; font-size: var(--os-team); text-transform: uppercase; }
+.t-code       { font-family: var(--oswald); font-weight: 700; font-size: var(--os-code); }
+
+/* ============================================================================
+   COLOR UTILITY SHORTCUTS
+   ============================================================================ */
+.c-green  { color: var(--green); }
+.c-yellow { color: var(--yellow); }
+.c-red    { color: var(--red); }
+.c-purple { color: var(--purple-light); }
+.c-muted  { color: var(--muted); }
+.c-white  { color: var(--white); }

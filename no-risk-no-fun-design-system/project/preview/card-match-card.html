@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:var(--vt);font-size:var(--vt-meta);width:700px;min-height:100px;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);overflow:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;}
+  .wrap{padding:20px 24px;}
+  .label{font-family:var(--pixel);font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;}
+  
+</style></head>
+<body><div class="wrap">
+<div class="label">Match card · meta row + pick row · result-coded left border</div>
+<div style="background:var(--bg2);border:2px solid var(--border);border-left:4px solid var(--green);padding:14px;position:relative;">
+  <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <span style="padding:2px 6px;background:var(--purple);color:#fff;">GROEP B</span>
+    <span>RONDE 2</span>
+    <span>·</span>
+    <span>23 JUNI · 21:00</span>
+    <span>·</span>
+    <span>AMSTERDAM</span>
+    <span style="padding:2px 6px;background:var(--red);color:#fff;">🔒 LOCKED</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:10px;align-items:stretch;">
+    <div style="background:rgba(0,255,102,0.15);border:2px solid var(--green);color:var(--green);font-family:var(--oswald);font-size:16px;font-weight:700;padding:14px 8px;text-align:center;text-transform:uppercase;line-height:1.3;">🇳🇱 NETHERLANDS<div style="font-family:var(--pixel);font-size:9px;color:var(--white);margin-top:4px;font-weight:400;">35% KANS</div><div style="font-family:var(--pixel);font-size:9px;color:var(--green);margin-top:3px;">+3 PT</div></div>
+    <div style="background:var(--bg3);border:2px solid var(--border);color:var(--white);font-family:var(--pixel);font-size:9px;padding:14px 6px;text-align:center;line-height:1.6;">GELIJK<br><span style="font-size:8px;">30%</span><br>+3 PT</div>
+    <div style="background:var(--bg3);border:2px solid var(--border);color:var(--white);font-family:var(--oswald);font-size:16px;font-weight:700;padding:14px 8px;text-align:center;text-transform:uppercase;line-height:1.3;">🇧🇷 BRAZIL<div style="font-family:var(--pixel);font-size:9px;color:var(--white);margin-top:4px;font-weight:400;">35% KANS</div><div style="font-family:var(--pixel);font-size:9px;color:var(--white);margin-top:3px;">+3 PT</div></div>
+  </div>
+  <div style="display:flex;gap:6px;margin-top:10px;font-family:var(--pixel);font-size:9px;">
+    <span style="color:var(--green);">▲ 4</span>
+    <span style="color:var(--border);">·</span>
+    <span style="color:var(--yellow);">═ 2</span>
+    <span style="color:var(--border);">·</span>
+    <span style="color:var(--red);">▼ 1</span>
+  </div>
+</div>
+</div></body></html>

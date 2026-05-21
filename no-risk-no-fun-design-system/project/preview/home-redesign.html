@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>NRNF · Home redesign</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+/* ============================================================================
+   Local layout — re-uses tokens from colors_and_type.css.
+   Component styles match the live UI kit (header, nav, box, podium, etc).
+   ============================================================================ */
+html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:var(--vt);min-height:100vh;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;}
+
+/* HEADER */
+header{background:var(--bg3);border-bottom:4px solid var(--green);}
+.header-stripe{height:6px;background:repeating-linear-gradient(90deg,var(--purple) 0,var(--purple) 20px,var(--green) 20px,var(--green) 40px,var(--yellow) 40px,var(--yellow) 60px);}
+.header-inner{display:flex;align-items:center;gap:1.5rem;padding:1rem 1.5rem;flex-wrap:wrap;max-width:1100px;margin:0 auto;}
+.mascot-wrap{width:80px;height:80px;border:3px solid var(--green);overflow:hidden;box-shadow:4px 4px 0 #000;background:#000;flex-shrink:0;}
+.mascot-wrap img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+.logo-title{font-family:var(--pixel);font-size:15px;color:var(--green);text-shadow:3px 3px 0 #004422,-1px -1px 0 #000;line-height:1.5;}
+.logo-sub{font-family:var(--vt);font-size:22px;color:var(--yellow);margin-top:4px;text-shadow:2px 2px 0 #000;}
+.header-user{font-family:var(--vt);font-size:16px;color:var(--muted);text-align:right;margin-left:auto;}
+.header-user strong{color:var(--green);display:block;font-size:20px;}
+
+/* NAV */
+nav{background:var(--bg2);border-bottom:3px solid var(--purple);display:flex;overflow-x:auto;}
+.tab{font-family:var(--pixel);font-size:9px;padding:12px 16px;background:transparent;border:none;border-right:2px solid var(--border);color:var(--muted);cursor:pointer;white-space:nowrap;}
+.tab:hover{background:rgba(123,0,255,0.3);color:var(--white);}
+.tab.active{background:var(--purple);color:var(--green);}
+
+main{max-width:980px;margin:0 auto;padding:1.5rem;}
+.sec-title{font-family:var(--pixel);font-size:13px;color:var(--green);text-shadow:3px 3px 0 #004422;margin-bottom:6px;}
+.sec-sub{font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:1.5rem;}
+
+/* SECTION BLOCK shell — used for each home section */
+.block{margin-bottom:2rem;}
+.block-head{
+  font-family:var(--pixel);font-size:11px;color:var(--yellow);
+  letter-spacing:.05em;display:flex;align-items:center;gap:10px;margin-bottom:14px;
+  padding-bottom:8px;border-bottom:2px solid var(--border);flex-wrap:wrap;
+}
+.block-head .num{font-family:var(--pixel);font-size:8px;color:var(--purple-light);background:var(--bg2);
+  border:1px solid var(--purple);padding:3px 6px;}
+.block-head .right{margin-left:auto;font-family:var(--vt);font-size:18px;color:var(--muted);letter-spacing:0;text-align:right;flex-shrink:1;min-width:0;}
+
+/* 1 ── PODIUM ─────────────────────────────────────── */
+.podium{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:14px;align-items:end;margin-bottom:8px;}
+.pcard{border:3px solid;background:var(--bg2);box-shadow:4px 4px 0 #000;position:relative;}
+.pcard-1{border-color:var(--yellow);box-shadow:0 0 14px rgba(255,230,0,0.45),5px 5px 0 #000;transform:translateY(-12px);}
+.pcard-2{border-color:#cccccc;}
+.pcard-3{border-color:#c87941;}
+.pcard .rb{font-family:var(--pixel);font-size:8px;text-align:center;padding:5px;color:#000;letter-spacing:.15em;}
+.pcard-1 .rb{background:var(--yellow);}
+.pcard-2 .rb{background:#cccccc;}
+.pcard-3 .rb{background:#c87941;color:#fff;}
+.pcard .pp{height:110px;display:flex;align-items:flex-end;justify-content:center;background:var(--bg3);position:relative;overflow:hidden;}
+.pcard-1 .pp{background:radial-gradient(ellipse at center 60%,rgba(255,230,0,0.20),var(--bg3) 70%);}
+.pcard-2 .pp{background:radial-gradient(ellipse at center 60%,rgba(200,200,200,0.18),var(--bg3) 70%);}
+.pcard-3 .pp{background:radial-gradient(ellipse at center 60%,rgba(200,120,65,0.20),var(--bg3) 70%);}
+.pcard .pp::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.20) 0,rgba(0,0,0,0.20) 1px,transparent 1px,transparent 3px);pointer-events:none;}
+.pcard .pp pixel-player svg{width:96px;height:auto;}
+.pcard .nm{text-align:center;padding:8px 6px;background:#000;font-family:var(--oswald);font-weight:700;font-size:18px;letter-spacing:.04em;}
+.pcard-1 .nm{color:var(--yellow);}
+.pcard-2 .nm{color:#dddddd;}
+.pcard-3 .nm{color:#e9b07f;}
+.pcard .pt{text-align:center;padding:7px 6px;font-family:var(--pixel);font-size:12px;color:var(--green);text-shadow:2px 2px 0 #000;}
+.pcard-1 .pt{font-size:14px;color:var(--yellow);background:rgba(255,230,0,0.08);}
+
+/* 2 ── STAT TICKERS ───────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.tk{background:var(--bg2);border:2px solid var(--border);padding:12px 16px;cursor:pointer;transition:border-color 0.15s;position:relative;}
+.tk::after{content:'';position:absolute;top:2px;left:2px;right:-2px;bottom:-2px;background:#000;z-index:-1;}
+.tk:hover{border-color:var(--green);}
+.tk .lbl{font-family:var(--pixel);font-size:9px;color:var(--yellow);margin-bottom:6px;}
+.tk .val{font-family:var(--vt);font-size:22px;color:var(--green);line-height:1.2;}
+.tk .hint{font-family:var(--pixel);font-size:7px;color:var(--muted);margin-top:6px;letter-spacing:.1em;}
+
+/* 3 ── KLASSEMENT (top 5) ─────────────────────────── */
+.lb{background:var(--bg2);border:2px solid var(--border);position:relative;}
+.lb::after{content:'';position:absolute;top:2px;left:2px;right:-2px;bottom:-2px;background:#000;z-index:-1;}
+.lb-row{display:grid;grid-template-columns:36px 44px 1fr auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(85,0,170,0.3);}
+.lb-row:last-child{border-bottom:none;}
+.lb-row:hover{background:rgba(123,0,255,0.08);}
+.lb-row .rk{font-family:var(--pixel);font-size:13px;color:var(--muted);text-align:center;}
+.lb-row .rk.r1{color:var(--yellow);text-shadow:0 0 8px var(--yellow);}
+.lb-row .rk.r2{color:#cccccc;}
+.lb-row .rk.r3{color:#c87941;}
+.lb-row .av{width:40px;height:40px;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;}
+.lb-row .av pixel-player svg{width:44px;height:auto;}
+.lb-row .who{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.lb-row .nm{font-family:var(--oswald);font-weight:700;font-size:18px;color:var(--white);}
+.lb-row .pt{font-family:var(--pixel);font-size:12px;color:var(--green);}
+.streak-badge{font-family:var(--pixel);font-size:7px;padding:2px 6px;border:2px solid;display:inline-block;}
+.sb-silver{border-color:#cccccc;color:#cccccc;background:rgba(200,200,200,0.1);box-shadow:2px 2px 0 #000;}
+.sb-gold{border-color:var(--yellow);color:var(--yellow);background:rgba(255,230,0,0.15);box-shadow:2px 2px 0 #000;}
+.sb-glow{border:3px solid var(--purple-light);color:var(--purple-light);background:rgba(170,68,255,0.15);box-shadow:0 0 12px var(--purple-light),0 0 24px rgba(170,68,255,0.4);}
+.lb-more{text-align:right;margin-top:10px;}
+.lb-more a{font-family:var(--pixel);font-size:9px;color:var(--green);text-decoration:none;letter-spacing:.05em;padding:6px 10px;border:2px solid var(--green);display:inline-block;box-shadow:2px 2px 0 #000;}
+.lb-more a:hover{background:rgba(0,255,102,0.1);}
+
+/* 4 ── HET BORD (messageboard) ────────────────────── */
+.board-frame{background:var(--bg2);border:3px solid var(--purple);position:relative;padding:0;}
+.board-frame::after{content:'';position:absolute;top:3px;left:3px;right:-3px;bottom:-3px;background:#000;z-index:-1;}
+.board-strip{height:4px;background:repeating-linear-gradient(90deg,var(--purple) 0,var(--purple) 12px,var(--green) 12px,var(--green) 24px,var(--yellow) 24px,var(--yellow) 36px);}
+
+.composer{padding:14px 16px;border-bottom:2px solid var(--border);background:var(--bg3);display:flex;gap:10px;align-items:flex-start;}
+.composer .av{width:40px;height:40px;border:2px solid var(--green);background:var(--bg2);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;flex-shrink:0;}
+.composer .av pixel-player svg{width:44px;height:auto;}
+.composer-input{flex:1;display:flex;flex-direction:column;gap:8px;}
+.composer textarea{background:var(--bg2);border:2px solid var(--border);color:var(--white);font-family:var(--vt);font-size:20px;padding:8px 10px;resize:vertical;outline:none;min-height:46px;width:100%;}
+.composer textarea:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255,102,0.25);}
+.composer textarea::placeholder{color:var(--muted);opacity:.7;}
+.composer-bottom{display:flex;align-items:center;gap:10px;}
+.composer-bottom .count{font-family:var(--pixel);font-size:7px;color:var(--muted);letter-spacing:.1em;margin-right:auto;}
+.composer-bottom .count.warn{color:var(--yellow);}
+.composer-bottom .count.over{color:var(--red);}
+.btn-post{font-family:var(--pixel);font-size:9px;padding:9px 14px;border:3px solid var(--green-dark);background:var(--green);color:#000;cursor:pointer;letter-spacing:.04em;box-shadow:4px 4px 0 #000;}
+.btn-post:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000;}
+.btn-post:disabled{opacity:.4;cursor:not-allowed;}
+
+#posts{padding:8px 0;}
+.post{padding:14px 16px;border-bottom:1px solid rgba(85,0,170,0.35);display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:flex-start;position:relative;}
+.post:last-child{border-bottom:none;}
+.post.pinned{background:rgba(255,230,0,0.04);border-left:4px solid var(--yellow);padding-left:12px;}
+.post .av{width:40px;height:40px;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;}
+.post .av pixel-player svg{width:44px;height:auto;}
+.post .head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+.post .name{font-family:var(--oswald);font-weight:700;font-size:18px;color:var(--white);}
+.post .haantje{font-family:var(--pixel);font-size:6px;color:var(--yellow);padding:2px 4px;border:1px solid var(--yellow);letter-spacing:.05em;}
+.post .pin{font-family:var(--pixel);font-size:6px;color:#000;padding:2px 4px;background:var(--yellow);letter-spacing:.05em;}
+.post .time{font-family:var(--vt);font-size:16px;color:var(--muted);margin-left:auto;}
+.post .body{font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.4;}
+.post .body em{color:var(--purple-light);font-style:normal;}
+.post .body .gn{color:var(--green);}
+.post .actions{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.react{font-family:var(--pixel);font-size:8px;padding:5px 10px;border:2px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:4px;letter-spacing:.05em;}
+.react:hover{color:var(--white);border-color:var(--white);}
+.react.up.active{border-color:var(--green);color:var(--green);background:rgba(0,255,102,0.1);}
+.react.down.active{border-color:var(--red);color:var(--red);background:rgba(255,34,68,0.1);}
+.react .glyph{font-size:10px;}
+.react .n{font-family:var(--pixel);font-size:9px;}
+.reply-link{font-family:var(--pixel);font-size:7px;color:var(--muted);margin-left:auto;letter-spacing:.1em;cursor:pointer;}
+.reply-link:hover{color:var(--green);}
+
+.board-footer{padding:10px 16px;background:var(--bg3);border-top:2px solid var(--border);font-family:var(--pixel);font-size:7px;color:var(--muted);letter-spacing:.1em;display:flex;justify-content:space-between;}
+
+/* 5 ── COMPLOTGROEPJES ───────────────────────────── */
+.complot-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.complot{background:var(--bg2);border:2px solid var(--purple);padding:14px;position:relative;}
+.complot::after{content:'';position:absolute;top:2px;left:2px;right:-2px;bottom:-2px;background:#000;z-index:-1;}
+.complot .nm{font-family:var(--pixel);font-size:10px;color:var(--purple-light);margin-bottom:6px;letter-spacing:.05em;}
+.complot .meta{font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:10px;}
+.complot .member{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(85,0,170,0.3);}
+.complot .member:last-child{border-bottom:none;}
+.complot .member .av{width:28px;height:28px;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;}
+.complot .member .av pixel-player svg{width:30px;height:auto;}
+.complot .member .nm-row{font-family:var(--oswald);font-weight:700;font-size:16px;color:var(--white);}
+.complot .member .ha{font-family:var(--pixel);font-size:6px;color:var(--yellow);padding:1px 4px;border:1px solid var(--yellow);margin-left:4px;}
+.complot .member .pt{margin-left:auto;font-family:var(--pixel);font-size:9px;color:var(--green);}
+.complot-empty{background:var(--bg2);border:2px dashed var(--purple);padding:18px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
+.complot-empty .ti{font-family:var(--pixel);font-size:10px;color:var(--purple-light);}
+.complot-empty .ds{font-family:var(--vt);font-size:18px;color:var(--muted);line-height:1.4;}
+.btn-purple{font-family:var(--pixel);font-size:9px;padding:9px 14px;border:3px solid #4400cc;background:var(--purple);color:var(--white);cursor:pointer;letter-spacing:.04em;box-shadow:4px 4px 0 #000;text-decoration:none;display:inline-block;}
+.btn-purple:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000;}
+
+/* responsive */
+@media (max-width:780px){
+  .stats-grid{grid-template-columns:1fr;}
+  .complot-grid{grid-template-columns:1fr;}
+  .lb-row{grid-template-columns:28px 36px 1fr auto;padding:8px 10px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-stripe"></div>
+  <div class="header-inner">
+    <div class="mascot-wrap"><img src="../assets/mascot.png" alt=""></div>
+    <div>
+      <div class="logo-title">NO RISK NO FUN</div>
+      <div class="logo-sub">⚽ WK POOL 2026 ⚽</div>
+    </div>
+    <div class="header-user">
+      ingelogd als<strong>niels</strong>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <button class="tab active">🏠 HOME</button>
+  <button class="tab">⚽ TIPS</button>
+  <button class="tab">🏆 STAND</button>
+  <button class="tab">💬 HET BORD <span style="color:var(--yellow);">·12</span></button>
+  <button class="tab">📖 SPELREGELS</button>
+  <button class="tab">📋 TOERNOOI</button>
+</nav>
+
+<main>
+  <div class="sec-title">▶ HOME</div>
+  <div class="sec-sub">Welkom terug, Niels — 14 dagen tot de finale.</div>
+
+  <!-- 1 · PODIUM ─────────────────────────────────────── -->
+  <div class="block">
+    <div class="block-head"><span class="num">01</span> ⭐ PODIUM GISTEREN <span class="right">23 juni · 4 wedstrijden gespeeld</span></div>
+    <div class="podium" id="podium"></div>
+  </div>
+
+  <!-- 2 · STATISTIEKEN ─────────────────────────────── -->
+  <div class="block">
+    <div class="block-head"><span class="num">02</span> 📊 STATISTIEKEN <span class="right">vandaag · klikbaar voor details</span></div>
+    <div class="stats-grid">
+      <div class="tk">
+        <div class="lbl">🎲 WAAGHALS VAN DE DAG</div>
+        <div class="val">MIRJAM</div>
+        <div class="hint">GEM. KANS 11% · 🎭 DE STROMAN</div>
+      </div>
+      <div class="tk">
+        <div class="lbl">🔥 STREAK LEIDER</div>
+        <div class="val">NIELS · 6 OP RIJ</div>
+        <div class="hint">⚡ THE CHOSEN ONE</div>
+      </div>
+      <div class="tk">
+        <div class="lbl">🎯 ODDS BEATER</div>
+        <div class="val">JEROEN</div>
+        <div class="hint">WON OP UNDERDOG · +42 PT</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 · KLASSEMENT (top 5) ─────────────────────── -->
+  <div class="block">
+    <div class="block-head"><span class="num">03</span> 🏆 KLASSEMENT · TOP 5 <span class="right">9 spelers totaal</span></div>
+    <div class="lb" id="lb"></div>
+    <div class="lb-more"><a>ZIE VOLLEDIG KLASSEMENT ▶</a></div>
+  </div>
+
+  <!-- 4 · HET BORD (messageboard) ─────────────────── -->
+  <div class="block">
+    <div class="block-head"><span class="num">04</span> 💬 HET BORD <span class="right" id="post-count">12 berichten · laatste activiteit 8 min geleden</span></div>
+    <div class="board-frame">
+      <div class="board-strip"></div>
+
+      <div class="composer">
+        <div class="av"><pixel-player name="niels" mini></pixel-player></div>
+        <div class="composer-input">
+          <textarea id="composer-text" placeholder="Wat speelt er in het complot? · max 240 tekens" maxlength="240"></textarea>
+          <div class="composer-bottom">
+            <span class="count" id="composer-count">0 / 240</span>
+            <button class="btn-post" id="btn-post" disabled>PLAATSEN ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="posts"></div>
+
+      <div class="board-footer">
+        <span>NRNF.NET · HET BORD v1.0 · alleen voor ingelogden</span>
+        <span>POWERED BY 🐙 + 🍌</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 · COMPLOTGROEPJES ─────────────────────────── -->
+  <div class="block">
+    <div class="block-head"><span class="num">05</span> 🐓 COMPLOTGROEPJES <span class="right">jij zit in 1 complot</span></div>
+    <div class="complot-grid">
+      <div class="complot">
+        <div class="nm">🐓 DE PHAROX BENDE</div>
+        <div class="meta">4 leden · 8 wedstrijden gespeeld</div>
+        <div class="member"><div class="av"><pixel-player name="niels" mini></pixel-player></div><span class="nm-row">NIELS</span><span class="ha">HAANTJE</span><span class="pt">147</span></div>
+        <div class="member"><div class="av"><pixel-player name="mirjam" mini></pixel-player></div><span class="nm-row">MIRJAM</span><span class="pt">132</span></div>
+        <div class="member"><div class="av"><pixel-player name="jeroen" mini></pixel-player></div><span class="nm-row">JEROEN</span><span class="pt">98</span></div>
+        <div class="member"><div class="av"><pixel-player name="petra" mini></pixel-player></div><span class="nm-row">PETRA</span><span class="pt">76</span></div>
+      </div>
+      <div class="complot-empty">
+        <div class="ti">START JE EIGEN COMPLOT</div>
+        <div class="ds">Bouw je eigen waarheid.<br>Ontsnap aan de matrix.</div>
+        <a class="btn-purple">🐓 NIEUW COMPLOT ▶</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="../ui_kits/nrnf/components/pixel-player.js"></script>
+<script>
+const { generatePlayer } = window.NRNFPixelPlayer;
+
+/* ── PODIUM ───────────────────────────────────────── */
+const PODIUM = [
+  { rank:1, u:'niels',  pt:68, cls:'pcard-1', rb:'★ 1ST · CHAMPION ★' },
+  { rank:2, u:'mirjam', pt:52, cls:'pcard-2', rb:'2ND · SILVER' },
+  { rank:3, u:'jeroen', pt:41, cls:'pcard-3', rb:'3RD · BRONZE' },
+];
+const order = [PODIUM[1], PODIUM[0], PODIUM[2]];
+document.getElementById('podium').innerHTML = order.map(s => `
+  <div class="pcard ${s.cls}">
+    <div class="rb">${s.rb}</div>
+    <div class="pp"><pixel-player name="${s.u}"></pixel-player></div>
+    <div class="nm">${s.u.toUpperCase()}</div>
+    <div class="pt">${s.pt} PT</div>
+  </div>
+`).join('');
+
+/* ── KLASSEMENT (top 5) ──────────────────────────── */
+const LB = [
+  { u:'niels',  pt:147, streak:6 },
+  { u:'mirjam', pt:132, streak:3 },
+  { u:'jeroen', pt:98,  streak:1 },
+  { u:'petra',  pt:76,  streak:0 },
+  { u:'tom',    pt:64,  streak:2 },
+];
+function streakBadge(n){
+  if (n>=12) return `<span class="streak-badge sb-glow">🔮 THE ORACLE</span>`;
+  if (n>=6)  return `<span class="streak-badge sb-gold">⚡ THE CHOSEN ONE</span>`;
+  if (n>=4)  return `<span class="streak-badge sb-gold">🌵🤠 EL JEFE</span>`;
+  if (n>=2)  return `<span class="streak-badge sb-silver">🐙 PAUL</span>`;
+  return '';
+}
+document.getElementById('lb').innerHTML = LB.map((p,i) => `
+  <div class="lb-row">
+    <div class="rk r${i+1}">${i+1}</div>
+    <div class="av"><pixel-player name="${p.u}" mini></pixel-player></div>
+    <div class="who">
+      <span class="nm">${p.u.toUpperCase()}</span>
+      ${streakBadge(p.streak)}
+    </div>
+    <div class="pt">${p.pt} PT</div>
+  </div>
+`).join('');
+
+/* ── HET BORD (messageboard) ─────────────────────── */
+const SEED_POSTS = [
+  {
+    id:1, u:'niels', haantje:true, pinned:true, time:'8 min',
+    body:'Iedereen die <em>Marokko</em> tipt vrijdag... ik <span class="gn">zie</span> jullie. 🐓',
+    up:15, down:2, mine:null,
+  },
+  {
+    id:2, u:'mirjam', time:'24 min',
+    body:'Net 50 punten op <span class="gn">MAR-FRA</span> gepakt 🇲🇦 Nu nog 7 wedstrijden te gaan. Niels watch out.',
+    up:22, down:4, mine:'up',
+  },
+  {
+    id:3, u:'jeroen', time:'1u',
+    body:'Iemand tips voor Spanje–Italië? Ik twijfel tussen onder en grote verrassing.',
+    up:3, down:1, mine:null,
+  },
+  {
+    id:4, u:'petra', time:'2u',
+    body:'De odds zijn weer omhoog gegaan voor Brazilië. De <em>matrix</em> is bezig. Niemand panikeer.',
+    up:8, down:0, mine:null,
+  },
+  {
+    id:5, u:'tom', time:'3u',
+    body:'Ik ben De Bureaucraat geworden. 55% gem. kans. Heeft iemand een rebellen-training tip 😴',
+    up:11, down:3, mine:'down',
+  },
+  {
+    id:6, u:'niels', haantje:true, pinned:true, time:'gisteren',
+    body:'<em>Welkom in het complot.</em> Lees de <span class="gn">spelregels</span>. Tip vóór aftrap. Geen tip = automatisch gelijkspel. 🐓',
+    up:18, down:0, mine:'up',
+  },
+];
+
+const state = { posts: SEED_POSTS.slice() };
+
+function renderPosts(){
+  document.getElementById('posts').innerHTML = state.posts.map(p => {
+    const upActive   = p.mine === 'up' ? 'active' : '';
+    const downActive = p.mine === 'down' ? 'active' : '';
+    return `<div class="post ${p.pinned?'pinned':''}" data-id="${p.id}">
+      <div class="av"><pixel-player name="${p.u}" mini></pixel-player></div>
+      <div>
+        <div class="head">
+          <span class="name">${p.u.toUpperCase()}</span>
+          ${p.haantje ? '<span class="haantje">🐓 HAANTJE</span>' : ''}
+          ${p.pinned ? '<span class="pin">📌 VASTGEPRIKT</span>' : ''}
+          <span class="time">${p.time}</span>
+        </div>
+        <div class="body">${p.body}</div>
+        <div class="actions">
+          <button class="react up ${upActive}" data-id="${p.id}" data-act="up">
+            <span class="glyph">▲</span><span class="n">+${p.up}</span>
+          </button>
+          <button class="react down ${downActive}" data-id="${p.id}" data-act="down">
+            <span class="glyph">▼</span><span class="n">-${p.down}</span>
+          </button>
+          <span class="reply-link">↳ REAGEER</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+renderPosts();
+
+document.getElementById('posts').addEventListener('click', e => {
+  const btn = e.target.closest('.react');
+  if (!btn) return;
+  const id = +btn.dataset.id;
+  const act = btn.dataset.act;
+  const p = state.posts.find(x => x.id === id);
+  if (!p) return;
+  // toggle: clicking same removes; clicking opposite switches
+  if (p.mine === act) {
+    p[act] -= 1; p.mine = null;
+  } else if (p.mine && p.mine !== act) {
+    p[p.mine] -= 1;
+    p[act] += 1;
+    p.mine = act;
+  } else {
+    p[act] += 1; p.mine = act;
+  }
+  renderPosts();
+});
+
+/* composer */
+const ta = document.getElementById('composer-text');
+const cnt = document.getElementById('composer-count');
+const btn = document.getElementById('btn-post');
+function updateComposer(){
+  const n = ta.value.length;
+  cnt.textContent = `${n} / 240`;
+  cnt.className = 'count' + (n>200?' warn':'') + (n>=240?' over':'');
+  btn.disabled = n < 3;
+}
+ta.addEventListener('input', updateComposer);
+btn.addEventListener('click', () => {
+  const txt = ta.value.trim();
+  if (!txt) return;
+  state.posts.unshift({
+    id: Date.now(), u:'niels', time:'nu net', body: txt.replace(/</g,'&lt;'),
+    up: 0, down: 0, mine: null
+  });
+  ta.value = '';
+  updateComposer();
+  renderPosts();
+  const newpost = document.querySelector('#posts .post');
+  newpost.style.background = 'rgba(0,255,102,0.08)';
+  setTimeout(() => { newpost.style.transition = 'background 1.2s'; newpost.style.background = ''; }, 50);
+});
+updateComposer();
+</script>
+</body>
+</html>

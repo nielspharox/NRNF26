@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:var(--vt);font-size:var(--vt-meta);width:700px;min-height:100px;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);overflow:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;}
+  .wrap{padding:20px 24px;}
+  .label{font-family:var(--pixel);font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;}
+  
+</style></head>
+<body><div class="wrap">
+<div class="label">Leaderboard · rank · avatar · player · recent tips · pts</div>
+<table style="width:100%;border-collapse:collapse;background:var(--bg2);border:3px solid var(--border);">
+  <thead><tr>
+    <th style="font-family:var(--pixel);font-size:9px;color:var(--white);padding:10px 8px;border-bottom:2px solid var(--border);text-align:left;">#</th>
+    <th style="border-bottom:2px solid var(--border);"></th>
+    <th style="font-family:var(--pixel);font-size:9px;color:var(--white);padding:10px 8px;border-bottom:2px solid var(--border);text-align:left;">SPELER</th>
+    <th style="font-family:var(--pixel);font-size:9px;color:var(--white);padding:10px 8px;border-bottom:2px solid var(--border);text-align:left;">RECENTE TIPS</th>
+    <th style="font-family:var(--pixel);font-size:9px;color:var(--white);padding:10px 8px;border-bottom:2px solid var(--border);text-align:right;">PTS</th>
+  </tr></thead>
+  <tbody>
+    <tr>
+      <td style="font-family:var(--pixel);font-size:12px;color:var(--yellow);text-shadow:0 0 8px var(--yellow);padding:10px 8px;border-bottom:1px solid rgba(85,0,170,0.3);width:40px;">1</td>
+      <td style="padding:10px 6px;border-bottom:1px solid rgba(85,0,170,0.3);"><div style="width:32px;height:32px;border:2px solid var(--border);background:var(--bg3);"></div></td>
+      <td style="font-family:var(--oswald);font-weight:700;font-size:18px;color:var(--white);padding:10px 6px;border-bottom:1px solid rgba(85,0,170,0.3);">NIELS</td>
+      <td style="padding:10px 6px;border-bottom:1px solid rgba(85,0,170,0.3);font-family:var(--pixel);font-size:7px;"><span style="color:var(--green);">🇳🇱NED<sup style="color:var(--green);font-size:6px;">+22</sup></span> <span style="color:var(--green);">🇧🇷BRA<sup style="color:var(--green);font-size:6px;">+5</sup></span> <span style="color:var(--red);">🇩🇪GER<sup style="font-size:6px;">+0</sup></span></td>
+      <td style="font-family:var(--pixel);font-size:12px;color:var(--green);padding:10px 6px;border-bottom:1px solid rgba(85,0,170,0.3);text-align:right;">147</td>
+    </tr>
+    <tr>
+      <td style="font-family:var(--pixel);font-size:12px;color:#cccccc;padding:10px 8px;border-bottom:1px solid rgba(85,0,170,0.3);">2</td>
+      <td style="padding:10px 6px;border-bottom:1px solid rgba(85,0,170,0.3);"><div style="width:32px;height:32px;border:2px solid var(--border);background:var(--bg3);"></div></td>
+      <td style="font-family:var(--oswald);font-weight:700;font-size:18px;color:var(--white);padding:10px 6px;border-bottom:1px solid rgba(85,0,170,0.3);">MIRJAM</td>
+      <td style="padding:10px 6px;border-bottom:1px solid rgba(85,0,170,0.3);font-family:var(--pixel);font-size:7px;"><span style="color:var(--green);">🇲🇦MAR<sup style="color:var(--green);font-size:6px;">+50</sup></span> <span style="color:var(--red);">🇫🇷FRA<sup style="font-size:6px;">+0</sup></span></td>
+      <td style="font-family:var(--pixel);font-size:12px;color:var(--green);padding:10px 6px;text-align:right;border-bottom:1px solid rgba(85,0,170,0.3);">132</td>
+    </tr>
+    <tr>
+      <td style="font-family:var(--pixel);font-size:12px;color:#c87941;padding:10px 8px;">3</td>
+      <td style="padding:10px 6px;"><div style="width:32px;height:32px;border:2px solid var(--border);background:var(--bg3);"></div></td>
+      <td style="font-family:var(--oswald);font-weight:700;font-size:18px;color:var(--white);padding:10px 6px;">JEROEN</td>
+      <td style="padding:10px 6px;font-family:var(--pixel);font-size:7px;"><span style="color:var(--green);">🇦🇷ARG<sup style="color:var(--green);font-size:6px;">+3</sup></span></td>
+      <td style="font-family:var(--pixel);font-size:12px;color:var(--green);padding:10px 6px;text-align:right;">98</td>
+    </tr>
+  </tbody>
+</table>
+</div></body></html>

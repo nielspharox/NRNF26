@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:var(--vt);font-size:var(--vt-meta);width:700px;min-height:100px;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);overflow:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;}
+  .wrap{padding:20px 24px;}
+  .label{font-family:var(--pixel);font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;}
+  
+</style></head>
+<body><div class="wrap">
+<div class="label">Border system · borders carry the structure, not radius</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+  <div>
+    <div style="height:46px;background:var(--bg2);border:2px solid var(--border);"></div>
+    <div style="font-family:var(--pixel);font-size:7px;color:var(--white);margin-top:6px;">2PX --border</div>
+    <div style="font-family:var(--vt);font-size:14px;color:var(--muted);">match card, input</div>
+  </div>
+  <div>
+    <div style="height:46px;background:var(--bg2);border:3px solid var(--border);"></div>
+    <div style="font-family:var(--pixel);font-size:7px;color:var(--white);margin-top:6px;">3PX --border</div>
+    <div style="font-family:var(--vt);font-size:14px;color:var(--muted);">.box</div>
+  </div>
+  <div>
+    <div style="height:46px;background:var(--bg2);border:4px solid var(--green);"></div>
+    <div style="font-family:var(--pixel);font-size:7px;color:var(--white);margin-top:6px;">4PX --green</div>
+    <div style="font-family:var(--vt);font-size:14px;color:var(--muted);">auth box</div>
+  </div>
+  <div>
+    <div style="height:46px;background:var(--bg2);border:4px solid var(--purple);"></div>
+    <div style="font-family:var(--pixel);font-size:7px;color:var(--white);margin-top:6px;">4PX --purple</div>
+    <div style="font-family:var(--vt);font-size:14px;color:var(--muted);">modal</div>
+  </div>
+  <div>
+    <div style="height:46px;background:rgba(123,0,255,0.08);border:2px dashed var(--purple);"></div>
+    <div style="font-family:var(--pixel);font-size:7px;color:var(--white);margin-top:6px;">2PX DASHED</div>
+    <div style="font-family:var(--vt);font-size:14px;color:var(--muted);">admin panel</div>
+  </div>
+  <div>
+    <div style="height:46px;background:var(--bg2);border:2px solid var(--border);border-left:4px solid var(--green);"></div>
+    <div style="font-family:var(--pixel);font-size:7px;color:var(--white);margin-top:6px;">L-BORDER 4PX</div>
+    <div style="font-family:var(--vt);font-size:14px;color:var(--muted);">result accent</div>
+  </div>
+</div>
+</div></body></html>

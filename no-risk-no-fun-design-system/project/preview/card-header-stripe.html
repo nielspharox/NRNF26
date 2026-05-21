@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:var(--vt);font-size:var(--vt-meta);width:700px;min-height:100px;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);overflow:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;}
+  .wrap{padding:20px 24px;}
+  .label{font-family:var(--pixel);font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;}
+  
+</style></head>
+<body><div class="wrap">
+<div class="label">Header bar · 3-color repeating stripe + green underline</div>
+<div style="background:var(--bg3);border-bottom:4px solid var(--green);">
+  <div style="height:6px;background:repeating-linear-gradient(90deg,var(--purple) 0px,var(--purple) 20px,var(--green) 20px,var(--green) 40px,var(--yellow) 40px,var(--yellow) 60px);"></div>
+  <div style="display:flex;align-items:center;gap:18px;padding:14px 18px;">
+    <div style="width:60px;height:60px;border:3px solid var(--green);background:#000;box-shadow:4px 4px 0 #000;overflow:hidden;">
+      <img src="../assets/mascot.png" style="width:100%;height:100%;object-fit:cover;object-position:top center;">
+    </div>
+    <div style="flex:1;">
+      <div style="font-family:var(--pixel);font-size:13px;color:var(--green);text-shadow:3px 3px 0 #004422;line-height:1.5;">NO RISK NO FUN</div>
+      <div style="font-family:var(--vt);font-size:20px;color:var(--yellow);margin-top:2px;text-shadow:2px 2px 0 #000;">⚽ WK POOL 2026 ⚽</div>
+    </div>
+    <div style="font-family:var(--vt);font-size:16px;color:var(--muted);text-align:right;">
+      ingelogd als<strong style="color:var(--green);display:block;font-size:20px;">niels99</strong>
+    </div>
+  </div>
+</div>
+</div></body></html>

@@ -177,22 +177,44 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .admin-title{font-family:var(--pixel);font-size:11px;color:var(--purple-light);margin-bottom:1rem}
 
 /* HOME */
-.podium{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-bottom:1.5rem;padding:1rem 0}
-.podium-place{text-align:center;flex:1;max-width:140px}
-.podium-block{border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:12px 8px 8px;position:relative}
-.podium-figure{position:absolute;top:-92px;left:50%;transform:translateX(-50%);width:44px;height:90px}
-.podium-1{height:150px;border-color:var(--yellow);background:rgba(255,230,0,0.08)}
-.podium-2{height:120px;border-color:#ccc;background:rgba(200,200,200,0.05)}
-.podium-3{height:100px;border-color:#c87941;background:rgba(200,120,65,0.05)}
-.podium-avatar{width:48px;height:48px;border:3px solid;overflow:hidden;background:var(--bg3);position:absolute;top:-28px;left:50%;transform:translateX(-50%)}
-.podium-avatar img{width:100%;height:100%;object-fit:cover}
-.podium-1 .podium-avatar{border-color:var(--yellow)}
-.podium-2 .podium-avatar{border-color:#ccc}
-.podium-3 .podium-avatar{border-color:#c87941}
-.podium-name{font-family:var(--pixel);font-size:7px;color:var(--white);margin-top:20px;word-break:break-all}
-.podium-pts{font-family:var(--pixel);font-size:9px;margin-top:4px}
-.podium-1 .podium-pts{color:var(--yellow)}.podium-2 .podium-pts{color:#ccc}.podium-3 .podium-pts{color:#c87941}
-.podium-rank{font-family:var(--pixel);font-size:17px;margin-top:2px}
+.podium{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:14px;align-items:end;margin-bottom:1.5rem;padding:1rem 0}
+.podium-card{border:3px solid;padding:0;background:var(--bg2);position:relative;box-shadow:4px 4px 0 #000;cursor:pointer}
+.podium-card-1{border-color:var(--yellow);box-shadow:0 0 14px rgba(255,230,0,0.45),5px 5px 0 #000;transform:translateY(-12px)}
+.podium-card-2{border-color:#cccccc}
+.podium-card-3{border-color:#c87941}
+.podium-rank-bar{font-family:var(--pixel);font-size:8px;letter-spacing:.15em;text-align:center;padding:5px 4px;color:#000}
+.podium-card-1 .podium-rank-bar{background:var(--yellow)}
+.podium-card-2 .podium-rank-bar{background:#cccccc}
+.podium-card-3 .podium-rank-bar{background:#c87941;color:#fff}
+.podium-portrait{height:120px;display:flex;align-items:flex-end;justify-content:center;background:var(--bg3);border-bottom:2px solid var(--border);position:relative;overflow:hidden}
+.podium-card-1 .podium-portrait{background:radial-gradient(ellipse at center 60%,rgba(255,230,0,0.20),var(--bg3) 70%)}
+.podium-card-2 .podium-portrait{background:radial-gradient(ellipse at center 60%,rgba(200,200,200,0.18),var(--bg3) 70%)}
+.podium-card-3 .podium-portrait{background:radial-gradient(ellipse at center 60%,rgba(200,120,65,0.20),var(--bg3) 70%)}
+.podium-portrait::after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.20) 0,rgba(0,0,0,0.20) 1px,transparent 1px,transparent 3px)}
+.podium-jersey-num{position:absolute;top:6px;right:8px;font-family:var(--pixel);font-size:11px;color:var(--white);text-shadow:2px 2px 0 #000}
+.podium-pos-tag{position:absolute;top:6px;left:8px;font-family:var(--pixel);font-size:6px;padding:2px 4px;background:#000;color:var(--green);letter-spacing:.1em}
+.podium-pos-tag.gk{color:var(--yellow)}
+.podium-kit-tag{position:absolute;bottom:4px;left:6px;font-family:var(--pixel);font-size:6px;padding:2px 4px;background:rgba(0,0,0,0.7);color:var(--muted);letter-spacing:.1em}
+.podium-portrait pixel-player svg{width:108px;height:auto;display:block}
+.podium-nameplate{background:#000;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 6px;text-align:center}
+.podium-nameplate .nm{font-family:var(--oswald);font-weight:700;font-size:18px;letter-spacing:.04em;line-height:1}
+.podium-card-1 .podium-nameplate .nm{color:var(--yellow)}
+.podium-card-2 .podium-nameplate .nm{color:#dddddd}
+.podium-card-3 .podium-nameplate .nm{color:#e9b07f}
+.podium-day-pts{text-align:center;padding:8px 6px;font-family:var(--pixel);font-size:13px;letter-spacing:.05em;border-top:1px solid var(--border);background:rgba(0,255,102,0.05);color:var(--green);text-shadow:2px 2px 0 #000}
+.podium-card-1 .podium-day-pts{font-size:15px;background:rgba(255,230,0,0.08);color:var(--yellow)}
+.podium-day-pts small{font-family:var(--vt);font-size:14px;color:var(--muted);text-shadow:none;letter-spacing:0;margin-left:4px;font-weight:normal}
+.podium-stats{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border)}
+.podium-stat{padding:6px;text-align:center;border-right:1px solid var(--border)}
+.podium-stat:last-child{border-right:none}
+.podium-stat .k{font-family:var(--pixel);font-size:6px;color:var(--muted);letter-spacing:.1em;margin-bottom:3px}
+.podium-stat .v{font-family:var(--pixel);font-size:10px;color:var(--green)}
+.podium-stat .v.streak{color:var(--yellow)}
+.podium-stars{padding:6px 6px 8px;text-align:center;letter-spacing:1px;line-height:1;font-size:14px;border-top:1px solid var(--border);background:var(--bg3)}
+.podium-stars .on{color:var(--yellow);text-shadow:0 0 4px var(--yellow)}
+.podium-stars .off{color:#3a1f5e}
+.podium-stars-lbl{font-family:var(--pixel);font-size:6px;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.15em}
+.podium-stars-num{font-size:14px;color:var(--yellow);text-shadow:0 0 4px var(--yellow);cursor:default}
 
 .stat-ticker{background:var(--bg2);border:2px solid var(--border);padding:12px 16px;margin-bottom:12px;cursor:pointer;transition:border-color 0.15s}
 .stat-ticker:hover{border-color:var(--green)}
@@ -641,6 +663,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 
 <div id="toast"></div>
 
+<script src="pixel-player.js"></script>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
 const SUPABASE_URL = 'https://soonpwnwrvxmariaqdfb.supabase.co';
@@ -867,73 +890,45 @@ function calcDayPts(userId,dayMatches){
   return pts;
 }
 
-// Retro pixel-art football player
-// seed: deterministic per day+position for random but stable tenues
-function seededRand(seed){
-  let x=Math.sin(seed)*10000;
-  return x-Math.floor(x);
-}
-function pixelFigure(pos,av){
-  // pos: 0=gold, 1=silver, 2=bronze
-  const today=new Date();
-  const daySeed=today.getFullYear()*10000+today.getMonth()*100+today.getDate();
-  const s=daySeed+pos*7;
-  // Shirt colors - retro football palettes
-  const shirts=["#e63946","#2196f3","#ff9800","#4caf50","#9c27b0","#00bcd4","#ffeb3b","#f06292","#1a237e","#004d40"];
-  const shorts=["#1a1a2e","#fff","#222","#1b5e20","#311b92","#01579b","#e65100","#880e4f","#263238","#bf360c"];
-  const sockColors=["#fff","#000","#ffeb3b","#e53935","#1565c0","#2e7d32"];
-  const si=Math.floor(seededRand(s)*shirts.length);
-  const sh=Math.floor(seededRand(s+1)*shorts.length);
-  const sk=Math.floor(seededRand(s+2)*sockColors.length);
-  const shirt=shirts[si],short=shorts[sh],sock=sockColors[sk];
-  const medalColor=["#ffe600","#cccccc","#c87941"][pos];
-  const cid="p"+pos+(daySeed%1000);
-  const head=av
-    ?`<image href="${av}" x="12" y="2" width="20" height="20" clip-path="url(#hc${cid})"/>`
-    :`<rect x="14" y="4" width="16" height="14" fill="#f5c87a"/>`
-     +`<rect x="16" y="7" width="3" height="3" fill="#333"/>`
-     +`<rect x="23" y="7" width="3" height="3" fill="#333"/>`
-     +`<rect x="18" y="13" width="8" height="2" fill="#c0392b" opacity="0.7"/>`
-     +`<rect x="12" y="2" width="20" height="8" fill="${shirt}" opacity="0.6"/>`;
-  return `<svg viewBox="0 0 44 90" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="image-rendering:pixelated;display:block">`
-    // Head
-    +`<defs><clipPath id="hc${cid}"><rect x="12" y="2" width="20" height="20" rx="2"/></clipPath></defs>`
-    +`<rect x="12" y="2" width="20" height="22" rx="3" fill="#f5c87a" stroke="#c8965a" stroke-width="1"/>`
-    +head
-    // Hair
-    +`<rect x="12" y="2" width="20" height="6" rx="2" fill="${shirt}" opacity="0.5"/>`
-    // Neck
-    +`<rect x="18" y="24" width="8" height="4" fill="#f5c87a"/>`
-    // Shirt with number
-    +`<rect x="8" y="28" width="28" height="22" rx="2" fill="${shirt}"/>`
-    +`<rect x="8" y="28" width="28" height="4" fill="${shirt}" opacity="0.7"/>`
-    +`<rect x="14" y="35" width="16" height="10" fill="${shirt}" opacity="0.5"/>`
-    // Collar
-    +`<rect x="18" y="28" width="8" height="4" rx="1" fill="#fff" opacity="0.3"/>`
-    // Arms
-    +`<rect x="0" y="29" width="10" height="7" rx="2" fill="${shirt}"/>`
-    +`<rect x="34" y="29" width="10" height="7" rx="2" fill="${shirt}"/>`
-    // Hands
-    +`<rect x="0" y="36" width="9" height="6" rx="2" fill="#f5c87a"/>`
-    +`<rect x="35" y="36" width="9" height="6" rx="2" fill="#f5c87a"/>`
-    // Shorts
-    +`<rect x="10" y="50" width="24" height="14" rx="2" fill="${short}"/>`
-    +`<line x1="22" y1="50" x2="22" y2="64" stroke="${shirt}" stroke-width="1" opacity="0.4"/>`
-    // Socks
-    +`<rect x="10" y="64" width="10" height="12" fill="${sock}"/>`
-    +`<rect x="24" y="64" width="10" height="12" fill="${sock}"/>`
-    // Shoes
-    +`<rect x="8" y="74" width="14" height="6" rx="1" fill="#111"/>`
-    +`<rect x="22" y="74" width="14" height="6" rx="1" fill="#111"/>`
-    // Football
-    +`<circle cx="36" cy="55" r="6" fill="#fff" stroke="#333" stroke-width="1"/>`
-    +`<polygon points="36,49 38,52 35,54 33,51" fill="#333" opacity="0.5"/>`
-    // Medal
-    +`<circle cx="22" cy="43" r="5" fill="${medalColor}" stroke="#000" stroke-width="0.5"/>`
-    +`<rect x="21" y="28" width="2" height="10" fill="${medalColor}" opacity="0.8"/>`
-    +`</svg>`;
+function renderStreakBadge(streak){
+  const s=streak||0;
+  if(s<2)return'';
+  const si=getStreakInfo(s);
+  if(!si)return'';
+  return`<span class="streak-badge" style="${getStreakBadgeStyle(s)}">${si.emoji} ${si.title} — ${s} op rij</span>`;
 }
 
+function renderPodiumCard(player,rank){
+  const pp=window.NRNFPixelPlayer.generatePlayer(player.username);
+  const rankLabels=['★ 1ST · CHAMPION ★','2ND · SILVER','3RD · BRONZE'];
+  const cardClass=['podium-card-1','podium-card-2','podium-card-3'];
+  const ri=rank-1;
+  const posCls=pp.position==='GK'?' gk':'';
+  const risk=Math.round(getAvgRisk(player.id));
+  const streak=player.current_streak||0;
+  const badge=renderStreakBadge(streak);
+  const wins=player.day_wins||0;
+  const starsHtml=wins>=6
+    ?`<div class="podium-stars"><span class="podium-stars-lbl">DAGWINSTEN</span><span class="podium-stars-num" title="${wins} dagwinsten JUNGE!!!">${wins}</span></div>`
+    :`<div class="podium-stars"><span class="podium-stars-lbl">DAGWINSTEN</span>${Array.from({length:5}).map((_,i)=>i<wins?'<span class="on">★</span>':'<span class="off">☆</span>').join('')}</div>`;
+  return`<div class="podium-card ${cardClass[ri]}" onclick="openProfile('${player.id}')">`
+    +`<div class="podium-rank-bar">${rankLabels[ri]}</div>`
+    +`<div class="podium-portrait">`
+    +`<span class="podium-pos-tag${posCls}">${pp.position}</span>`
+    +`<span class="podium-jersey-num">#${String(pp.number).padStart(2,'0')}</span>`
+    +`<pixel-player name="${player.username}"></pixel-player>`
+    +`<span class="podium-kit-tag">${pp.kit.name}${pp.kit.throwback?' · RETRO':''}</span>`
+    +`</div>`
+    +`<div class="podium-nameplate"><div class="nm">${player.username.toUpperCase()}</div></div>`
+    +`<div class="podium-day-pts">${player.dayPts} PT <small>· dag totaal</small></div>`
+    +`<div class="podium-stats">`
+    +`<div class="podium-stat"><div class="k">STREAK</div><div class="v streak">🔥 ${streak}</div></div>`
+    +`<div class="podium-stat"><div class="k">RISICO</div><div class="v">${risk}%</div></div>`
+    +`</div>`
+    +(badge?`<div style="padding:6px;border-top:1px solid var(--border);text-align:center">${badge}</div>`:'')
+    +starsHtml
+    +`</div>`;
+}
 
 function renderPodium(){
   const el=document.getElementById("podium-wrap");
@@ -946,24 +941,11 @@ function renderPodium(){
     return;
   }
   const order=[1,0,2];
-  const colorHex=["#cccccc","#ffe600","#c87941"];
-  const colorVar=["#ccc","var(--yellow)","#c87941"];
-  const medals=["🥈","🥇","🥉"];
-  const blockClass=["podium-2","podium-1","podium-3"];
-  el.innerHTML=`<div class="podium">${order.map((ri,vi)=>{
+  el.innerHTML=`<div class="podium">${order.map(ri=>{
     const p=ranked[ri];
-    if(!p)return"";
-    const av=avatarUrl(p);
-    const si=getStreakInfo(p.current_streak||0);
-    return`<div class="podium-place" onclick="openProfile('${p.id}')">`
-      +`<div class="podium-block ${blockClass[vi]}" style="border-color:${colorVar[vi]}">`
-      +`<div class="podium-figure">${pixelFigure(order[vi],av)}</div>`
-      +`<div class="podium-name" style="color:${colorVar[vi]}">${p.username.toUpperCase()}</div>`
-      +(si?`<div style="margin-top:2px"><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${si.emoji} ${si.title} — ${p.current_streak} op rij</span></div>`:"")
-      +`<div class="podium-pts" style="color:${colorVar[vi]}">${p.dayPts} PTS</div>`
-      +`<div class="podium-rank">${medals[vi]}</div>`
-      +`</div></div>`;
-  }).join("")}</div>`;
+    if(!p)return'';
+    return renderPodiumCard(p,ri+1);
+  }).join('')}</div>`;
 }
 
 // ── STATS HELPERS ───────────────────────────────────────────
@@ -1739,6 +1721,7 @@ async function saveScore(matchId){
   const {error}=await sb.from('matches').update({home_score:hs,away_score:as,result}).eq('id',matchId);
   if(error){showToast('Fout: '+error.message);return;}
   await updateStreaks(matchId,result);
+  await updateDayWins(matchId);
   await updateBracket();
   await autoFetchOddsIfRoundComplete(result,matchId);
   showToast('Score & uitslag opgeslagen!');
@@ -1750,6 +1733,7 @@ async function setResult(matchId,side){
   const {error}=await sb.from('matches').update({result:side}).eq('id',matchId);
   if(error){showToast('Fout: '+error.message);return;}
   await updateStreaks(matchId,side);
+  await updateDayWins(matchId);
   await updateBracket();
   showToast('Uitslag opgeslagen!');
   await loadAll();
@@ -1797,6 +1781,36 @@ async function updateStreaks(matchId,result){
 
     await sb.from('profiles').update({current_streak:current,longest_streak:longest}).eq('id',profile.id);
   }
+}
+
+async function updateDayWins(matchId){
+  const [{data:fMatches},{data:fTips},{data:fProfiles}]=await Promise.all([
+    sb.from('matches').select('*'),
+    sb.from('tips').select('*'),
+    sb.from('profiles').select('id,day_wins'),
+  ]);
+  if(!fMatches||!fTips||!fProfiles)return;
+  const match=fMatches.find(m=>m.id===matchId);
+  if(!match?.kickoff)return;
+  const day=match.kickoff.slice(0,10);
+  const dayMatches=fMatches.filter(m=>m.result&&m.kickoff&&m.kickoff.slice(0,10)===day);
+  if(!dayMatches.length)return;
+  const scored=fProfiles.map(p=>{
+    let pts=0;
+    dayMatches.forEach(m=>{
+      const tip=fTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
+      const side=tip?tip.tip:'draw';
+      if(side===m.result){
+        const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
+        pts+=calcPts(o);
+      }
+    });
+    return{id:p.id,pts,day_wins:p.day_wins||0};
+  });
+  const maxPts=Math.max(...scored.map(s=>s.pts));
+  if(maxPts<=0)return;
+  const winners=scored.filter(s=>s.pts===maxPts);
+  await Promise.all(winners.map(w=>sb.from('profiles').update({day_wins:w.day_wins+1}).eq('id',w.id)));
 }
 
 async function loadOddsKey(){

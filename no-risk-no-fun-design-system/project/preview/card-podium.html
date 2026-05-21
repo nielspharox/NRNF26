@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NRNF — Podium</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:var(--vt);width:700px;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:9999;}
+  .wrap{padding:20px 24px;}
+  .label{font-family:var(--pixel);font-size:7px;color:var(--muted);letter-spacing:1px;margin-bottom:14px;text-transform:uppercase;}
+
+  .marquee{
+    font-family:var(--pixel);font-size:11px;text-align:center;color:var(--yellow);
+    text-shadow:0 0 8px var(--yellow),3px 3px 0 #000;letter-spacing:.15em;
+    padding:14px 8px;border:2px solid var(--border);margin-bottom:18px;position:relative;background:var(--bg2);
+  }
+  .marquee::before,.marquee::after{content:'';position:absolute;left:0;right:0;height:4px;
+    background:repeating-linear-gradient(90deg,var(--purple) 0,var(--purple) 12px,var(--green) 12px,var(--green) 24px,var(--yellow) 24px,var(--yellow) 36px);}
+  .marquee::before{top:0;} .marquee::after{bottom:0;}
+
+  .podium{display:grid;grid-template-columns:1fr 1.08fr 1fr;gap:14px;align-items:end;}
+
+  .card{border:3px solid;padding:0;background:var(--bg2);position:relative;box-shadow:4px 4px 0 #000;}
+  .card-1{border-color:var(--yellow);box-shadow:0 0 14px rgba(255,230,0,0.45),5px 5px 0 #000;transform:translateY(-12px);}
+  .card-2{border-color:#cccccc;}
+  .card-3{border-color:#c87941;}
+
+  .rank-bar{font-family:var(--pixel);font-size:8px;letter-spacing:.15em;text-align:center;padding:5px 4px;color:#000;}
+  .card-1 .rank-bar{background:var(--yellow);}
+  .card-2 .rank-bar{background:#cccccc;}
+  .card-3 .rank-bar{background:#c87941;color:#fff;}
+
+  .portrait{
+    height:120px;display:flex;align-items:flex-end;justify-content:center;
+    background:var(--bg3);border-bottom:2px solid var(--border);position:relative;overflow:hidden;
+  }
+  .card-1 .portrait{background:radial-gradient(ellipse at center 60%,rgba(255,230,0,0.20),var(--bg3) 70%);}
+  .card-2 .portrait{background:radial-gradient(ellipse at center 60%,rgba(200,200,200,0.18),var(--bg3) 70%);}
+  .card-3 .portrait{background:radial-gradient(ellipse at center 60%,rgba(200,120,65,0.20),var(--bg3) 70%);}
+  .portrait::after{content:'';position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,0.20) 0,rgba(0,0,0,0.20) 1px,transparent 1px,transparent 3px);}
+  .jersey-num{position:absolute;top:6px;right:8px;font-family:var(--pixel);font-size:11px;color:var(--white);text-shadow:2px 2px 0 #000;}
+  .pos{position:absolute;top:6px;left:8px;font-family:var(--pixel);font-size:6px;padding:2px 4px;background:#000;color:var(--green);letter-spacing:.1em;}
+  .pos.gk{color:var(--yellow);}
+  .kit-tag{position:absolute;bottom:4px;left:6px;font-family:var(--pixel);font-size:6px;padding:2px 4px;background:rgba(0,0,0,0.7);color:var(--muted);letter-spacing:.1em;}
+  pixel-player svg{width:108px;height:auto;display:block;}
+
+  .nameplate{background:#000;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 6px;text-align:center;}
+  .nameplate .nm{font-family:var(--oswald);font-weight:700;font-size:18px;color:var(--white);letter-spacing:.04em;line-height:1;}
+  .card-1 .nameplate .nm{color:var(--yellow);}
+  .card-2 .nameplate .nm{color:#dddddd;}
+  .card-3 .nameplate .nm{color:#e9b07f;}
+  .nameplate .yr{font-family:var(--pixel);font-size:6px;color:var(--muted);margin-top:4px;letter-spacing:.15em;}
+
+  .day-pts{text-align:center;padding:8px 6px;font-family:var(--pixel);font-size:13px;letter-spacing:.05em;
+    border-top:1px solid var(--border);background:rgba(0,255,102,0.05);color:var(--green);text-shadow:2px 2px 0 #000;}
+  .card-1 .day-pts{font-size:15px;background:rgba(255,230,0,0.08);color:var(--yellow);}
+  .day-pts small{font-family:var(--vt);font-size:14px;color:var(--muted);text-shadow:none;letter-spacing:0;margin-left:4px;font-weight:normal;}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--border);}
+  .stat{padding:6px 6px;text-align:center;border-right:1px solid var(--border);}
+  .stat:last-child{border-right:none;}
+  .stat .k{font-family:var(--pixel);font-size:6px;color:var(--muted);letter-spacing:.1em;margin-bottom:3px;}
+  .stat .v{font-family:var(--pixel);font-size:10px;color:var(--green);}
+  .stat .v.streak{color:var(--yellow);}
+
+  .stars{padding:6px 6px 8px;text-align:center;letter-spacing:1px;line-height:1;font-size:14px;
+    border-top:1px solid var(--border);background:var(--bg3);}
+  .stars .on{color:var(--yellow);text-shadow:0 0 4px var(--yellow);}
+  .stars .off{color:#3a1f5e;}
+  .stars-lbl{font-family:var(--pixel);font-size:6px;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.15em;}
+
+  /* throwbacks + keepers gallery */
+  .gallery{margin-top:30px;padding:14px;background:var(--bg2);border:2px dashed var(--purple);}
+  .gallery-title{font-family:var(--pixel);font-size:9px;color:var(--purple-light);margin-bottom:10px;letter-spacing:.1em;}
+  .gallery-title small{font-family:var(--vt);font-size:14px;color:var(--muted);letter-spacing:0;text-transform:none;}
+  .gallery-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;}
+  .gallery-grid.tight{grid-template-columns:repeat(10,1fr);}
+  .vplayer{background:var(--bg3);border:1px solid var(--border);padding:4px;text-align:center;position:relative;}
+  .vplayer pixel-player svg{width:100%;height:auto;}
+  .vplayer .vnm{font-family:var(--pixel);font-size:5px;color:var(--muted);margin-top:3px;letter-spacing:.05em;line-height:1.4;}
+  .vplayer .kit{font-family:var(--pixel);font-size:5px;color:var(--green);letter-spacing:.05em;}
+  .vplayer .kit.gk{color:var(--yellow);}
+  .vplayer .kit.tb{color:var(--purple-light);}
+
+  /* mini leaderboard row preview */
+  .lb-preview{margin-top:24px;padding:14px;background:var(--bg2);border:2px solid var(--border);}
+  .lb-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(85,0,170,0.3);}
+  .lb-row:last-child{border-bottom:none;}
+  .lb-row .rank{font-family:var(--pixel);font-size:12px;width:24px;}
+  .lb-row .av{width:36px;height:36px;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;}
+  .lb-row .av pixel-player svg{width:38px;height:auto;}
+  .lb-row .nm{font-family:var(--oswald);font-weight:700;font-size:18px;color:var(--white);flex:1;}
+  .lb-row .pt{font-family:var(--pixel);font-size:11px;color:var(--green);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="label">Podium · daily top-3 · arcade high-score screen · NRNFPixelPlayer generator</div>
+
+  <div class="marquee">★ &nbsp;DAGWINNAARS · 23 JUNI · WK 2026&nbsp; ★</div>
+
+  <div class="podium" id="podium"></div>
+
+  <div class="lb-preview">
+    <div class="gallery-title">MINI VARIANT · LEADERBOARD AVATAR <small>(mini attribute · ~36px)</small></div>
+    <div id="lb"></div>
+  </div>
+
+  <div class="gallery">
+    <div class="gallery-title">VARIANTS · 16 USERNAMES <small>(same generator, stable output)</small></div>
+    <div class="gallery-grid" id="variants"></div>
+  </div>
+
+  <div class="gallery">
+    <div class="gallery-title">THROWBACK KITS <small>(force the kit attribute to lock a retro look)</small></div>
+    <div class="gallery-grid tight" id="throwbacks"></div>
+  </div>
+
+  <div class="gallery">
+    <div class="gallery-title">KEEPER KITS <small>(10 variants · 15% chance of being a keeper at random)</small></div>
+    <div class="gallery-grid tight" id="keepers"></div>
+  </div>
+</div>
+
+<script src="../ui_kits/nrnf/components/pixel-player.js"></script>
+<script>
+const { generatePlayer } = window.NRNFPixelPlayer;
+
+/* ─── Podium ──────────────────────────────────────── */
+const PODIUM = [
+  { rank:1, username:'niels',  pts:68, streak:6, risk:'22%', stars:4, yearcity:"'85 · AMSTERDAM",  cls:'card-1', rankLabel:'★ 1ST · CHAMPION ★' },
+  { rank:2, username:'mirjam', pts:52, streak:3, risk:'11%', stars:2, yearcity:"'82 · DEN HAAG",   cls:'card-2', rankLabel:'2ND · SILVER' },
+  { rank:3, username:'jeroen', pts:41, streak:1, risk:'35%', stars:1, yearcity:"'79 · ROTTERDAM", cls:'card-3', rankLabel:'3RD · BRONZE' },
+];
+const order = [PODIUM[1], PODIUM[0], PODIUM[2]];
+document.getElementById('podium').innerHTML = order.map(slot => {
+  const p = generatePlayer(slot.username);
+  const posCls = p.position === 'GK' ? ' gk' : '';
+  const stars = Array.from({length:5}).map((_,i) => i < slot.stars ? '<span class="on">★</span>' : '<span class="off">★</span>').join('');
+  return `<div class="card ${slot.cls}">
+    <div class="rank-bar">${slot.rankLabel}</div>
+    <div class="portrait">
+      <span class="pos${posCls}">${p.position}</span>
+      <span class="jersey-num">#${String(p.number).padStart(2,'0')}</span>
+      <pixel-player name="${slot.username}"></pixel-player>
+      <span class="kit-tag">${p.kit.name}${p.kit.throwback?' · RETRO':''}</span>
+    </div>
+    <div class="nameplate"><div class="nm">${slot.username.toUpperCase()}</div><div class="yr">${slot.yearcity}</div></div>
+    <div class="day-pts">${slot.pts} PT <small>· dag totaal</small></div>
+    <div class="stats">
+      <div class="stat"><div class="k">STREAK</div><div class="v streak">🔥 ${slot.streak}</div></div>
+      <div class="stat"><div class="k">RISICO</div><div class="v">${slot.risk}</div></div>
+    </div>
+    <div class="stars">
+      <span class="stars-lbl">DAGWINSTEN</span>
+      ${stars}
+    </div>
+  </div>`;
+}).join('');
+
+/* ─── Mini leaderboard preview ───────────────────── */
+const LB = [
+  ['niels', 147], ['mirjam', 132], ['jeroen', 98], ['petra', 76], ['tom', 64], ['lieke', 51],
+];
+document.getElementById('lb').innerHTML = LB.map((row,i) => {
+  const [u, pts] = row;
+  return `<div class="lb-row">
+    <span class="rank" style="color:${i===0?'var(--yellow)':i===1?'#ccc':i===2?'#c87941':'var(--muted)'};">${i+1}</span>
+    <div class="av"><pixel-player name="${u}" mini></pixel-player></div>
+    <span class="nm">${u.toUpperCase()}</span>
+    <span class="pt">${pts}</span>
+  </div>`;
+}).join('');
+
+/* ─── Variants strip ─────────────────────────────── */
+const VARIANT_NAMES = ['niels','mirjam','jeroen','petra','tom','lieke','sander','wim','floor','bram','iris','rik','femke','daan','sofie','joost'];
+document.getElementById('variants').innerHTML = VARIANT_NAMES.map(u => {
+  const p = generatePlayer(u);
+  return `<div class="vplayer">
+    <pixel-player name="${u}"></pixel-player>
+    <div class="vnm">${u.toUpperCase()}</div>
+    <div class="kit ${p.position==='GK'?'gk':p.kit.throwback?'tb':''}">#${String(p.number).padStart(2,'0')} ${p.position}</div>
+  </div>`;
+}).join('');
+
+/* ─── Throwback gallery ──────────────────────────── */
+const THROWBACK_KITS = Object.keys(window.NRNFPixelPlayer.OUTFIELD_KITS).filter(k => window.NRNFPixelPlayer.OUTFIELD_KITS[k].throwback);
+document.getElementById('throwbacks').innerHTML = THROWBACK_KITS.map(k => `
+  <div class="vplayer">
+    <pixel-player name="${k}" kit="${k}"></pixel-player>
+    <div class="vnm">${k.replace('_','·')}</div>
+    <div class="kit tb">RETRO</div>
+  </div>
+`).join('');
+
+/* ─── Keeper gallery ─────────────────────────────── */
+const KEEPER_KITS = Object.keys(window.NRNFPixelPlayer.KEEPER_KITS);
+document.getElementById('keepers').innerHTML = KEEPER_KITS.map(k => `
+  <div class="vplayer">
+    <pixel-player name="${k}" kit="${k}"></pixel-player>
+    <div class="vnm">${k.replace('GK_','')}</div>
+    <div class="kit gk">GK</div>
+  </div>
+`).join('');
+</script>
+</body>
+</html>
