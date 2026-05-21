@@ -1,0 +1,161 @@
+# CHANGELOG — NO RISK NO FUN 2026
+
+Dagelijkse voortgang van het project.
+
+---
+
+## Woensdag 21 mei 2026
+
+### Claude Code setup
+- Node.js geïnstalleerd + Claude Code opgezet voor lokale ontwikkeling
+- Workflow: lokaal aanpassen → Live Server preview → git push → live
+- CONTEXT.md aangemaakt als kennisbank voor Claude Code sessies
+
+### Features
+- **Tooltips tip-tellingen** — hover/klik op `4× · 1× · 3×` toont wie wat heeft getipt
+- **Head-to-head vergelijking** — twee spelers vergelijken per wedstrijd, fase en ronde
+  - 3-kolom layout: tip speler 1 | wedstrijd + score | tip speler 2
+  - Filter tabs: Ronde 1/2/3, R32, R16, 1/4, Halve, 3e Plaats, Finale
+  - Winnaar tekst: "[naam] troeft [naam] genadeloos af met X punten verschil"
+  - Custom dropdown met streak info per speler
+- **Dansende banaan** als streak indicator (ipv vuur emojis)
+- **Klikbare namen** in stats blokken op homepagina
+
+### Complotgroepjes verbeterd
+- "Object object" bug gefixed in complotklassement
+- Ledenbeheer UI gebouwd (was nog SQL-only)
+- Invite modal in NRNF stijl (ipv browser prompt)
+- Matrix thema teksten doorgevoerd:
+  - "Slaper wakker maken" / "Laten slapen" / "Kronen"
+  - "Rode pil geven" / "Terug de matrix in"
+  - "X IS NU DE WAARHEID"
+
+### Streak systeem
+- Drempelwaarden aangepast: 2 / 4 / 6 / 8 / 10 / 12 / 14
+- Streak telt nu terug vanaf meest recente wedstrijd
+- Streak badge kleuren per niveau:
+  - Zilver (2-4): `#cccccc`
+  - Goud (6-10): `var(--yellow)` 
+  - Paars glow (12+): `var(--purple-light)` met box-shadow glow
+
+### Design & typografie
+- Typografie standaarden vastgelegd in CONTEXT.md
+- Modal breedtes vergroot (H2H 780px, profiel 560px etc.)
+- Streak badges consistent gemaakt door hele app
+- H2H gebruikersnamen Oswald bold 26px
+
+### CONTEXT.md
+- Uitgebreid met volledige typografie standaarden
+- Streak badge kleuren gedocumenteerd
+- Complot terminologie gedocumenteerd
+- Openstaande items bijgewerkt
+
+---
+
+## Dinsdag 20 mei 2026
+
+### Supabase & authenticatie
+- Supabase project opgezet (`soonpwnwrvxmariaqdfb`)
+- Database schema aangemaakt: profiles, matches, tips, bracket_slots, complot_groups, complot_members, settings
+- Row Level Security policies ingesteld
+- Authenticatie systeem: registreren, inloggen, uitloggen
+- Admin rol via `is_admin` flag op profiles
+- Avatar upload via Supabase Storage (avatars bucket)
+
+### Volledige app herbouwd (v2)
+- Retro design: paars/groen thema, Press Start 2P + VT323 + Oswald fonts
+- Mascotte (De Condor) als header en login scherm
+- 5 tabs: Home, Tips, Stand, Spelregels, Toernooi + Admin
+
+### Wedstrijden & data
+- Alle 104 WK 2026 wedstrijden in database geladen
+  - 72 groepswedstrijden (12 groepen × 3 rondes)
+  - 32 knockoutwedstrijden (R32 t/m Finale + 3e Plaats)
+  - Speelsteden, datums, tijden (Nederlandse tijd CEST)
+- Officiële loting verwerkt op basis van FIFA spreadsheet
+- Bracket slots tabel aangemaakt voor knockout koppeling
+
+### Knockout bracket
+- `updateBracket()` functie: groepswinnaars + nummers 2 automatisch invullen
+- Beste nummers 3 via handmatige SQL (`nummers3_invullen.sql`)
+- Winnaars schuiven automatisch door na elke uitslag
+
+### Groepsstanden
+- Live berekend op basis van uitslagen + scores
+- Sortering: punten → doelsaldo → doelpunten voor
+- Groepswedstrijden tab + knockout bracket tab in toernooi overzicht
+
+### Gamification
+- Killstreak titels: PAUL → EL JEFE → THE CHOSEN ONE → SITTING BULL → THE DEEP STATE → THE ORACLE → PAUL WAS AN AMATEUR
+- Risicoprofielen: De Bureaucraat → De Ambtenaar → De Informant → De Stroman → De Rebel
+- Waaghals van de dag (laagste gem. gekozen kans)
+- Odds Beater (wint terwijl niet op favoriet gokken)
+- Stats popup bij klikken op stat-blokken
+
+### Complotgroepjes
+- Aanmaken, uitnodigen via gebruikersnaam + invite link (`invite.html`)
+- Haantje powers: schaap rekruteren, laten slapen, kronen
+- Eigen klassement per groepje
+
+### Odds API
+- The Odds API gekoppeld (gratis tier)
+- Key opgeslagen in `settings` tabel
+- Auto-fetch na laatste wedstrijd per speelronde
+- Foutmelding als niet alle wedstrijden gevuld zijn
+
+### Testdata
+- `testdata.sql`: 5 dummy spelers + alle 72 groepsuitslagen + tips
+- `cleanup.sql`: reset alles voor het echte toernooi
+- `beste_nummers_3.sql`: welke 8 nummers 3 gaan door
+- `nummers3_invullen.sql`: vul beste nummers 3 in R32 bracket
+
+### Podium
+- Pixel-art voetbalpoppetjes met random dagelijkse tenues
+- Avatar als hoofd van het poppetje
+- Goud/zilver/brons kleuren + medaille om de nek
+
+---
+
+## Maandag 19 mei 2026
+
+### Eerste versie live
+- Eerste versie WK pool app gebouwd (vanilla HTML, localStorage)
+- Odds-gebaseerd puntensysteem: `100 / kans%`
+- Tips invoeren per wedstrijd (thuis/gelijk/uit)
+- Scorebord met klassement
+- Live gezet op GitHub Pages: `https://nielspharox.github.io/NRNF26/`
+
+### Feedback verwerkt
+- Lettertype verbeterd (minder chaotisch)
+- Retro stijl toegevoegd (paars/groen, pixel fonts)
+- Puntenaantal verkleind (100x kleiner)
+- Gelijkspel tippen toegevoegd
+
+### Beslissingen
+- Supabase als backend (ipv localStorage)
+- The Odds API voor kansen
+- GitHub Pages voor hosting
+- Mascotte: De Condor (gebaseerd op Jiskefet sketch)
+
+---
+
+## Zondag 18 mei 2026
+
+### Conceptfase
+- Idee: WK pool waarbij risico nemen beloond wordt
+- Puntensysteem bedacht: `100 / kans%`
+- NRNF logo ontworpen (SVG)
+- Mascotte (De Condor) Midjourney prompts ontwikkeld
+- Naam vastgesteld: **No Risk No Fun 2026**
+
+---
+
+## Openstaande items
+
+- [ ] Prijzenkast in profielmodal (behaalde streaks, dagwinsten, medailles)
+- [ ] Custom streak namen per complotgroepje (door Haantje aan te passen)
+- [ ] Meertaligheid NL/EN/DE
+- [ ] Bonus/nerf systeem (nog te brainstormen)
+- [ ] Paul drempel → 8 (eerbetoon aan Paul de Octopus)
+- [ ] Streak badge in profielmodal soms incorrect (cached data)
+- [ ] Auto-odds fetch edge cases
