@@ -38,8 +38,12 @@ header{background:var(--bg3);border-bottom:4px solid var(--green)}
 .header-user strong{color:var(--green);display:block;font-size:20px}
 .btn-logout{font-family:var(--pixel);font-size:7px;background:transparent;border:2px solid var(--red);color:var(--red);padding:4px 8px;cursor:pointer;margin-top:6px;display:inline-block}
 .btn-logout:hover{background:var(--red);color:#000}
-.header-avatar{width:36px;height:36px;border:2px solid var(--green);overflow:hidden;cursor:pointer;background:var(--bg2);flex-shrink:0}
+.header-avatar{width:90px;height:90px;border:2px solid var(--green);overflow:hidden;cursor:pointer;background:var(--bg2);flex-shrink:0}
 .header-avatar img{width:100%;height:100%;object-fit:cover}
+.lang-switcher{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.lang-flag{font-size:20px;cursor:pointer;opacity:0.35;border:2px solid transparent;padding:2px;line-height:1;transition:opacity 0.1s}
+.lang-flag:hover{opacity:0.7}
+.lang-flag.active{opacity:1;border-color:var(--green);box-shadow:0 0 6px rgba(0,255,102,0.4)}
 
 /* NAV */
 nav{background:var(--bg2);border-bottom:3px solid var(--purple);display:flex;overflow-x:auto}
@@ -340,6 +344,11 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     </div>
     <div class="header-avatar" id="header-avatar" style="display:none;cursor:pointer" onclick="openProfile(currentUser?currentUser.id:null)">
       <img id="header-avatar-img" src="" alt="">
+    </div>
+    <div class="lang-switcher">
+      <span class="lang-flag" id="lang-nl" onclick="changeLanguage('nl')" title="Nederlands">🇳🇱</span>
+      <span class="lang-flag" id="lang-en" onclick="changeLanguage('en')" title="English">🇬🇧</span>
+      <span class="lang-flag" id="lang-de" onclick="changeLanguage('de')" title="Deutsch">🇩🇪</span>
     </div>
   </div>
 </header>
@@ -795,6 +804,7 @@ function showApp(profile){
   if(profile.avatar_url)document.getElementById('header-avatar-img').src=profile.avatar_url;
   if(profile.is_admin)document.getElementById('admin-tab').style.display='inline-block';
   translatePage();
+  updateLangSwitcher();
   loadAll().then(()=>updateHeaderStreak());
 }
 
@@ -844,11 +854,20 @@ function translatePage(){
   renderSpelregels();
 }
 
+function updateLangSwitcher(){
+  const cur=getCurrentLanguage();
+  ['nl','en','de'].forEach(l=>{
+    const el=document.getElementById('lang-'+l);
+    if(el)el.classList.toggle('active',l===cur);
+  });
+}
+
 async function changeLanguage(lang){
   if(!TRANSLATIONS[lang])return;
   setLanguage(lang);
   if(currentUser?.id) await saveLanguageToProfile(currentUser.id,lang,sb);
   translatePage();
+  updateLangSwitcher();
   renderHome();
   renderTips();
   renderScoreboard();
@@ -1207,7 +1226,7 @@ function renderComplotGroup(group){
       +`<span style="display:flex;flex-wrap:nowrap;gap:2px">${tipsHtml}</span>`
       +`</div>`:'';
     return`<div class="member-row">`
-      +avatarHTML(p,28,`onclick="openProfile('${p.id}')"`)
+      +avatarHTML(p,42,`onclick="openProfile('${p.id}')"`)
       +`<div style="flex:1">`
       +`<div style="font-family:var(--oswald);font-weight:700;font-size:16px">${['🥇','🥈','🥉'][i]||i+1} ${p.username}${p.is_haantje?`<span class="haantje-badge">${t('complot_haantje_badge')}</span>`:''}</div>`
       +`${streakInfo?`<div><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:streakInfo.emoji,title:streakInfo.title,X:p.current_streak})}</span></div>`:''}`
@@ -1302,7 +1321,7 @@ function renderComplotModal(){
   const memberRows=mProfiles.map(p=>{
     const isMe=p.user_id===currentUser.id;
     return`<div class="member-row" style="padding:8px 0;border-bottom:1px solid rgba(85,0,170,.3)">`
-      +avatarHTML(p,28,`onclick="openProfile('${p.id}')"`)
+      +avatarHTML(p,42,`onclick="openProfile('${p.id}')"`)
       +`<div style="flex:1;font-family:var(--oswald);font-weight:700;font-size:16px">${p.username}${p.is_haantje?`<span class="haantje-badge">${t('complot_haantje_badge')}</span>`:''}</div>`
       +(!isMe?`<div style="display:flex;gap:6px;flex-wrap:wrap">`
         +(!p.is_haantje?`<div class="tt-wrap"><button class="btn btn-purple" style="padding:8px 14px;font-size:9px" onclick="makeHaantje('${_complotManageId}','${p.user_id}','${p.username}')">${t('complot_action_btn_crown')}</button><div class="tt-text">${t('complot_action_tooltip_crown')}</div></div>`:'')
@@ -1579,7 +1598,7 @@ function renderScoreboard(){
 
     return`<tr>
       <td class="rank-cell ${rc(i)}" style="width:36px">${medals[i]||i+1}</td>
-      <td style="width:36px">${avatarHTML(p,30,`onclick="openProfile('${p.id}')"`)} </td>
+      <td style="width:50px">${avatarHTML(p,45,`onclick="openProfile('${p.id}')"`)} </td>
       <td style="width:160px;min-width:120px">
         <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
           <span style="font-family:var(--oswald);font-weight:700;font-size:18px;cursor:pointer" onclick="openProfile('${p.id}')">${p.username}</span>
@@ -2266,6 +2285,7 @@ function showToast(msg){
 sb.auth.getSession().then(({data:{session}})=>{
   if(session?.user)handleUser(session.user);
 });
+updateLangSwitcher();
 </script>
 </body>
 </html>

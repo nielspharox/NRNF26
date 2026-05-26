@@ -826,7 +826,7 @@ const TRANSLATIONS = {
     tips_filter_final: "FINALE",
     tips_no_matches_in_phase: "Keine Spiele in dieser Phase.",
     tips_btn_save: "TIPPS SPEICHERN ▶",
-    tips_match_draw: "UNENTSCHIEDEN",
+    tips_match_draw: "UNENT.",
     tips_match_locked: "🔒 GESPERRT",
     tips_match_after_120: "NACH 120 MIN",
     tips_match_result_known: "ERGEBNIS BEKANNT",
