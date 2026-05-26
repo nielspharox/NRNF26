@@ -409,11 +409,11 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 
 <!-- SPELREGELS -->
 <div id="sec-spelregels" class="section">
-  <div class="sec-title">▶ SPELREGELS</div>
-  <div class="sec-sub">No Risk, No Fun — alles wat je moet weten</div>
+  <div class="sec-title" data-i18n="rules_section_title">▶ SPELREGELS</div>
+  <div class="sec-sub" data-i18n="rules_section_sub">No Risk, No Fun — alles wat je moet weten</div>
 
   <div class="box box-green" style="margin-bottom:16px">
-    <div style="font-family:var(--pixel);font-size:10px;color:var(--green);margin-bottom:12px">⚽ HOE WERKT HET?</div>
+    <div style="font-family:var(--pixel);font-size:10px;color:var(--green);margin-bottom:12px" data-i18n="rules_how_it_works_title">⚽ HOE WERKT HET?</div>
     <div style="font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.7" data-i18n="rules_how_it_works_body">
       Tip per wedstrijd: thuisploeg wint, gelijkspel, of uitploeg wint.<br>
       Geen tip ingevoerd? Dan telt automatisch <span style="color:var(--yellow)">gelijkspel</span>.<br>
@@ -460,27 +460,13 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="box" style="margin-bottom:16px">
     <div style="font-family:var(--pixel);font-size:10px;color:var(--yellow);margin-bottom:12px" data-i18n="rules_streaks_title">🔥 STREAKS</div>
     <div style="font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:10px" data-i18n="rules_streaks_intro">Voorspel wedstrijden op rij goed en verdien een titel.<br>Eén foute tip en je gaat terug naar start.</div>
-    <table style="width:100%;border-collapse:collapse;font-family:var(--vt);font-size:20px">
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">2 op rij</td><td style="padding:6px">🐙 PAUL</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">4 op rij</td><td style="padding:6px">🌵🤠 EL JEFE</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">6 op rij</td><td style="padding:6px">⚡ THE CHOSEN ONE</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">8 op rij</td><td style="padding:6px">🦬 SITTING BULL</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">10 op rij</td><td style="padding:6px">🕵️ THE DEEP STATE</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">12 op rij</td><td style="padding:6px">🔮 THE ORACLE</td></tr>
-      <tr><td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">14 op rij</td><td style="padding:6px">🐙💀 PAUL WAS AN AMATEUR</td></tr>
-    </table>
+    <table style="width:100%;border-collapse:collapse;font-family:var(--vt);font-size:20px"><tbody id="rules-streak-body"></tbody></table>
   </div>
 
   <div class="box" style="margin-bottom:16px">
     <div style="font-family:var(--pixel);font-size:10px;color:var(--yellow);margin-bottom:12px" data-i18n="rules_riskprofiles_title">📊 RISICOPROFIELEN</div>
     <div style="font-family:var(--vt);font-size:18px;color:var(--muted);margin-bottom:10px" data-i18n="rules_riskprofiles_intro">Op basis van je gemiddeld gekozen kans krijg je een profiel.</div>
-    <table style="width:100%;border-collapse:collapse;font-family:var(--vt);font-size:18px">
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px">📁</td><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--white)">De Bureaucraat</td><td style="padding:5px;color:var(--muted)">55–100% gem. kans</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px">🖊️</td><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--white)">De Ambtenaar</td><td style="padding:5px;color:var(--muted)">40–55% gem. kans</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px">🤫</td><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--white)">De Informant</td><td style="padding:5px;color:var(--muted)">28–40% gem. kans</td></tr>
-      <tr style="border-bottom:1px solid var(--border)"><td style="padding:5px">🎭</td><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--white)">De Stroman</td><td style="padding:5px;color:var(--muted)">18–28% gem. kans</td></tr>
-      <tr><td style="padding:5px">✊</td><td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--white)">De Rebel</td><td style="padding:5px;color:var(--muted)">0–18% gem. kans</td></tr>
-    </table>
+    <table style="width:100%;border-collapse:collapse;font-family:var(--vt);font-size:18px"><tbody id="rules-riskprofile-body"></tbody></table>
   </div>
 
   <div class="box" style="margin-bottom:16px">
@@ -511,12 +497,12 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 
 <!-- TOERNOOI -->
 <div id="sec-toernooi" class="section">
-  <div class="sec-title">▶ TOERNOOIOVERZICHT</div>
-  <div class="sec-sub">Groepsfase · Knockout · Standen &amp; uitslagen</div>
+  <div class="sec-title" data-i18n="toernooi_section_title">▶ TOERNOOIOVERZICHT</div>
+  <div class="sec-sub" data-i18n="toernooi_section_sub">Groepsfase · Knockout · Standen &amp; uitslagen</div>
   <div class="phase-tabs">
-    <button class="phase-tab active" onclick="filterTournament('group_standings',this)">STANDEN</button>
-    <button class="phase-tab" onclick="filterTournament('group_matches',this)">WEDSTRIJDEN</button>
-    <button class="phase-tab" onclick="filterTournament('ko',this)">KNOCKOUT</button>
+    <button class="phase-tab active" onclick="filterTournament('group_standings',this)" data-i18n="toernooi_filter_standings">STANDEN</button>
+    <button class="phase-tab" onclick="filterTournament('group_matches',this)" data-i18n="toernooi_filter_matches">WEDSTRIJDEN</button>
+    <button class="phase-tab" onclick="filterTournament('ko',this)" data-i18n="toernooi_filter_ko">KNOCKOUT</button>
   </div>
   <div id="tournament-view"><div class="loading">Laden...</div></div>
 </div>
@@ -697,11 +683,11 @@ const STREAKS = [
   {n:14,title:'PAUL WAS AN AMATEUR',emoji:'🐙💀'},
 ];
 const RISK_PROFILES = [
-  {min:55,max:100,title:'De Bureaucraat',emoji:'📁',sub:'Speelt alleen op papieren zekerheden. Favoriet wint? Aangevinkt.'},
-  {min:40,max:55,title:'De Ambtenaar',emoji:'🖊️',sub:'Iets losser dan de bureaucraat, maar nog steeds binnen de lijntjes.'},
-  {min:28,max:40,title:'De Informant',emoji:'🤫',sub:'Heeft wat inside info, durft er iets op te gokken.'},
-  {min:18,max:28,title:'De Stroman',emoji:'🎭',sub:'Doet alsof hij het weet. Soms heeft ie gelijk ook.'},
-  {min:0,max:18,title:'De Rebel',emoji:'✊',sub:'Trekt zich niks aan van de odds. Chaos is zijn strategie.'},
+  {key:'bureaucrat',min:55,max:100,emoji:'📁'},
+  {key:'ambtenaar',min:40,max:55,emoji:'🖊️'},
+  {key:'informant',min:28,max:40,emoji:'🤫'},
+  {key:'stroman',min:18,max:28,emoji:'🎭'},
+  {key:'rebel',min:0,max:18,emoji:'✊'},
 ];
 
 // ── STATE ────────────────────────────────────────────────────
@@ -715,7 +701,7 @@ let viewingProfile=null;
 // ── HELPERS ──────────────────────────────────────────────────
 function calcPts(o){return Math.round(1000/Math.max(o,1))}
 function isLocked(m){return m.kickoff?new Date(m.kickoff)<=new Date():false}
-const phaseLabel={group:'GROEP',r32:'1/32',r16:'1/16',qf:'1/4',sf:'HALVE',third:'3E PL.',final:'FINALE'};
+function getPhaseLabel(p){return{group:t('tips_phase_label_group'),r32:t('tips_phase_label_r32'),r16:t('tips_phase_label_r16'),qf:t('tips_phase_label_qf'),sf:t('tips_phase_label_sf'),third:t('tips_phase_label_third'),final:t('tips_phase_label_final')}[p]||p;}
 const koPhases=['r32','r16','qf','sf','third','final'];
 const teamShort={'DR Congo':'DRC','Saudi Arabia':'SAU','Cape Verde':'CPV','Czech Republic':'CZE','New Zealand':'NZL','Ivory Coast':'CIV','South Korea':'KOR','South Africa':'RSA','El Salvador':'SAL','Costa Rica':'CRC'};
 
@@ -817,7 +803,7 @@ function updateHeaderStreak(){
   if(!me)return;
   const si=getStreakInfo(me.current_streak||0);
   const el=document.getElementById('header-streak');
-  if(si&&el){el.textContent=si.emoji+' '+si.title+' — '+(me.current_streak||0)+' op rij';el.setAttribute('style','font-family:var(--pixel);font-size:7px;padding:2px 6px;margin-top:4px;display:block;'+getStreakBadgeStyle(me.current_streak||0));}
+  if(si&&el){el.textContent=t('streak_badge_label',{emoji:si.emoji,title:si.title,X:me.current_streak||0});el.setAttribute('style','font-family:var(--pixel);font-size:7px;padding:2px 6px;margin-top:4px;display:block;'+getStreakBadgeStyle(me.current_streak||0));}
   else if(el){el.style.display='none';}
 }
 
@@ -836,8 +822,26 @@ function translateStaticText(){
   });
 }
 
+function renderSpelregels(){
+  const sb=document.getElementById('rules-streak-body');
+  if(sb){
+    sb.innerHTML=STREAKS.map((s,i)=>`<tr${i<STREAKS.length-1?' style="border-bottom:1px solid var(--border)"':''}>`
+      +`<td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">${t('rules_streak_threshold_label',{X:s.n})}</td>`
+      +`<td style="padding:6px">${s.emoji} ${t('streak_title_'+s.n)}</td></tr>`).join('');
+  }
+  const rb=document.getElementById('rules-riskprofile-body');
+  if(rb){
+    rb.innerHTML=RISK_PROFILES.map((r,i)=>`<tr${i<RISK_PROFILES.length-1?' style="border-bottom:1px solid var(--border)"':''}>`
+      +`<td style="padding:5px">${r.emoji}</td>`
+      +`<td style="padding:5px;font-family:var(--pixel);font-size:8px;color:var(--white)">${t('risk_profile_'+r.key+'_title')}</td>`
+      +`<td style="padding:5px;color:var(--muted)">${t('risk_profile_range_label',{X:r.min,Y:r.max})}</td>`
+      +`</tr>`).join('');
+  }
+}
+
 function translatePage(){
   translateStaticText();
+  renderSpelregels();
 }
 
 async function changeLanguage(lang){
@@ -845,6 +849,12 @@ async function changeLanguage(lang){
   setLanguage(lang);
   if(currentUser?.id) await saveLanguageToProfile(currentUser.id,lang,sb);
   translatePage();
+  renderHome();
+  renderTips();
+  renderScoreboard();
+  renderTournament();
+  updateHeaderStreak();
+  if(currentProfile?.is_admin)renderAdminResults();
   if(document.getElementById('profile-modal').classList.contains('open')){
     openProfile(currentUser.id);
   }
@@ -949,12 +959,12 @@ function renderStreakBadge(streak){
   if(s<2)return'';
   const si=getStreakInfo(s);
   if(!si)return'';
-  return`<span class="streak-badge" style="${getStreakBadgeStyle(s)}">${si.emoji} ${si.title} — ${s} op rij</span>`;
+  return`<span class="streak-badge" style="${getStreakBadgeStyle(s)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:s})}</span>`;
 }
 
 function renderPodiumCard(player,rank){
   const pp=window.NRNFPixelPlayer.generatePlayer(player.username);
-  const rankLabels=['★ 1ST · CHAMPION ★','2ND · SILVER','3RD · BRONZE'];
+  const rankLabels=[t('podium_rank_1'),t('podium_rank_2'),t('podium_rank_3')];
   const cardClass=['podium-card-1','podium-card-2','podium-card-3'];
   const ri=rank-1;
   const posCls=pp.position==='GK'?' gk':'';
@@ -963,8 +973,8 @@ function renderPodiumCard(player,rank){
   const badge=renderStreakBadge(streak);
   const wins=player.day_wins||0;
   const starsHtml=wins>=6
-    ?`<div class="podium-stars"><span class="podium-stars-lbl">DAGWINSTEN</span><span class="podium-stars-num" title="${wins} dagwinsten JUNGE!!!">${wins}</span></div>`
-    :`<div class="podium-stars"><span class="podium-stars-lbl">DAGWINSTEN</span>${Array.from({length:5}).map((_,i)=>i<wins?'<span class="on">★</span>':'<span class="off">☆</span>').join('')}</div>`;
+    ?`<div class="podium-stars"><span class="podium-stars-lbl">${t('podium_stat_day_wins')}</span><span class="podium-stars-num" title="${wins} dagwinsten JUNGE!!!">${wins}</span></div>`
+    :`<div class="podium-stars"><span class="podium-stars-lbl">${t('podium_stat_day_wins')}</span>${Array.from({length:5}).map((_,i)=>i<wins?'<span class="on">★</span>':'<span class="off">☆</span>').join('')}</div>`;
   return`<div class="podium-card ${cardClass[ri]}" onclick="openProfile('${player.id}')">`
     +`<div class="podium-rank-bar">${rankLabels[ri]}</div>`
     +`<div class="podium-portrait">`
@@ -974,10 +984,10 @@ function renderPodiumCard(player,rank){
     +`<span class="podium-kit-tag">${pp.kit.name}${pp.kit.throwback?' · RETRO':''}</span>`
     +`</div>`
     +`<div class="podium-nameplate"><div class="nm">${player.username.toUpperCase()}</div></div>`
-    +`<div class="podium-day-pts">${player.dayPts} PT <small>· dag totaal</small></div>`
+    +`<div class="podium-day-pts">${player.dayPts} PT <small>· ${t('podium_day_total')}</small></div>`
     +`<div class="podium-stats">`
-    +`<div class="podium-stat"><div class="k">STREAK</div><div class="v streak">🔥 ${streak}</div></div>`
-    +`<div class="podium-stat"><div class="k">RISICO</div><div class="v">${risk}%</div></div>`
+    +`<div class="podium-stat"><div class="k">${t('podium_stat_streak')}</div><div class="v streak">🔥 ${streak}</div></div>`
+    +`<div class="podium-stat"><div class="k">${t('podium_stat_risk')}</div><div class="v">${risk}%</div></div>`
     +`</div>`
     +(badge?`<div style="padding:6px;border-top:1px solid var(--border);text-align:center">${badge}</div>`:'')
     +starsHtml
@@ -991,7 +1001,7 @@ function renderPodium(){
     return{...p,dayPts:pts,day};
   }).sort((a,b)=>b.dayPts-a.dayPts).slice(0,3);
   if(!ranked.length||ranked[0].dayPts===0){
-    el.innerHTML='<div style="font-family:var(--vt);font-size:22px;color:var(--muted);padding:1rem 0">Nog geen wedstrijden gespeeld.</div>';
+    el.innerHTML=`<div style="font-family:var(--vt);font-size:22px;color:var(--muted);padding:1rem 0">${t('home_no_matches_yet')}</div>`;
     return;
   }
   const order=[1,0,2];
@@ -1048,9 +1058,9 @@ function renderGlobalStats(){
   if(waag.length&&waag[0]){
     const waagSi=getStreakInfo(waag[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('waaghals')">`
-      +`<div class="stat-ticker-label">🎲 WAAGHALS VAN VANDAAG</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${waag[0].id}')">${waag[0].username.toUpperCase()}</span>${waagSi?`<span class="streak-badge" style="${getStreakBadgeStyle(waag[0].current_streak||0)}">${waagSi.emoji} ${waagSi.title} — ${waag[0].current_streak} op rij</span>`:''}<span>— gem. ${Math.round(waag[0].risk)}% kans</span></div>`
-      +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
+      +`<div class="stat-ticker-label">${t('stat_ticker_waaghals_label')}</div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${waag[0].id}')">${waag[0].username.toUpperCase()}</span>${waagSi?`<span class="streak-badge" style="${getStreakBadgeStyle(waag[0].current_streak||0)}">${t('streak_badge_label',{emoji:waagSi.emoji,title:waagSi.title,X:waag[0].current_streak})}</span>`:''}<span>— ${t('stat_ticker_avg_chance',{X:Math.round(waag[0].risk)})}</span></div>`
+      +`<div class="stat-ticker-hint">${t('stat_ticker_hint')}</div>`
       +`</div>`);
   }
 
@@ -1060,9 +1070,9 @@ function renderGlobalStats(){
     const s=streakers[0];
     const si=getStreakInfo(s.current_streak);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('streaks')">`
-      +`<div class="stat-ticker-label">🔥 HEISSESTE STREAK</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${s.id}')">${s.username.toUpperCase()}</span>${si?`<span class="streak-badge" style="${getStreakBadgeStyle(s.current_streak||0)}">${si.emoji} ${si.title} — ${s.current_streak} op rij</span>`:''}</div>`
-      +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
+      +`<div class="stat-ticker-label">${t('stat_ticker_streak_label')}</div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${s.id}')">${s.username.toUpperCase()}</span>${si?`<span class="streak-badge" style="${getStreakBadgeStyle(s.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:s.current_streak})}</span>`:''}</div>`
+      +`<div class="stat-ticker-hint">${t('stat_ticker_hint')}</div>`
       +`</div>`);
   }
 
@@ -1071,13 +1081,13 @@ function renderGlobalStats(){
   if(beaters.length){
     const beatSi=getStreakInfo(beaters[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('oddsbeater')">`
-      +`<div class="stat-ticker-label">🎯 ODDS BEATER</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${beaters[0].id}')">${beaters[0].username.toUpperCase()}</span>${beatSi?`<span class="streak-badge" style="${getStreakBadgeStyle(beaters[0].current_streak||0)}">${beatSi.emoji} ${beatSi.title} — ${beaters[0].current_streak} op rij</span>`:''}<span>— ${beaters[0].oddsGap.toFixed(1)}% gem. onder favoriet</span></div>`
-      +`<div class="stat-ticker-hint">▶ klik voor volledig overzicht</div>`
+      +`<div class="stat-ticker-label">${t('stat_ticker_oddsbeater_label')}</div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${beaters[0].id}')">${beaters[0].username.toUpperCase()}</span>${beatSi?`<span class="streak-badge" style="${getStreakBadgeStyle(beaters[0].current_streak||0)}">${t('streak_badge_label',{emoji:beatSi.emoji,title:beatSi.title,X:beaters[0].current_streak})}</span>`:''}<span>— ${t('stat_ticker_under_fav',{X:beaters[0].oddsGap.toFixed(1)})}</span></div>`
+      +`<div class="stat-ticker-hint">${t('stat_ticker_hint')}</div>`
       +`</div>`);
   }
 
-  el.innerHTML=stats.length?stats.join(""):`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">Stats beschikbaar na de eerste speeldag.</div>`;
+  el.innerHTML=stats.length?stats.join(""):`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">${t('stats_no_data_yet')}</div>`;
 }
 
 function openStatsModal(type){
@@ -1085,46 +1095,46 @@ function openStatsModal(type){
   let html="";
   if(type==="waaghals"){
     const data=calcWaaghals();
-    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🎲 WAAGHALS RANKING</div>`
-      +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">Lagere gem. kans = meer risico genomen</div>`
+    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">${t('stats_modal_waaghals_title')}</div>`
+      +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">${t('stats_modal_waaghals_sub')}</div>`
       +data.map((p,i)=>{
         const si=getStreakInfo(p.current_streak||0);
         return `<div class="stats-row-item">`
           +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${p.username.toUpperCase()}</span>`
-          +`${si?`<span class="streak-badge" style="margin-left:8px;${getStreakBadgeStyle(p.current_streak||0)}">${si.emoji} ${si.title} — ${p.current_streak} op rij</span>`:''}`
+          +`${si?`<span class="streak-badge" style="margin-left:8px;${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span>`:''}`
           +`</div>`
           +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">gem. ${Math.round(p.risk)}%</div>`
           +`</div>`;
       }).join("");
   } else if(type==="streaks"){
     const data=calcAllStreaks();
-    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🔥 STREAK OVERZICHT</div>`
+    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">${t('stats_modal_streaks_title')}</div>`
       +data.map((p,i)=>{
         const si=getStreakInfo(p.current_streak);
         return `<div class="stats-row-item">`
           +`<div>`
           +`<div style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${p.username.toUpperCase()}</div>`
-          +`${si?`<div style="margin-top:4px"><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${si.emoji} ${si.title} — ${p.current_streak} op rij</span></div>`:''}`
-          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">langste: ${p.longest_streak}</div>`
+          +`${si?`<div style="margin-top:4px"><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span></div>`:''}`
+          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${t('stats_modal_streaks_longest',{X:p.longest_streak})}</div>`
           +`</div>`
           +`<div style="font-family:var(--pixel);font-size:14px;color:var(--yellow)">${getStreakEmoji(p.current_streak)}</div>`
           +`</div>`;
       }).join("");
   } else if(type==="oddsbeater"){
     const data=calcOddsBeaters();
-    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">🎯 ODDS BEATER RANKING</div>`
-      +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">Wint terwijl ze niet op de favoriet gokken</div>`
+    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">${t('stats_modal_oddsbeater_title')}</div>`
+      +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">${t('stats_modal_oddsbeater_sub')}</div>`
       +data.map((p,i)=>{
         const si=getStreakInfo(p.current_streak||0);
         return `<div class="stats-row-item">`
           +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${p.username.toUpperCase()}</span>`
-          +`${si?`<span class="streak-badge" style="margin-left:8px;${getStreakBadgeStyle(p.current_streak||0)}">${si.emoji} ${si.title} — ${p.current_streak} op rij</span>`:''}`
-          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${p.oddsCount}× raak · ${p.oddsPts} pts</div></div>`
+          +`${si?`<span class="streak-badge" style="margin-left:8px;${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span>`:''}`
+          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${t('stats_modal_oddsbeater_hits',{X:p.oddsCount,Y:p.oddsPts})}</div></div>`
           +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.oddsGap.toFixed(1)}%</div>`
           +`</div>`;
       }).join("");
   }
-  el.innerHTML=html||`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">Geen data.</div>`;
+  el.innerHTML=html||`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">${t('stats_modal_no_data')}</div>`;
   document.getElementById("stats-modal").classList.add("open");
 }
 function closeStatsModal(){document.getElementById("stats-modal").classList.remove("open");}
@@ -1135,9 +1145,9 @@ function renderComplotHome(){
 
   if(!myGroups.length){
     el.innerHTML=`<div class="box">
-      <div style="font-family:var(--pixel);font-size:9px;color:var(--purple-light);margin-bottom:8px">JE ZIET NOG NIETS</div>
-      <div style="font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:12px">Je zit nog niet in een complotgroepje. Maak er één aan of wacht op een uitnodiging.</div>
-      <button class="btn btn-purple btn-sm" onclick="showCreateComplot()">🐓 COMPLOT AANMAKEN</button>
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--purple-light);margin-bottom:8px">${t('complot_empty_title')}</div>
+      <div style="font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:12px">${t('complot_empty_body')}</div>
+      <button class="btn btn-purple btn-sm" onclick="showCreateComplot()">${t('complot_btn_create')}</button>
     </div>`;
     return;
   }
@@ -1148,7 +1158,7 @@ function renderComplotHome(){
     html+=`<div class="phase-tabs" style="margin-bottom:12px">${myGroups.map((g,i)=>`<button class="phase-tab ${i===0?'active':''}" onclick="switchComplotTab('${g.id}',this)">${g.name.toUpperCase()}</button>`).join('')}</div>`;
   }
   html+=myGroups.map((g,i)=>`<div class="complot-tab-content" id="ctab-${g.id}" style="display:${i===0?'block':'none'}">${renderComplotGroup(g)}</div>`).join('');
-  html+=`<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="showCreateComplot()">+ NIEUW COMPLOT</button>`;
+  html+=`<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="showCreateComplot()">${t('complot_btn_new')}</button>`;
   el.innerHTML=html;
 }
 
@@ -1181,13 +1191,13 @@ function renderComplotGroup(group){
       const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
       if(!tip)return '';
       const side=tip.tip;
-      const teamName=side==='home'?m.home_team:side==='away'?m.away_team:null;
-      const f=teamName?flag(teamName):'=';
-      const lbl=teamName?(teamShort[teamName]||teamName.slice(0,3).toUpperCase()):'GLK';
+      const pickedTeam=side==='home'?m.home_team:side==='away'?m.away_team:null;
+      const f=pickedTeam?flag(pickedTeam):'=';
+      const lbl=pickedTeam?(teamShort[pickedTeam]||pickedTeam.slice(0,3).toUpperCase()):t('tips_abbrev_draw');
       const ok=side===m.result;
       const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
       const pts=ok?calcPts(o):0;
-      return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-flex;align-items:center;width:62px;flex-shrink:0;white-space:nowrap" title="${m.home_team} vs ${m.away_team}">`
+      return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-flex;align-items:center;width:62px;flex-shrink:0;white-space:nowrap" title="${teamName(m.home_team)} vs ${teamName(m.away_team)}">`
         +`<span style="font-size:15px;line-height:1">${f}</span>`
         +`<span style="font-family:var(--pixel);font-size:6px;margin-left:1px">${lbl}${ok?'<sup style="color:var(--green)">+'+pts+'</sup>':''}</span>`
         +`</span>`;
@@ -1199,8 +1209,8 @@ function renderComplotGroup(group){
     return`<div class="member-row">`
       +avatarHTML(p,28,`onclick="openProfile('${p.id}')"`)
       +`<div style="flex:1">`
-      +`<div style="font-family:var(--oswald);font-weight:700;font-size:16px">${['🥇','🥈','🥉'][i]||i+1} ${p.username}${p.is_haantje?'<span class="haantje-badge">🐓 HAANTJE</span>':''}</div>`
-      +`${streakInfo?`<div><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${streakInfo.emoji} ${streakInfo.title} — ${p.current_streak} op rij</span></div>`:''}`
+      +`<div style="font-family:var(--oswald);font-weight:700;font-size:16px">${['🥇','🥈','🥉'][i]||i+1} ${p.username}${p.is_haantje?`<span class="haantje-badge">${t('complot_haantje_badge')}</span>`:''}</div>`
+      +`${streakInfo?`<div><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:streakInfo.emoji,title:streakInfo.title,X:p.current_streak})}</span></div>`:''}`
       +dayRow
       +`<div class="complot-badges-placeholder"></div>`
       +`</div>`
@@ -1209,15 +1219,15 @@ function renderComplotGroup(group){
   }).join('');
   let html=`<div class="complot-card">`
     +`<div class="complot-name">🐓 ${group.name.toUpperCase()}</div>`
-    +`<div style="font-family:var(--vt);font-size:16px;color:var(--muted);margin-bottom:10px">${members.length} leden</div>`
-    +`<div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-bottom:8px">KLASSEMENT</div>`
+    +`<div style="font-family:var(--vt);font-size:16px;color:var(--muted);margin-bottom:10px">${t('complot_member_count',{X:members.length})}</div>`
+    +`<div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-bottom:8px">${t('complot_label_ranking')}</div>`
     +rankedHtml;
   if(isHaantje){
     html+=`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">`
-      +`<div style="font-family:var(--pixel);font-size:7px;color:var(--yellow);margin-bottom:8px">🐓 HAANTJE POWERS</div>`
+      +`<div style="font-family:var(--pixel);font-size:7px;color:var(--yellow);margin-bottom:8px">${t('complot_haantje_powers_label')}</div>`
       +`<div style="display:flex;gap:6px;flex-wrap:wrap">`
-      +`<button class="btn btn-sm btn-purple" onclick="showInviteByUsername('${group.id}')">🐑 Slaper wakker maken</button>`
-      +`<button class="btn btn-sm btn-ghost" onclick="manageMembers('${group.id}')">🐓 Complot beheren</button>`
+      +`<button class="btn btn-sm btn-purple" onclick="showInviteByUsername('${group.id}')">${t('complot_btn_wake_up')}</button>`
+      +`<button class="btn btn-sm btn-ghost" onclick="manageMembers('${group.id}')">${t('complot_btn_manage')}</button>`
       +`</div></div>`;
   }
   html+=`</div>`;
@@ -1293,27 +1303,27 @@ function renderComplotModal(){
     const isMe=p.user_id===currentUser.id;
     return`<div class="member-row" style="padding:8px 0;border-bottom:1px solid rgba(85,0,170,.3)">`
       +avatarHTML(p,28,`onclick="openProfile('${p.id}')"`)
-      +`<div style="flex:1;font-family:var(--oswald);font-weight:700;font-size:16px">${p.username}${p.is_haantje?'<span class="haantje-badge">🐓 HAANTJE</span>':''}</div>`
+      +`<div style="flex:1;font-family:var(--oswald);font-weight:700;font-size:16px">${p.username}${p.is_haantje?`<span class="haantje-badge">${t('complot_haantje_badge')}</span>`:''}</div>`
       +(!isMe?`<div style="display:flex;gap:6px;flex-wrap:wrap">`
-        +(!p.is_haantje?`<div class="tt-wrap"><button class="btn btn-purple" style="padding:8px 14px;font-size:9px" onclick="makeHaantje('${_complotManageId}','${p.user_id}','${p.username}')">🐓👑 Kronen</button><div class="tt-text">Maak dit lid ook Haantje</div></div>`:'')
-        +`<div class="tt-wrap"><button class="btn btn-red" style="padding:8px 14px;font-size:9px" onclick="kickMember('${_complotManageId}','${p.user_id}','${p.username}')">😴 Laten slapen</button><div class="tt-text">Stuur terug de matrix in</div></div>`
+        +(!p.is_haantje?`<div class="tt-wrap"><button class="btn btn-purple" style="padding:8px 14px;font-size:9px" onclick="makeHaantje('${_complotManageId}','${p.user_id}','${p.username}')">${t('complot_action_btn_crown')}</button><div class="tt-text">${t('complot_action_tooltip_crown')}</div></div>`:'')
+        +`<div class="tt-wrap"><button class="btn btn-red" style="padding:8px 14px;font-size:9px" onclick="kickMember('${_complotManageId}','${p.user_id}','${p.username}')">${t('complot_action_btn_sleep')}</button><div class="tt-text">${t('complot_action_tooltip_sleep')}</div></div>`
         +`</div>`:'')
       +`</div>`;
   }).join('');
   document.getElementById('complot-modal-content').innerHTML=`
-    <div style="font-family:var(--pixel);font-size:10px;color:var(--green);margin-bottom:1rem">BEHEER HET COMPLOT 🐓</div>
+    <div style="font-family:var(--pixel);font-size:10px;color:var(--green);margin-bottom:1rem">${t('complot_manage_title')}</div>
     <div style="margin-bottom:1rem">${memberRows}</div>
     <div class="box" style="margin-bottom:10px">
-      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">INVITE LINK</div>
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">${t('complot_manage_invite_link_label')}</div>
       <div style="font-family:var(--vt);font-size:18px;color:var(--green);cursor:pointer;word-break:break-all;margin-bottom:8px" onclick="copyInvite('${inviteUrl}')">${inviteUrl}</div>
-      <button class="btn btn-ghost" style="padding:8px 14px" onclick="copyInvite('${inviteUrl}')">📋 KOPIEER LINK</button>
+      <button class="btn btn-ghost" style="padding:8px 14px" onclick="copyInvite('${inviteUrl}')">${t('complot_manage_btn_copy_link')}</button>
     </div>
     <div class="box">
-      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">🐑 SCHAAP REKRUTEREN</div>
-      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">Gebruikersnaam van de slaapkop:</div>
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">${t('complot_manage_recruit_label')}</div>
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">${t('complot_manage_username_label')}</div>
       <div style="display:flex;gap:6px">
-        <input id="complot-invite-input" type="text" placeholder="gebruikersnaam..." style="flex:1;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:6px 8px" onkeypress="if(event.key==='Enter')complotInviteFromModal()">
-        <button class="btn btn-purple" style="padding:8px 14px" onclick="complotInviteFromModal()">💊 WAKKER MAKEN</button>
+        <input id="complot-invite-input" type="text" placeholder="${t('complot_manage_username_placeholder')}" style="flex:1;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:6px 8px" onkeypress="if(event.key==='Enter')complotInviteFromModal()">
+        <button class="btn btn-purple" style="padding:8px 14px" onclick="complotInviteFromModal()">${t('complot_manage_btn_wake_up')}</button>
       </div>
       <div id="complot-invite-error" style="font-family:var(--vt);font-size:20px;color:var(--red);margin-top:6px;display:none"></div>
     </div>
@@ -1357,7 +1367,7 @@ function filterPhase(phase,btn){
 function renderTips(){
   const el=document.getElementById('tips-list');
   const filtered=currentPhaseFilter==='all'?matches:currentPhaseFilter==='group1'?matches.filter(m=>m.phase==='group'&&m.round===1):currentPhaseFilter==='group2'?matches.filter(m=>m.phase==='group'&&m.round===2):currentPhaseFilter==='group3'?matches.filter(m=>m.phase==='group'&&m.round===3):matches.filter(m=>m.phase===currentPhaseFilter);
-  if(!filtered.length){el.innerHTML='<div class="loading">Geen wedstrijden in deze fase.</div>';return;}
+  if(!filtered.length){el.innerHTML=`<div class="loading">${t('tips_no_matches_in_phase')}</div>`;return;}
 
   el.innerHTML=filtered.map(m=>{
     const locked=isLocked(m);
@@ -1379,24 +1389,24 @@ function renderTips(){
 
     return`<div class="match-card ${res?'res-'+res:''}" data-match-id="${m.id}">
       <div class="match-meta">
-        <span class="phase-badge ${m.phase==='group'?'phase-group':'phase-ko'}">${phaseLabel[m.phase]||m.phase}${m.group_name?' '+m.group_name:''}</span>
-        ${m.round?`<span>Ronde ${m.round}</span>`:''}
+        <span class="phase-badge ${m.phase==='group'?'phase-group':'phase-ko'}">${getPhaseLabel(m.phase)}${m.group_name?' '+m.group_name:''}</span>
+        ${m.round?`<span>${t('tips_match_round',{X:m.round})}</span>`:''}
         ${ko?`<span>${ko}</span>`:''}
         ${m.venue?`<span>📍 ${m.venue}</span>`:''}
-        ${locked?'<span class="locked-badge">🔒 VERGRENDELD</span>':''}
-        ${koPhases.includes(m.phase)?'<span style="color:var(--yellow);font-size:7px">NA 120 MIN</span>':''}
-        ${res?'<span style="color:var(--green);font-size:9px;font-family:var(--pixel)">UITSLAG BEKEND</span>':''}
+        ${locked?`<span class="locked-badge">${t('tips_match_locked')}</span>`:''}
+        ${koPhases.includes(m.phase)?`<span style="color:var(--yellow);font-size:7px">${t('tips_match_after_120')}</span>`:''}
+        ${res?`<span style="color:var(--green);font-size:9px;font-family:var(--pixel)">${t('tips_match_result_known')}</span>`:''}
       </div>
       <div class="pick-row">
-        <button class="pick-btn ${tip==='home'?'sel-home':''}" onclick="pickTip(${m.id},'home',this)" ${locked?'disabled':''}>
-          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.home_team)}</span>${m.home_team}<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>
+          <button class="pick-btn ${tip==='home'?'sel-home':''}" onclick="pickTip(${m.id},'home',this)" ${locked?'disabled':''}>
+          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.home_team)}</span>${teamName(m.home_team)}<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>
         </button>
         <button class="pick-draw ${tip==='draw'?'sel-draw':''}" onclick="pickTip(${m.id},'draw',this)" ${locked?'disabled':''}>
-          GELIJK<br><span style="font-size:6px">${m.draw_odds}%</span><br>
+          ${t('tips_match_draw')}<br><span style="font-size:6px">${m.draw_odds}%</span><br>
           <span style="font-family:var(--pixel);font-size:6px;color:var(--yellow)">${calcPts(m.draw_odds)}</span>
         </button>
         <button class="pick-btn ${tip==='away'?'sel-away':''}" onclick="pickTip(${m.id},'away',this)" ${locked?'disabled':''}>
-          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.away_team)}</span>${m.away_team}<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>
+          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.away_team)}</span>${teamName(m.away_team)}<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>
         </button>
       </div>
       ${total>0?`<div class="tip-counts">
@@ -1420,7 +1430,7 @@ function showTipTooltip(e,el,side){
   }
   if(!users.length){closeTipTooltip();return;}
   const team=el.dataset.team||'';
-  const lbl=side==='draw'?'= GELIJK':(flag(team)+' '+team);
+  const lbl=side==='draw'?t('tips_tooltip_draw'):(flag(team)+' '+teamName(team));
   const col=side==='home'?'var(--green)':side==='draw'?'var(--yellow)':'var(--red)';
   tt.innerHTML=`<div class="tt-lbl" style="color:${col}">${lbl}</div>`+users.map(u=>`<div class="tt-usr">${u}</div>`).join('');
   const r=el.getBoundingClientRect();
@@ -1522,9 +1532,9 @@ function renderScoreboard(){
   const ranked=allProfiles.map(p=>({...p,...getScore(p.id,filter),avgRisk:getAvgRisk(p.id)})).sort((a,b)=>b.pts-a.pts);
   const played=matches.filter(m=>m.result).length;
   document.getElementById('stats-row').innerHTML=`
-    <div class="stat-box"><span class="stat-val">${allProfiles.length}</span><div class="stat-lbl">Spelers</div></div>
-    <div class="stat-box"><span class="stat-val">${played}/${matches.length}</span><div class="stat-lbl">Gespeeld</div></div>
-    <div class="stat-box"><span class="stat-val">${ranked[0]?.pts||0}</span><div class="stat-lbl">Hoogste</div></div>`;
+    <div class="stat-box"><span class="stat-val">${allProfiles.length}</span><div class="stat-lbl">${t('stand_stat_players')}</div></div>
+    <div class="stat-box"><span class="stat-val">${played}/${matches.length}</span><div class="stat-lbl">${t('stand_stat_played')}</div></div>
+    <div class="stat-box"><span class="stat-val">${ranked[0]?.pts||0}</span><div class="stat-lbl">${t('stand_stat_highest')}</div></div>`;
 
   const medals=['🥇','🥈','🥉'];
   const rc=i=>['r1','r2','r3'][i]||'';
@@ -1548,14 +1558,14 @@ function renderScoreboard(){
         const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
         if(!tip)return '';
         const side=tip.tip;
-        const teamName=side==='home'?m.home_team:side==='away'?m.away_team:null;
-        const f=teamName?flag(teamName):'=';
-        const lbl=teamName?(teamShort[teamName]||teamName.slice(0,3).toUpperCase()):'GLK';
+        const pickedTeam=side==='home'?m.home_team:side==='away'?m.away_team:null;
+        const f=pickedTeam?flag(pickedTeam):'=';
+        const lbl=pickedTeam?(teamShort[pickedTeam]||pickedTeam.slice(0,3).toUpperCase()):t('tips_abbrev_draw');
         const ok=side===m.result;
         const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
         const pts=ok?calcPts(o):0;
         // Each tip: fixed 58px wide, flag+label on one line, pts superscript
-        return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-flex;align-items:center;width:58px;flex-shrink:0;white-space:nowrap" title="${m.home_team} vs ${m.away_team}">`
+        return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-flex;align-items:center;width:58px;flex-shrink:0;white-space:nowrap" title="${teamName(m.home_team)} vs ${teamName(m.away_team)}">`
           +`<span style="font-size:15px;line-height:1">${f}</span>`
           +`<span style="font-family:var(--pixel);font-size:6px;margin-left:1px">${lbl}${ok?'<sup style="color:var(--green)">+'+pts+'</sup>':''}</span>`
           +`</span>`;
@@ -1575,7 +1585,7 @@ function renderScoreboard(){
           <span style="font-family:var(--oswald);font-weight:700;font-size:18px;cursor:pointer" onclick="openProfile('${p.id}')">${p.username}</span>
           ${streakEmoji?`<span style="font-size:15px">${streakEmoji}</span>`:''}
         </div>
-        ${streakInfo?`<div style="margin:2px 0"><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${streakInfo.emoji} ${streakInfo.title} — ${p.current_streak} op rij</span></div>`:''}
+        ${streakInfo?`<div style="margin:2px 0"><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:streakInfo.emoji,title:streakInfo.title,X:p.current_streak})}</span></div>`:''}
       </td>
       <td style="overflow:hidden">${tipsHtml}</td>
       <td class="pts-cell" style="width:70px">${p.pts}</td>
@@ -1612,38 +1622,38 @@ function renderTournament(){
   const groupNames=[...new Set(matches.filter(m=>m.phase==='group'&&m.group_name).map(m=>m.group_name))].sort();
 
   if(currentTournamentFilter==='group_standings'){
-    if(!groupNames.length){el.innerHTML='<div class="loading">Geen groepswedstrijden.</div>';return;}
+    if(!groupNames.length){el.innerHTML=`<div class="loading">${t('toernooi_no_group_matches')}</div>`;return;}
     el.innerHTML='<div class="group-grid">'+groupNames.map(g=>{
       const standings=calcGroupStandings(g);
       return`<div class="group-card">
-        <div class="group-title">GROEP ${g}</div>
+        <div class="group-title">${t('toernooi_group_title',{X:g})}</div>
         <table class="group-table">
-          <thead><tr><th style="text-align:left">Team</th><th>G</th><th>W</th><th>D</th><th>V</th><th>GV</th><th>GT</th><th>+/-</th><th>Pts</th></tr></thead>
-          <tbody>${standings.length?standings.map((t,i)=>`<tr style="${i<2?'color:var(--green)':i===2?'color:var(--yellow)':''}">
-            <td>${flag(t.name)} ${teamShort[t.name]||t.name}</td>
-            <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
-            <td>${t.gf}</td><td>${t.ga}</td><td>${t.gf-t.ga>=0?'+':''}${t.gf-t.ga}</td>
-            <td style="font-weight:700">${t.pts}</td>
-          </tr>`).join(''):'<tr><td colspan="9" style="color:var(--muted)">Nog geen uitslagen</td></tr>'}</tbody>
+          <thead><tr><th style="text-align:left">${t('toernooi_table_col_team')}</th><th>${t('toernooi_table_col_g')}</th><th>${t('toernooi_table_col_w')}</th><th>${t('toernooi_table_col_d')}</th><th>${t('toernooi_table_col_v')}</th><th>${t('toernooi_table_col_gv')}</th><th>${t('toernooi_table_col_gt')}</th><th>${t('toernooi_table_col_diff')}</th><th>${t('toernooi_table_col_pts')}</th></tr></thead>
+          <tbody>${standings.length?standings.map((s,i)=>`<tr style="${i<2?'color:var(--green)':i===2?'color:var(--yellow)':''}">
+            <td>${flag(s.name)} ${teamShort[s.name]||teamName(s.name)}</td>
+            <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
+            <td>${s.gf}</td><td>${s.ga}</td><td>${s.gf-s.ga>=0?'+':''}${s.gf-s.ga}</td>
+            <td style="font-weight:700">${s.pts}</td>
+          </tr>`).join(''):`<tr><td colspan="9" style="color:var(--muted)">${t('toernooi_no_results_yet')}</td></tr>`}</tbody>
         </table>
       </div>`;
     }).join('')+'</div>';
 
   } else if(currentTournamentFilter==='group_matches'){
-    if(!groupNames.length){el.innerHTML='<div class="loading">Geen groepswedstrijden.</div>';return;}
+    if(!groupNames.length){el.innerHTML=`<div class="loading">${t('toernooi_no_group_matches')}</div>`;return;}
     el.innerHTML='<div class="group-grid">'+groupNames.map(g=>{
       const gMatches=matches.filter(m=>m.phase==='group'&&m.group_name===g).sort((a,b)=>a.round-b.round||(new Date(a.kickoff)-new Date(b.kickoff)));
       return`<div class="group-card">
-        <div class="group-title">GROEP ${g}</div>
+        <div class="group-title">${t('toernooi_group_title',{X:g})}</div>
         ${gMatches.map(m=>{
           const r=m.result;
           const score=(m.home_score!==null&&m.away_score!==null)?` ${m.home_score}-${m.away_score}`:'';
-          const pill=r?`<span class="rp rp-${r}">${r==='home'?m.home_team.slice(0,3).toUpperCase():r==='away'?m.away_team.slice(0,3).toUpperCase():'GLK'}${score}</span>`:'<span style="color:var(--muted);font-size:16px">—</span>';
+          const pill=r?`<span class="rp rp-${r}">${r==='home'?m.home_team.slice(0,3).toUpperCase():r==='away'?m.away_team.slice(0,3).toUpperCase():t('tips_abbrev_draw')}${score}</span>`:'<span style="color:var(--muted);font-size:16px">—</span>';
           const timeStr=m.kickoff?`<div style="font-family:var(--vt);font-size:17px;color:var(--muted)">${nlDate(m.kickoff)} · ${nlTimeOnly(m.kickoff)}</div>`:'';
           return`<div class="group-match" style="flex-direction:column;align-items:flex-start;gap:3px">
             ${timeStr}
             <div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">
-              <span style="font-family:var(--oswald);font-weight:700;font-size:17px">${flag(m.home_team)} ${m.home_team} - ${m.away_team} ${flag(m.away_team)}</span>${pill}
+              <span style="font-family:var(--oswald);font-weight:700;font-size:17px">${flag(m.home_team)} ${teamName(m.home_team)} - ${teamName(m.away_team)} ${flag(m.away_team)}</span>${pill}
             </div>
           </div>`;
         }).join('')}
@@ -1652,9 +1662,9 @@ function renderTournament(){
 
   } else {
     const phases=[
-      {key:'r32',label:'RONDE VAN 32'},{key:'r16',label:'RONDE VAN 16'},
-      {key:'qf',label:'KWARTFINALE'},{key:'sf',label:'HALVE FINALE'},
-      {key:'third',label:'3E PLAATS'},{key:'final',label:'FINALE'},
+      {key:'r32',label:t('toernooi_ko_round_r32')},{key:'r16',label:t('toernooi_ko_round_r16')},
+      {key:'qf',label:t('toernooi_ko_round_qf')},{key:'sf',label:t('toernooi_ko_round_sf')},
+      {key:'third',label:t('toernooi_ko_round_third')},{key:'final',label:t('toernooi_ko_round_final')},
     ];
     const html=phases.map(ph=>{
       const ms=matches.filter(m=>m.phase===ph.key).sort((a,b)=>a.bracket_pos-b.bracket_pos||(new Date(a.kickoff)-new Date(b.kickoff)));
@@ -1663,19 +1673,19 @@ function renderTournament(){
         ${ms.map(m=>{
           const r=m.result;
           const score=(m.home_score!==null&&m.away_score!==null)?` (${m.home_score}-${m.away_score})`:'';
-          const winner=r==='home'?m.home_team:r==='away'?m.away_team:r==='draw'?'Verlengd':null;
+          const winner=r==='home'?teamName(m.home_team):r==='away'?teamName(m.away_team):r==='draw'?t('toernooi_ko_extended'):null;
           const timeStr=m.kickoff?`${nlDate(m.kickoff)} · ${nlTimeOnly(m.kickoff)}${m.venue?' · '+m.venue:''}`:m.venue||'';
           return`<div class="ko-match ${r?'has-result':''}">
-            <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${flag(m.home_team)} ${m.home_team}</div>
+            <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${flag(m.home_team)} ${teamName(m.home_team)}</div>
             <div style="font-family:var(--pixel);font-size:9px;color:var(--white);margin:6px 0;opacity:0.6">VS</div>
-            <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${flag(m.away_team)} ${m.away_team}</div>
-            ${r?`<div style="margin-top:6px;font-family:var(--pixel);font-size:7px;color:var(--green)">▶ ${winner}${score}</div>`:'<div style="font-family:var(--vt);font-size:18px;color:var(--white);margin-top:6px;opacity:0.7">Nog niet gespeeld</div>'}
+            <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${flag(m.away_team)} ${teamName(m.away_team)}</div>
+            ${r?`<div style="margin-top:6px;font-family:var(--pixel);font-size:7px;color:var(--green)">▶ ${winner}${score}</div>`:`<div style="font-family:var(--vt);font-size:18px;color:var(--white);margin-top:6px;opacity:0.7">${t('toernooi_ko_not_played')}</div>`}
             ${timeStr?`<div style="font-family:var(--vt);font-size:18px;color:var(--white);margin-top:6px;opacity:0.8">${timeStr}</div>`:''}
           </div>`;
         }).join('')}
       </div></div>`;
     }).join('');
-    el.innerHTML=html||'<div class="loading">Nog geen knockoutwedstrijden.</div>';
+    el.innerHTML=html||`<div class="loading">${t('toernooi_no_ko_matches')}</div>`;
   }
 }
 
@@ -1784,7 +1794,7 @@ function renderAdminResults(){
   el.innerHTML=matches.map(m=>`
     <div class="box" style="margin-bottom:8px;padding:0.75rem 1rem">
       <div style="font-family:var(--oswald);font-weight:700;font-size:15px;margin-bottom:8px">
-        ${flag(m.home_team)} ${m.home_team} vs ${flag(m.away_team)} ${m.away_team}
+        ${flag(m.home_team)} ${teamName(m.home_team)} vs ${flag(m.away_team)} ${teamName(m.away_team)}
         ${m.kickoff?`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-left:8px">${nlDate(m.kickoff)}</span>`:''}
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
@@ -1794,9 +1804,9 @@ function renderAdminResults(){
         <button class="btn btn-sm btn-purple" onclick="saveScore(${m.id})">SCORE ▶</button>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-sm ${m.result==='home'?'btn-green':'btn-ghost'}" onclick="setResult(${m.id},'home')">${m.home_team}</button>
-        <button class="btn btn-sm ${m.result==='draw'?'btn-yellow':'btn-ghost'}" onclick="setResult(${m.id},'draw')">GELIJK</button>
-        <button class="btn btn-sm ${m.result==='away'?'btn-red':'btn-ghost'}" onclick="setResult(${m.id},'away')">${m.away_team}</button>
+        <button class="btn btn-sm ${m.result==='home'?'btn-green':'btn-ghost'}" onclick="setResult(${m.id},'home')">${teamName(m.home_team)}</button>
+        <button class="btn btn-sm ${m.result==='draw'?'btn-yellow':'btn-ghost'}" onclick="setResult(${m.id},'draw')">${t('tips_match_draw')}</button>
+        <button class="btn btn-sm ${m.result==='away'?'btn-red':'btn-ghost'}" onclick="setResult(${m.id},'away')">${teamName(m.away_team)}</button>
         ${m.result?`<button class="btn btn-sm btn-ghost" onclick="clearResult(${m.id})">✗</button>`:''}
       </div>
     </div>`).join('');
@@ -1973,7 +1983,7 @@ async function fetchOddsApi(auto=false){
     await loadAll();
     const stillDefault=matches.filter(m=>m.phase==='group'&&m.round===round&&m.home_odds===33&&m.draw_odds===34&&m.away_odds===33);
     if(stillDefault.length){
-      const names=stillDefault.map(m=>m.home_team+' vs '+m.away_team).join(', ');
+      const names=stillDefault.map(m=>teamName(m.home_team)+' vs '+teamName(m.away_team)).join(', ');
       const warn=`⚠ Niet alle odds gevuld voor ronde ${round}: ${names}`;
       if(errEl)errEl.innerHTML=`<div class="err">${warn}</div>`;
       if(status)status.innerHTML=`<div style="color:var(--yellow);font-family:var(--vt);font-size:18px">${count} bijgewerkt maar ${stillDefault.length} wedstrijden missen nog odds!</div>`;
@@ -2064,9 +2074,9 @@ function renderH2H(){
   });
   const tipBadge=(side,m,align)=>{
     const ok=side===m.result;
-    const teamName=side==='home'?m.home_team:side==='away'?m.away_team:null;
-    const f=teamName?flag(teamName):'=';
-    const lbl=teamName?(teamShort[teamName]||teamName.slice(0,3).toUpperCase()):'GLK';
+    const pickedTeam=side==='home'?m.home_team:side==='away'?m.away_team:null;
+    const f=pickedTeam?flag(pickedTeam):'=';
+    const lbl=pickedTeam?(teamShort[pickedTeam]||pickedTeam.slice(0,3).toUpperCase()):t('tips_abbrev_draw');
     const pts=ok?calcPts(side==='home'?m.home_odds:side==='draw'?m.draw_odds:m.away_odds):0;
     const col=ok?'var(--green)':'var(--red)';
     const pStr=ok?`<span style="font-family:var(--vt);font-size:18px;opacity:0.85">+${pts}</span>`:'';
@@ -2080,11 +2090,11 @@ function renderH2H(){
     const t2=p2?allTips.find(t=>t.user_id===p2.id&&t.match_id===m.id):null;
     const s2=t2?t2.tip:'draw';
     const score=m.home_score!=null?`${m.home_score}-${m.away_score}`:'';
-    const mid=`${flag(m.home_team)} ${m.home_team}`
+    const mid=`${flag(m.home_team)} ${teamName(m.home_team)}`
       +(score
         ?` <span style="font-family:var(--pixel);font-size:10px;color:var(--yellow);vertical-align:middle">${score}</span> `
         :`<span style="color:var(--muted);font-family:var(--vt);font-size:22px"> — </span>`)
-      +`${m.away_team} ${flag(m.away_team)}`;
+      +`${teamName(m.away_team)} ${flag(m.away_team)}`;
     return`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">`
       +`<div style="flex:0 0 120px;text-align:left">${tipBadge(s1,m,'left')}</div>`
       +`<div style="flex:1;text-align:center;font-family:var(--vt);font-size:22px;line-height:1.4;padding:0 6px">${mid}</div>`
@@ -2094,10 +2104,10 @@ function renderH2H(){
   let verdict='';
   if(p2&&played.length>0){
     if(p1pts===p2pts){
-      verdict=`<span style="color:var(--white);font-family:var(--oswald);font-weight:700">${p1.username}</span> en <span style="color:var(--white);font-family:var(--oswald);font-weight:700">${p2.username}</span> staan volledig gelijk. Nog geen winnaar.`;
+      verdict=t('h2h_verdict_draw',{p1:`<span style="color:var(--white);font-family:var(--oswald);font-weight:700">${p1.username}</span>`,p2:`<span style="color:var(--white);font-family:var(--oswald);font-weight:700">${p2.username}</span>`});
     }else{
       const winner=p1pts>p2pts?p1:p2,loser=p1pts>p2pts?p2:p1;
-      verdict=`<span style="color:var(--green);font-family:var(--pixel);font-size:9px;font-weight:700">${winner.username}</span><span style="font-family:var(--pixel);font-size:9px;color:var(--white)"> troeft </span><span style="color:var(--red);font-family:var(--pixel);font-size:9px;font-weight:700">${loser.username}</span><span style="font-family:var(--pixel);font-size:9px;color:var(--white)"> genadeloos af met </span><span style="color:var(--yellow);font-family:var(--pixel);font-size:9px">${Math.abs(p1pts-p2pts)}</span><span style="font-family:var(--pixel);font-size:9px;color:var(--white)"> punten verschil.</span>`;
+      verdict=t('h2h_verdict_winner',{winner:`<span style="color:var(--green);font-family:var(--pixel);font-size:9px;font-weight:700">${winner.username}</span>`,loser:`<span style="color:var(--red);font-family:var(--pixel);font-size:9px;font-weight:700">${loser.username}</span>`,diff:`<span style="color:var(--yellow);font-family:var(--pixel);font-size:9px">${Math.abs(p1pts-p2pts)}</span>`});
     }
   }
   const others=allProfiles.filter(p=>p.id!==p1.id);
@@ -2106,7 +2116,7 @@ function renderH2H(){
     if(s<2)return'';
     const si=getStreakInfo(s);
     if(!si)return'';
-    return`<span class="streak-badge" style="display:inline-block;margin-top:4px;${getStreakBadgeStyle(s)}">${si.emoji} ${si.title} — ${s} op rij</span>`;
+    return`<span class="streak-badge" style="display:inline-block;margin-top:4px;${getStreakBadgeStyle(s)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:s})}</span>`;
   };
   const dropItems=others.map(p=>`<div class="h2h-dropdown-item${p.id===h2hP2Id?' selected':''}" onclick="event.stopPropagation();setH2HP2('${p.id}')">`
     +`<div style="font-family:var(--oswald);font-weight:700;font-size:26px;color:${p.id===h2hP2Id?'var(--green)':'var(--white)'}">${p.username}</div>`
@@ -2115,7 +2125,7 @@ function renderH2H(){
   document.getElementById('h2h-content').innerHTML=`
     <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;flex-wrap:wrap">
       <div style="flex:1;min-width:120px">
-        <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">JIJ:</div>
+        <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">${t('h2h_label_you')}</div>
         <div style="background:var(--bg2);border:2px solid var(--purple);box-shadow:3px 3px 0 rgba(123,0,255,.5);padding:10px 14px">
           <div style="font-family:var(--oswald);font-weight:700;font-size:26px;color:var(--white)">${p1.username}</div>
           ${streakBadge(p1)}
@@ -2123,7 +2133,7 @@ function renderH2H(){
       </div>
       <div style="font-family:var(--pixel);font-size:14px;padding-top:28px">⚔️</div>
       <div style="flex:1;min-width:160px">
-        <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">TEGENSTANDER:</div>
+        <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">${t('h2h_label_opponent')}</div>
         <div style="position:relative">
           <div class="h2h-custom-select" onclick="toggleH2HDropdown(event)">
             <div style="flex:1">
@@ -2137,22 +2147,22 @@ function renderH2H(){
       </div>
     </div>
     ${p2&&played.length>0?`<div class="box" style="margin-bottom:10px">
-      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:8px">SAMENVATTING · ${played.length} WEDSTRIJD${played.length!==1?'EN':''}</div>
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:8px">${t('h2h_summary_label',{X:played.length})}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <div>
           <div style="font-family:var(--oswald);font-weight:700;font-size:22px;color:var(--green);margin-bottom:4px">${p1.username}</div>
-          <div style="font-family:var(--vt);font-size:24px;color:var(--white)">${p1c} goed · ${p1w} fout</div>
+          <div style="font-family:var(--vt);font-size:24px;color:var(--white)">${t('h2h_result_correct_wrong',{X:p1c,Y:p1w})}</div>
           <div style="font-family:var(--vt);font-size:24px;color:var(--green)">${p1pts} PTS</div>
         </div>
         <div>
           <div style="font-family:var(--oswald);font-weight:700;font-size:22px;color:var(--green);margin-bottom:4px">${p2.username}</div>
-          <div style="font-family:var(--vt);font-size:24px;color:var(--white)">${p2c} goed · ${p2w} fout</div>
+          <div style="font-family:var(--vt);font-size:24px;color:var(--white)">${t('h2h_result_correct_wrong',{X:p2c,Y:p2w})}</div>
           <div style="font-family:var(--vt);font-size:24px;color:var(--green)">${p2pts} PTS</div>
         </div>
       </div>
       ${verdict?`<div style="font-family:var(--pixel);font-size:10px;line-height:1.8">${verdict}</div>`:''}</div>`:''}
     <div class="h2h-tabs">${H2H_FILTERS.map(f=>`<button class="h2h-tab${h2hFilter===f.id?' active':''}" onclick="setH2HFilter('${f.id}')">${f.lbl}</button>`).join('')}</div>
-    ${played.length===0?`<div class="loading">Geen gespeelde wedstrijden.</div>`:`<div>${matchRows}</div>`}
+    ${played.length===0?`<div class="loading">${t('h2h_no_matches')}</div>`:`<div>${matchRows}</div>`}
   `;
 }
 
@@ -2182,15 +2192,15 @@ async function openProfile(userId){
   document.getElementById('profile-content').innerHTML=`
     <div style="text-align:center;margin-bottom:1rem">
       <div style="font-family:var(--pixel);font-size:12px;color:var(--green)">${profile.username.toUpperCase()}</div>
-      ${streakInfo?`<div style="margin-top:4px"><span class="streak-badge" style="${getStreakBadgeStyle(profile.current_streak||0)}">${streakInfo.emoji} ${streakInfo.title} — ${profile.current_streak||0} op rij</span></div>`:''}
+      ${streakInfo?`<div style="margin-top:4px"><span class="streak-badge" style="${getStreakBadgeStyle(profile.current_streak||0)}">${t('streak_badge_label',{emoji:streakInfo.emoji,title:streakInfo.title,X:profile.current_streak||0})}</span></div>`:''}
     </div>
     <div class="box" style="margin-bottom:8px">
       <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:6px">${t('profile_section_risk_profile')}</div>
       <div style="font-size:24px;margin-bottom:4px">${riskProfile.emoji}</div>
-      <div style="font-family:var(--pixel);font-size:9px;color:var(--yellow);margin-bottom:4px">${riskProfile.title}</div>
-      <div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:8px">${riskProfile.sub}</div>
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--yellow);margin-bottom:4px">${t('risk_profile_'+riskProfile.key+'_title')}</div>
+      <div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:8px">${t('risk_profile_'+riskProfile.key+'_sub')}</div>
       <div class="risk-bar"><div class="risk-fill" style="width:${Math.min(avgRisk,100)}%"></div></div>
-      <div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-top:4px">Gem. gekozen kans: ${avgRisk.toFixed(1)}%</div>
+      <div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-top:4px">${t('profile_avg_chosen_odds',{X:avgRisk.toFixed(1)})}</div>
     </div>
     <div class="box" style="margin-bottom:8px">
       <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:8px">${t('profile_section_stats')}</div>
@@ -2198,12 +2208,12 @@ async function openProfile(userId){
         <div><div style="font-family:var(--pixel);font-size:17px;color:var(--green)">${score.pts}</div><div style="font-family:var(--vt);font-size:16px;color:var(--muted)">${t('profile_stat_points')}</div></div>
         <div>
           <div style="font-family:var(--pixel);font-size:17px;color:var(--yellow)">${profile.current_streak||0}</div>
-          ${getStreakInfo(profile.current_streak||0)?`<div style="margin-top:2px"><span class="streak-badge" style="${getStreakBadgeStyle(profile.current_streak||0)}">${getStreakInfo(profile.current_streak).emoji} ${getStreakInfo(profile.current_streak).title} — ${profile.current_streak} op rij</span></div>`:''}
+          ${getStreakInfo(profile.current_streak||0)?`<div style="margin-top:2px"><span class="streak-badge" style="${getStreakBadgeStyle(profile.current_streak||0)}">${t('streak_badge_label',{emoji:getStreakInfo(profile.current_streak).emoji,title:getStreakInfo(profile.current_streak).title,X:profile.current_streak})}</span></div>`:''}
           <div style="font-family:var(--vt);font-size:16px;color:var(--muted)">${t('profile_stat_current_streak')}</div>
         </div>
         <div>
           <div style="font-family:var(--pixel);font-size:17px;color:var(--purple-light)">${profile.longest_streak||0}</div>
-          ${getStreakInfo(profile.longest_streak||0)?`<div style="margin-top:2px"><span class="streak-badge" style="${getStreakBadgeStyle(profile.longest_streak||0)}">${getStreakInfo(profile.longest_streak).emoji} ${getStreakInfo(profile.longest_streak).title}</span></div>`:''}
+          ${getStreakInfo(profile.longest_streak||0)?`<div style="margin-top:2px"><span class="streak-badge" style="${getStreakBadgeStyle(profile.longest_streak||0)}">${t('streak_badge_label',{emoji:getStreakInfo(profile.longest_streak).emoji,title:getStreakInfo(profile.longest_streak).title,X:profile.longest_streak})}</span></div>`:''}
           <div style="font-family:var(--vt);font-size:16px;color:var(--muted)">${t('profile_stat_longest_streak')}</div>
         </div>
         <div><div style="font-family:var(--pixel);font-size:17px;color:var(--white)">${score.correct}/${score.correct+score.wrong}</div><div style="font-family:var(--vt);font-size:16px;color:var(--muted)">${t('profile_stat_correct_played')}</div></div>
