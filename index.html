@@ -942,22 +942,11 @@ function renderHome(){
 }
 
 function getYesterdayPts(userId){
-  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
-  const yStr=yesterday.toISOString().slice(0,10);
-  // Find matches played yesterday (result set, kickoff was yesterday)
-  const yesterdayMatches=matches.filter(m=>{
-    if(!m.result||!m.kickoff)return false;
-    return m.kickoff.slice(0,10)===yStr;
-  });
-  if(!yesterdayMatches.length){
-    // Fallback: last day with results
-    const daysWithResults=[...new Set(matches.filter(m=>m.result&&m.kickoff).map(m=>m.kickoff.slice(0,10)))].sort().reverse();
-    if(!daysWithResults.length)return{pts:0,day:null};
-    const lastDay=daysWithResults[0];
-    const lastMatches=matches.filter(m=>m.result&&m.kickoff&&m.kickoff.slice(0,10)===lastDay);
-    return{pts:calcDayPts(userId,lastMatches),day:lastDay};
-  }
-  return{pts:calcDayPts(userId,yesterdayMatches),day:yStr};
+  const playedMatchdays=[...new Set(matches.filter(m=>m.result&&m.matchday!=null).map(m=>m.matchday))].sort((a,b)=>b-a);
+  if(!playedMatchdays.length)return{pts:0,day:null};
+  const lastMatchday=playedMatchdays[0];
+  const dayMatches=matches.filter(m=>m.result&&m.matchday===lastMatchday);
+  return{pts:calcDayPts(userId,dayMatches),day:lastMatchday};
 }
 function calcDayPts(userId,dayMatches){
   let pts=0;
@@ -1040,9 +1029,9 @@ function calcAllStreaks(){
   })).filter(p=>p.current_streak>=1).sort((a,b)=>b.current_streak-a.current_streak);
 }
 function calcWaaghals(){
-  const today=new Date().toISOString().slice(0,10);
-  const dayMatches=matches.filter(m=>m.kickoff&&m.result&&m.kickoff.slice(0,10)===today);
-  const src=dayMatches.length?dayMatches:matches.filter(m=>m.result);
+  const playedMatchdays=[...new Set(matches.filter(m=>m.result&&m.matchday!=null).map(m=>m.matchday))].sort((a,b)=>b-a);
+  const lastMatchday=playedMatchdays[0];
+  const src=lastMatchday!=null?matches.filter(m=>m.result&&m.matchday===lastMatchday):matches.filter(m=>m.result);
   return allProfiles.map(p=>{
     let risk=0,cnt=0;
     src.forEach(m=>{
@@ -1557,13 +1546,13 @@ function renderScoreboard(){
 
   const medals=['🥇','🥈','🥉'];
   const rc=i=>['r1','r2','r3'][i]||'';
-  // Pre-compute day groups once for all players
-  const playedSorted=matches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
+  // Pre-compute matchday groups once for all players
+  const playedSorted=matches.filter(m=>m.result&&m.matchday!=null).sort((a,b)=>b.matchday-a.matchday);
   const dayMap={};
   for(const m of playedSorted){
-    const day=new Date(m.kickoff).toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'short'});
-    if(!dayMap[day])dayMap[day]=[];
-    dayMap[day].push(m);
+    const key=m.matchday;
+    if(!dayMap[key])dayMap[key]=[];
+    dayMap[key].push(m);
   }
   const last3days=Object.entries(dayMap).slice(0,3);
 
@@ -1589,9 +1578,9 @@ function renderScoreboard(){
           +`<span style="font-family:var(--pixel);font-size:6px;margin-left:1px">${lbl}${ok?'<sup style="color:var(--green)">+'+pts+'</sup>':''}</span>`
           +`</span>`;
       }).join('');
-      // One row per day: date label (fixed 44px) + tips flowing right
+      // One row per matchday: label + tips flowing right
       return`<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;flex-wrap:nowrap">`
-        +`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);width:44px;flex-shrink:0;white-space:nowrap">${day}</span>`
+        +`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);width:54px;flex-shrink:0;white-space:nowrap">SD ${day}</span>`
         +`<span style="display:flex;flex-wrap:nowrap;gap:2px">${dayTips}</span>`
         +`</div>`;
     }).join('');
@@ -1814,7 +1803,7 @@ function renderAdminResults(){
     <div class="box" style="margin-bottom:8px;padding:0.75rem 1rem">
       <div style="font-family:var(--oswald);font-weight:700;font-size:15px;margin-bottom:8px">
         ${flag(m.home_team)} ${teamName(m.home_team)} vs ${flag(m.away_team)} ${teamName(m.away_team)}
-        ${m.kickoff?`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-left:8px">${nlDate(m.kickoff)}</span>`:''}
+        ${m.kickoff?`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-left:8px">${nlDate(m.kickoff)} ${nlTimeOnly(m.kickoff)}</span>`:''}
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
         <input type="number" placeholder="Thuis" id="hs-${m.id}" value="${m.home_score??''}" style="width:60px;padding:4px 6px;font-size:16px">
@@ -1912,9 +1901,9 @@ async function updateDayWins(matchId){
   ]);
   if(!fMatches||!fTips||!fProfiles)return;
   const match=fMatches.find(m=>m.id===matchId);
-  if(!match?.kickoff)return;
-  const day=match.kickoff.slice(0,10);
-  const dayMatches=fMatches.filter(m=>m.result&&m.kickoff&&m.kickoff.slice(0,10)===day);
+  if(!match?.matchday)return;
+  const day=match.matchday;
+  const dayMatches=fMatches.filter(m=>m.result&&m.matchday===day);
   if(!dayMatches.length)return;
   const scored=fProfiles.map(p=>{
     let pts=0;
