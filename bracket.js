@@ -53,8 +53,8 @@
 #bracket-view{display:none;overflow:hidden}
 @media(min-width:900px){
   #bracket-view.bkt-visible{
-    display:block;margin-top:8px;
-    position:relative;width:100vw;left:50%;margin-left:-50vw;
+    display:flex;justify-content:center;align-items:center;margin-top:8px;
+    width:100%;max-width:100vw;overflow-x:auto;
   }
   #tournament-view.bracket-active{display:none!important}
 }
@@ -322,11 +322,13 @@
     const _orig = window.renderTournament;
     window.renderTournament = function () {
       _orig.call(window);
+      const toernooiSection = document.getElementById('sec-toernooi');
+      const isTournamentActive = toernooiSection && toernooiSection.classList.contains('active');
       const koBtn = document.querySelector('#sec-toernooi .phase-tab[onclick*="\'ko\'"]');
       const isKO  = koBtn && koBtn.classList.contains('active');
       const tv = document.getElementById('tournament-view');
       const bv = document.getElementById('bracket-view');
-      if (isKO) {
+      if (isTournamentActive && isKO) {
         if (tv) tv.classList.add('bracket-active');
         if (bv) { bv.classList.add('bkt-visible'); renderBracket(); }
       } else {
