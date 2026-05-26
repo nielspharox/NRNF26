@@ -1734,21 +1734,21 @@ async function updateBracket(){
     let nh=m.home_team,na=m.away_team;
 
     // Pattern: "Winner M73"
-    const hWM=m.home_team.match(/^Winner M(\d+)$/);
-    const aWM=m.away_team.match(/^Winner M(\d+)$/);
+    const hWM=m.home_team?.match(/^Winner M(\d+)$/);
+    const aWM=m.away_team?.match(/^Winner M(\d+)$/);
     if(hWM&&winMap[+hWM[1]])nh=winMap[+hWM[1]];
     if(aWM&&winMap[+aWM[1]])na=winMap[+aWM[1]];
 
     // Pattern: "Loser M73" or "Loser SF-1"
-    const hLM=m.home_team.match(/^Loser M(\d+)$/);
-    const aLM=m.away_team.match(/^Loser M(\d+)$/);
+    const hLM=m.home_team?.match(/^Loser M(\d+)$/);
+    const aLM=m.away_team?.match(/^Loser M(\d+)$/);
     if(hLM&&losMap[+hLM[1]])nh=losMap[+hLM[1]];
     if(aLM&&losMap[+aLM[1]])na=losMap[+aLM[1]];
 
     // Pattern: "Winner R32-1", "Winner R16-1", "Winner QF-1", "Winner SF-1"
     const phMap={'R32':'r32','R16':'r16','QF':'qf','SF':'sf'};
-    const hRP=m.home_team.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i);
-    const aRP=m.away_team.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i);
+    const hRP=m.home_team?.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i);
+    const aRP=m.away_team?.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i);
     if(hRP){
       const src=matches.find(x=>x.phase===phMap[hRP[1].toUpperCase()]&&x.bracket_pos===+hRP[2]&&x.result);
       if(src)nh=src.result==='home'?src.home_team:src.away_team;
@@ -1759,8 +1759,8 @@ async function updateBracket(){
     }
 
     // Pattern: "Loser SF-1"
-    const hLS=m.home_team.match(/^Loser SF-(\d+)$/i);
-    const aLS=m.away_team.match(/^Loser SF-(\d+)$/i);
+    const hLS=m.home_team?.match(/^Loser SF-(\d+)$/i);
+    const aLS=m.away_team?.match(/^Loser SF-(\d+)$/i);
     if(hLS){
       const src=matches.find(x=>x.phase==='sf'&&x.bracket_pos===+hLS[1]&&x.result);
       if(src)nh=src.result==='home'?src.away_team:src.home_team;
@@ -1831,7 +1831,6 @@ async function saveScore(matchId){
   await updateStreaks(matchId,result);
   await updateDayWins(matchId);
   await updateBracket();
-  await autoFetchOddsIfRoundComplete(result,matchId);
   showToast('Score & uitslag opgeslagen!');
   await loadAll();
   updateHeaderStreak();
@@ -2007,22 +2006,6 @@ async function fetchOddsApi(auto=false){
   }
 }
 
-async function autoFetchOddsIfRoundComplete(savedResult,matchId){
-  // Check if last match of a group round was just played
-  const m=matches.find(x=>x.id===matchId);
-  if(!m||m.phase!=='group')return;
-  const currentRound=m.round;
-  const nextRound=currentRound+1;
-  if(nextRound>3)return; // No more group rounds
-  const roundMatches=matches.filter(x=>x.phase==='group'&&x.round===currentRound);
-  const allPlayed=roundMatches.every(x=>x.result||(x.id===matchId&&savedResult));
-  if(!allPlayed)return;
-  // All played! Auto-fetch odds for next round
-  showToast('Ronde '+currentRound+' klaar — odds ophalen voor ronde '+nextRound+'...');
-  const el=document.getElementById('odds-round');
-  if(el)el.value=String(nextRound);
-  await fetchOddsApi(true);
-}
 
 // ── PROFILE MODAL ────────────────────────────────────────────
 // ── HEAD-TO-HEAD ─────────────────────────────────────────────
