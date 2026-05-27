@@ -1018,14 +1018,32 @@ function renderPodium(){
     if(i>0&&p.dayPts<withPts[i-1].dayPts)rank++;
     p.rank=rank;
   });
-  const toShow=withPts.filter(p=>p.rank<=3);
-  // Visual order: all rank-1 in middle group, rank-2 left, rank-3 right
-  // For simplicity with variable counts, render rank-1 first then 2 then 3
-  const r1=toShow.filter(p=>p.rank===1);
-  const r2=toShow.filter(p=>p.rank===2);
-  const r3=toShow.filter(p=>p.rank===3);
-  const ordered=[...r2,...r1,...r3];
-  el.innerHTML=`<div class="podium">${ordered.map(p=>renderPodiumCard(p,p.rank)).join('')}</div>`;
+  const r1=withPts.filter(p=>p.rank===1);
+  const r2=withPts.filter(p=>p.rank===2);
+  const r3=withPts.filter(p=>p.rank===3);
+  // 3 fixed slots: [left, middle, right]
+  // middle = always rank-1[0]
+  // left   = shared-1st[1] | rank-2[0] | null
+  // right  = shared-1st[2] | shared-2nd[1] | rank-3[0] | null
+  let left,mid,right,leftRank,rightRank;
+  mid=r1[0]; // always
+  if(r1.length>=3){
+    left=r1[1];leftRank=1;
+    right=r1[2];rightRank=1;
+  }else if(r1.length===2){
+    left=r1[1];leftRank=1;
+    right=r2[0]||null;rightRank=2;
+  }else{
+    left=r2[0]||null;leftRank=2;
+    right=r2.length>=2?r2[1]:(r3[0]||null);
+    rightRank=r2.length>=2?2:3;
+  }
+  const slots=[
+    left?{p:left,rank:leftRank}:null,
+    {p:mid,rank:1},
+    right?{p:right,rank:rightRank}:null,
+  ];
+  el.innerHTML=`<div class="podium">${slots.map(s=>s?renderPodiumCard(s.p,s.rank):'').join('')}</div>`;
 }
 
 // ── STATS HELPERS ───────────────────────────────────────────
@@ -1853,6 +1871,7 @@ async function setResult(matchId,side){
 
 async function clearResult(matchId){
   await sb.from('matches').update({result:null,home_score:null,away_score:null}).eq('id',matchId);
+  await updateStreaks(matchId,null);
   showToast('Uitslag gewist.');
   await loadAll();
 }
@@ -1867,31 +1886,33 @@ async function updateStreaks(matchId,result){
   const fMatches=freshMatches||[];
   const fTips=freshTips||[];
 
-  for(const profile of (freshProfiles||[])){
-    // Sort by matchday desc, kickoff desc as tiebreaker - count back from most recent
-    const sortDesc=(a,b)=>{
-      const md=(b.matchday||0)-(a.matchday||0);
-      if(md!==0)return md;
-      return new Date(b.kickoff||0)-new Date(a.kickoff||0);
-    };
-    const played=fMatches.filter(m=>m.result).sort(sortDesc);
+  // Sort once outside the loop — matchday primary, kickoff secondary, created_at tiebreaker
+  const withResult=fMatches.filter(m=>m.result);
+  const played=[...withResult].sort((a,b)=>{
+    const md=(b.matchday||0)-(a.matchday||0);
+    if(md!==0)return md;
+    const ko=new Date(b.kickoff||0)-new Date(a.kickoff||0);
+    if(ko!==0)return ko;
+    return new Date(b.created_at||0)-new Date(a.created_at||0);
+  });
+  const chrono=[...withResult].sort((a,b)=>{
+    const md=(a.matchday||0)-(b.matchday||0);
+    if(md!==0)return md;
+    const ko=new Date(a.kickoff||0)-new Date(b.kickoff||0);
+    if(ko!==0)return ko;
+    return new Date(a.created_at||0)-new Date(b.created_at||0);
+  });
 
-    // Current streak: count backwards until first wrong tip
+  for(const profile of (freshProfiles||[])){
+    // Current streak: go backwards from most recent match
     let current=0;
     for(const m of played){
       const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
-      if(!tip)break;
-      const side=tip.tip;
-      if(side===m.result)current++;
-      else break;
+      if(!tip||tip.tip!==m.result)break;
+      current++;
     }
 
     // Longest streak: scan all matches chronologically
-    const chrono=fMatches.filter(m=>m.result).sort((a,b)=>{
-      const md=(a.matchday||0)-(b.matchday||0);
-      if(md!==0)return md;
-      return new Date(a.kickoff||0)-new Date(b.kickoff||0);
-    });
     let longest=0,running=0;
     for(const m of chrono){
       const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
