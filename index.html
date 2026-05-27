@@ -1004,20 +1004,28 @@ function renderPodiumCard(player,rank){
 
 function renderPodium(){
   const el=document.getElementById("podium-wrap");
-  const ranked=allProfiles.map(p=>{
+  const withPts=allProfiles.map(p=>{
     const {pts,day}=getYesterdayPts(p.id);
     return{...p,dayPts:pts,day};
-  }).sort((a,b)=>b.dayPts-a.dayPts).slice(0,3);
-  if(!ranked.length||ranked[0].dayPts===0){
+  }).sort((a,b)=>b.dayPts-a.dayPts);
+  if(!withPts.length||withPts[0].dayPts===0){
     el.innerHTML=`<div style="font-family:var(--vt);font-size:22px;color:var(--muted);padding:1rem 0">${t('home_no_matches_yet')}</div>`;
     return;
   }
-  const order=[1,0,2];
-  el.innerHTML=`<div class="podium">${order.map(ri=>{
-    const p=ranked[ri];
-    if(!p)return'';
-    return renderPodiumCard(p,ri+1);
-  }).join('')}</div>`;
+  // Assign dense ranks: tied scores get the same rank
+  let rank=1;
+  withPts.forEach((p,i)=>{
+    if(i>0&&p.dayPts<withPts[i-1].dayPts)rank++;
+    p.rank=rank;
+  });
+  const toShow=withPts.filter(p=>p.rank<=3);
+  // Visual order: all rank-1 in middle group, rank-2 left, rank-3 right
+  // For simplicity with variable counts, render rank-1 first then 2 then 3
+  const r1=toShow.filter(p=>p.rank===1);
+  const r2=toShow.filter(p=>p.rank===2);
+  const r3=toShow.filter(p=>p.rank===3);
+  const ordered=[...r2,...r1,...r3];
+  el.innerHTML=`<div class="podium">${ordered.map(p=>renderPodiumCard(p,p.rank)).join('')}</div>`;
 }
 
 // ── STATS HELPERS ───────────────────────────────────────────
@@ -1183,15 +1191,12 @@ function renderComplotGroup(group){
   const isHaantje=members.find(m=>m.user_id===currentUser.id&&m.is_haantje);
   const inviteUrl=`${window.location.origin}${window.location.pathname.replace('index.html','')}invite.html?code=${group.invite_code}`;
   const ranked=memberProfiles.map(p=>({...p,pts:getScore(p.id,'all').pts})).sort((a,b)=>b.pts-a.pts);
-  const playedSorted=matches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
-  const yesterday=new Date();
-  yesterday.setDate(yesterday.getDate()-1);
-  const yesterdayStr=yesterday.toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam',day:'numeric',month:'short'});
+  const playedMatchdays=[...new Set(matches.filter(m=>m.result&&m.matchday!=null).map(m=>m.matchday))].sort((a,b)=>b-a);
   let lastDayStr=null,lastDayMatches=[];
-  if(playedSorted.length){
-    const hasYesterday=playedSorted.some(m=>nlDate(m.kickoff)===yesterdayStr);
-    lastDayStr=hasYesterday?yesterdayStr:nlDate(playedSorted[0].kickoff);
-    lastDayMatches=playedSorted.filter(m=>nlDate(m.kickoff)===lastDayStr);
+  if(playedMatchdays.length){
+    const lastMatchday=playedMatchdays[0];
+    lastDayMatches=matches.filter(m=>m.result&&m.matchday===lastMatchday);
+    lastDayStr=`SD ${lastMatchday}`;
   }
   const rankedHtml=ranked.map((p,i)=>{
     const streakInfo=getStreakInfo(p.current_streak||0);
@@ -1863,8 +1868,13 @@ async function updateStreaks(matchId,result){
   const fTips=freshTips||[];
 
   for(const profile of (freshProfiles||[])){
-    // Sort by kickoff descending - count back from most recent
-    const played=fMatches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff));
+    // Sort by matchday desc, kickoff desc as tiebreaker - count back from most recent
+    const sortDesc=(a,b)=>{
+      const md=(b.matchday||0)-(a.matchday||0);
+      if(md!==0)return md;
+      return new Date(b.kickoff||0)-new Date(a.kickoff||0);
+    };
+    const played=fMatches.filter(m=>m.result).sort(sortDesc);
 
     // Current streak: count backwards until first wrong tip
     let current=0;
@@ -1877,7 +1887,11 @@ async function updateStreaks(matchId,result){
     }
 
     // Longest streak: scan all matches chronologically
-    const chrono=fMatches.filter(m=>m.result&&m.kickoff).sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+    const chrono=fMatches.filter(m=>m.result).sort((a,b)=>{
+      const md=(a.matchday||0)-(b.matchday||0);
+      if(md!==0)return md;
+      return new Date(a.kickoff||0)-new Date(b.kickoff||0);
+    });
     let longest=0,running=0;
     for(const m of chrono){
       const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
@@ -1902,8 +1916,10 @@ async function updateDayWins(matchId){
   const match=fMatches.find(m=>m.id===matchId);
   if(!match?.matchday)return;
   const day=match.matchday;
-  const dayMatches=fMatches.filter(m=>m.result&&m.matchday===day);
-  if(!dayMatches.length)return;
+  const allDayMatches=fMatches.filter(m=>m.matchday===day);
+  const dayMatches=allDayMatches.filter(m=>m.result);
+  // Only award when the entire matchday is complete
+  if(!dayMatches.length||dayMatches.length!==allDayMatches.length)return;
   const scored=fProfiles.map(p=>{
     let pts=0;
     dayMatches.forEach(m=>{
