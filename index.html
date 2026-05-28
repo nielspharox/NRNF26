@@ -125,6 +125,11 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .res-home{border-left:4px solid var(--green)!important}
 .res-draw{border-left:4px solid var(--yellow)!important}
 .res-away{border-left:4px solid var(--red)!important}
+.tip-correct{border-left:4px solid var(--green)!important}
+.tip-wrong{border-left:4px solid var(--red)!important}
+.pick-btn-result-correct{background:rgba(0,255,102,0.2)!important;border-color:var(--green)!important;color:var(--green)!important}
+.pick-btn-result-wrong{background:rgba(255,34,68,0.2)!important;border-color:var(--red)!important;color:var(--red)!important}
+.pick-btn-dimmed{opacity:0.25!important;pointer-events:none}
 
 /* TIP COUNTS */
 .tip-counts{display:flex;gap:6px;margin-top:10px;font-family:var(--pixel);font-size:9px}
@@ -726,15 +731,9 @@ function getStreakBadgeStyle(streak){
   return'border:2px solid #cccccc;color:#cccccc;background:rgba(200,200,200,0.1);box-shadow:2px 2px 0 #000';
 }
 function getStreakEmoji(n){
+  if(n<2)return '';
   const b='<img src="banana.gif" style="width:24px;height:24px;image-rendering:pixelated;vertical-align:middle">';
-  if(n>=14)return b.repeat(7);
-  if(n>=12)return b.repeat(6);
-  if(n>=10)return b.repeat(5);
-  if(n>=8)return b.repeat(4);
-  if(n>=6)return b.repeat(3);
-  if(n>=4)return b.repeat(2);
-  if(n>=2)return b;
-  return '';
+  return b.repeat(Math.floor(n/2));
 }
 function getRiskProfile(avgOdds){
   for(const r of RISK_PROFILES){if(avgOdds>=r.min&&avgOdds<r.max)return r;}
@@ -1062,12 +1061,12 @@ function calcWaaghals(){
     let risk=0,cnt=0;
     src.forEach(m=>{
       const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
-      const side=tip?tip.tip:"draw";
-      risk+=(side==="home"?m.home_odds:side==="draw"?m.draw_odds:m.away_odds);
+      if(!tip)return;
+      risk+=(tip.tip==="home"?m.home_odds:tip.tip==="draw"?m.draw_odds:m.away_odds);
       cnt++;
     });
-    return{...p,risk:cnt?risk/cnt:50};
-  }).sort((a,b)=>a.risk-b.risk);
+    return{...p,risk:cnt?risk/cnt:null,tipCount:cnt};
+  }).filter(p=>p.tipCount>0).sort((a,b)=>a.risk-b.risk);
 }
 function calcOddsBeaters(){
   return allProfiles.map(p=>{
@@ -1418,18 +1417,28 @@ function renderTips(){
     const uDraw=JSON.stringify(drawTips.map(getName)).replace(/'/g,'&#39;');
     const uAway=JSON.stringify(awayTips.map(getName)).replace(/'/g,'&#39;');
 
-    return`<div class="match-card ${res?'res-'+res:''}" data-match-id="${m.id}">
-      <div class="match-meta">
-        <span class="phase-badge ${m.phase==='group'?'phase-group':'phase-ko'}">${getPhaseLabel(m.phase)}${m.group_name?' '+m.group_name:''}</span>
-        ${m.round?`<span>${t('tips_match_round',{X:m.round})}</span>`:''}
-        ${ko?`<span>${ko}</span>`:''}
-        ${m.venue?`<span>📍 ${m.venue}</span>`:''}
-        ${locked?`<span class="locked-badge">${t('tips_match_locked')}</span>`:''}
-        ${koPhases.includes(m.phase)?`<span style="color:var(--yellow);font-size:7px">${t('tips_match_after_120')}</span>`:''}
-        ${res?`<span style="color:var(--green);font-size:9px;font-family:var(--pixel)">${t('tips_match_result_known')}</span>`:''}
-      </div>
+    const myTipObj=currentUser?allTips.find(t=>t.user_id===currentUser.id&&t.match_id===m.id):null;
+    const chosenOdds=myTipObj?.chosen_odds??(tip==='home'?m.home_odds:tip==='draw'?m.draw_odds:m.away_odds);
+    const earnedPts=myTipObj?.points_scored!=null?myTipObj.points_scored:(tip&&tip===res?calcPts(chosenOdds):0);
+    const accentClass=res?(tip&&tip===res?'tip-correct':'tip-wrong'):'';
+    const hBtnClass=res?(tip==='home'?(res==='home'?'pick-btn pick-btn-result-correct':'pick-btn pick-btn-result-wrong'):'pick-btn pick-btn-dimmed'):`pick-btn ${tip==='home'?'sel-home':''}`;
+    const aBtnClass=res?(tip==='away'?(res==='away'?'pick-btn pick-btn-result-correct':'pick-btn pick-btn-result-wrong'):'pick-btn pick-btn-dimmed'):`pick-btn ${tip==='away'?'sel-away':''}`;
+    const scoreDisplay=res?(m.home_score!=null&&m.away_score!=null?`<span style="font-family:var(--vt);font-size:26px;color:var(--white);line-height:1">${m.home_score} – ${m.away_score}</span>`:`<span style="font-family:var(--pixel);font-size:8px;color:var(--muted)">${res.toUpperCase()}</span>`):'';
+    const drawTipLabel=res&&tip==='draw'?`<span style="font-family:var(--pixel);font-size:9px;margin-top:4px;color:${res==='draw'?'var(--green)':'var(--red)'}">${res==='draw'?'+'+earnedPts:'X'}</span>`:'';
+    const pickRow=res?`
       <div class="pick-row">
-          <button class="pick-btn ${tip==='home'?'sel-home':''}" onclick="pickTip(${m.id},'home',this)" ${locked?'disabled':''}>
+        <button class="${hBtnClass}" disabled>
+          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.home_team)}</span>${teamName(m.home_team)}
+          ${tip==='home'?`<span class="team-pts" style="font-size:9px;color:${res==='home'?'var(--green)':'var(--red)'}">${res==='home'?'+'+earnedPts:'X'}</span>`:''}
+        </button>
+        <div style="display:flex;align-items:center;justify-content:center;flex-direction:column;width:80px;text-align:center">${scoreDisplay}${drawTipLabel}</div>
+        <button class="${aBtnClass}" disabled>
+          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.away_team)}</span>${teamName(m.away_team)}
+          ${tip==='away'?`<span class="team-pts" style="font-size:9px;color:${res==='away'?'var(--green)':'var(--red)'}">${res==='away'?'+'+earnedPts:'X'}</span>`:''}
+        </button>
+      </div>`:`
+      <div class="pick-row">
+        <button class="pick-btn ${tip==='home'?'sel-home':''}" onclick="pickTip(${m.id},'home',this)" ${locked?'disabled':''}>
           <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.home_team)}</span>${teamName(m.home_team)}<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>
         </button>
         <button class="pick-draw ${tip==='draw'?'sel-draw':''}" onclick="pickTip(${m.id},'draw',this)" ${locked?'disabled':''}>
@@ -1439,7 +1448,19 @@ function renderTips(){
         <button class="pick-btn ${tip==='away'?'sel-away':''}" onclick="pickTip(${m.id},'away',this)" ${locked?'disabled':''}>
           <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.away_team)}</span>${teamName(m.away_team)}<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>
         </button>
+      </div>`;
+
+    return`<div class="match-card ${accentClass}" data-match-id="${m.id}">
+      <div class="match-meta">
+        <span class="phase-badge ${m.phase==='group'?'phase-group':'phase-ko'}">${getPhaseLabel(m.phase)}${m.group_name?' '+m.group_name:''}</span>
+        ${m.round?`<span>${t('tips_match_round',{X:m.round})}</span>`:''}
+        ${ko?`<span>${ko}</span>`:''}
+        ${m.venue?`<span>📍 ${m.venue}</span>`:''}
+        ${locked?`<span class="locked-badge">${t('tips_match_locked')}</span>`:''}
+        ${koPhases.includes(m.phase)?`<span style="color:var(--yellow);font-size:7px">${t('tips_match_after_120')}</span>`:''}
+        ${res?`<span style="color:var(--green);font-size:9px;font-family:var(--pixel)">${t('tips_match_result_known')}</span>`:''}
       </div>
+      ${pickRow}
       ${total>0?`<div class="tip-counts">
         <span class="tc-home" data-users='${uHome}' data-team="${m.home_team}" onmouseenter="showTipTooltip(event,this,'home')" onmouseleave="closeTipTooltip()" onclick="showTipTooltip(event,this,'home')">${cHome}×</span><span class="tc-sep"> · </span>
         <span class="tc-draw" data-users='${uDraw}' onmouseenter="showTipTooltip(event,this,'draw')" onmouseleave="closeTipTooltip()" onclick="showTipTooltip(event,this,'draw')">${cDraw}×</span><span class="tc-sep"> · </span>

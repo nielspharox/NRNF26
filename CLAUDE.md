@@ -17,7 +17,7 @@ Een WK voetbalpool webapp waar risico nemen beloond wordt. Hoe meer underdog je 
 
 ## Stack
 
-- **Frontend:** Vanilla HTML/CSS/JS — alles in één bestand (`index.html`) + `pixel-player.js`
+- **Frontend:** Vanilla HTML/CSS/JS — alles in één bestand (`index.html`) + `pixel-player.js` + `bracket.js` + `languages.js`
 - **Backend:** Supabase (PostgreSQL + Auth + Storage)
 - **Hosting:** GitHub Pages
 - **Odds:** The Odds API (the-odds-api.com)
@@ -110,20 +110,17 @@ const STREAKS = [
 | Paars glow | 12+ | `var(--purple-light)` | `0 0 12px var(--purple-light), 0 0 24px rgba(170,68,255,0.4)` |
 
 ### Streak telt TERUG
-Vanaf de meest recente gespeelde wedstrijd terug tellen. Één foute tip = reset naar 0. Geen tip = automatisch gelijkspel (telt mee voor streak).
+Matches gesorteerd op `matchday` desc, dan `kickoff` desc, dan `created_at` desc. Één foute tip = reset naar 0. Geen tip = automatisch gelijkspel (telt mee voor streak).
 
 ### Streak indicator
-Dansende banaan GIF (`banana.gif`). Aantal bananen = streak niveau:
-- 1 banaan bij streak 2-4
-- 2 bananen bij streak 6-10
-- 3+ bananen bij streak 12+
+Dansende banaan GIF (`banana.gif`). Aantal bananen = `Math.floor(streak / 2)` — dus per 2 goede tips 1 banaan erbij.
 
 ---
 
 ## PUNTENSYSTEEM
 
 ```
-punten = 100 / kans (%)
+punten = 1000 / kans (%)   // zie calcPts(o) → Math.round(1000/Math.max(o,1))
 ```
 
 Geen tip = automatisch gelijkspel. Tips vergrendeld bij aftrap.
@@ -138,8 +135,8 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 
 | Tabel | Inhoud |
 |-------|--------|
-| `profiles` | id, username, is_admin, avatar_url, current_streak, longest_streak, **day_wins** |
-| `matches` | id, match_number, home_team, away_team, home_odds, draw_odds, away_odds, phase, group_name, round, kickoff, venue, result, home_score, away_score, bracket_pos |
+| `profiles` | id, username, is_admin, avatar_url, current_streak, longest_streak, **day_wins**, language |
+| `matches` | id, match_number, home_team, away_team, home_odds, draw_odds, away_odds, phase, group_name, round, **matchday**, kickoff, venue, result, home_score, away_score, bracket_pos |
 | `tips` | id, user_id, match_id, tip (home/draw/away), chosen_odds, max_odds, points_scored |
 | `complot_groups` | id, name, invite_code, created_by |
 | `complot_members` | id, group_id, user_id, is_haantje |
@@ -147,6 +144,10 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 | `settings` | key, value (bijv. odds_api_key) |
 
 **`day_wins`** (INT, default 0) — aantal keer dagwinnaar geweest. Bij gelijke dagstand krijgen alle gedeelde winnaars +1. Wordt opgehoogd in de admin bij het invoeren van een uitslag.
+
+**`matchday`** (INT) — speeldag-nummer op een wedstrijd. Cruciaal: dagwinnaar-berekening (`updateDayWins()`), streak-berekening (`updateStreaks()`) en waaghals-statistiek (`calcWaaghals()`) groeperen allemaal op `matchday`, niet op kalenderdag.
+
+**`language`** (TEXT) — taalvoorkeur speler (`'nl'`/`'en'`/`'de'`), opgeslagen in `profiles`.
 
 **Fases:** `group`, `r32`, `r16`, `qf`, `sf`, `third`, `final`
 **Speelrondes groep:** round 1, 2, 3
@@ -317,7 +318,7 @@ const RISK_PROFILES = [
 
 ## GAMIFICATION STATISTIEKEN
 
-- `calcWaaghals()` — laagste gem. gekozen kans = meeste risico
+- `calcWaaghals()` — laagste gem. gekozen kans op de laatste `matchday` = meeste risico. Spelers zonder tips op die dag worden uitgesloten.
 - `calcAllStreaks()` — alle spelers met streak >= 1, gesorteerd
 - `calcOddsBeaters()` — wie wint terwijl ze niet op favoriet gokken
 - `getAvgRisk(userId)` — gemiddelde gekozen kans per speler
@@ -343,6 +344,29 @@ Stats zijn klikbaar op homepagina → `openStatsModal('waaghals'/'streaks'/'odds
 
 ---
 
+## MEERTALIGHEID (NL/EN/DE)
+
+Geïmplementeerd via `languages.js` (extern bestand). Taalvoorkeur opgeslagen in `profiles.language`.
+
+- `loadLanguageFromProfile()` — laadt voorkeur bij login
+- `saveLanguageToProfile()` — slaat op bij taalwissel
+- `changeLanguage(lang)` — wisselt actieve taal
+- `t('key', {X: val})` — vertaalfunctie voor alle UI-teksten
+- Taalknopjes (NL/EN/DE) zichtbaar in profielmodal
+- HTML-elementen hebben `data-i18n="key"` attributen
+
+---
+
+## AVATAR UPLOAD
+
+Spelers kunnen een eigen avatar uploaden in de profielmodal.
+
+- Upload via `<input type="file">` → `uploadAvatar()` → Supabase Storage
+- Na upload: `avatar_url` in `profiles` bijgewerkt
+- Fallback: als geen avatar, `<pixel-player>` component tonen
+
+---
+
 ## DEPLOY
 
 ```bash
@@ -360,11 +384,10 @@ GitHub Pages deploy ~1 minuut. Hard refresh: `Cmd+Shift+R`.
 
 1. **Prijzenkast in profielmodal** — behaalde streaks + hoe vaak, dagwinsten, medailles
 2. **Custom streak namen per complotgroepje** — nieuwe DB tabel: `complot_streak_names (group_id, streak_level, title, emoji)`
-3. **Meertaligheid NL/EN/DE** — volledige UI vertaling, taalvoorkeur in `profiles`
-4. **Bonus/nerf systeem** — superkrachten via streaks, nog te brainstormen
-5. **Paul drempel → 8** — eerbetoon aan Paul de Octopus
-6. **Streak badge in profielmodal** — toont soms niet correct (cached data issue)
-7. **Auto-odds fetch finetunen** — edge cases afvangen
+3. **Bonus/nerf systeem** — superkrachten via streaks, nog te brainstormen
+4. **Paul drempel → 8** — eerbetoon aan Paul de Octopus
+5. **Streak badge in profielmodal** — toont soms niet correct (cached data issue)
+6. **Auto-odds fetch finetunen** — edge cases afvangen
 
 ---
 
