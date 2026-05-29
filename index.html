@@ -310,7 +310,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="auth-box">
     <div class="auth-mascot"><img src="mascot.png" alt="De Condor" onerror="this.style.display='none'"></div>
     <div class="auth-title" data-i18n="auth_title">NO RISK NO FUN</div>
-    <div class="auth-sub">⚽ WK POOL 2026 ⚽</div>
+    <div class="auth-sub"><img src="football.gif" style="width:22px;height:22px;display:inline-block;image-rendering:pixelated;vertical-align:middle"> WK POOL 2026 <img src="football.gif" style="width:22px;height:22px;display:inline-block;image-rendering:pixelated;vertical-align:middle"></div>
     <div id="auth-login">
       <form onsubmit="doLogin();return false;">
         <div class="form-row"><label data-i18n="auth_label_email">E-MAILADRES</label><input type="email" id="login-email" placeholder="jouw@email.nl" data-i18n-placeholder="auth_placeholder_email"></div>
@@ -340,7 +340,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     <div class="mascot-wrap"><img src="mascot.png" alt="De Condor" onerror="this.style.display='none'"></div>
     <div class="logo-block">
       <div class="logo-title" data-i18n="header_logo_title">NO RISK NO FUN</div>
-      <div class="logo-sub" data-i18n="header_logo_sub">⚽ WK POOL 2026 ⚽</div>
+      <div class="logo-sub"><img src="football.gif" style="width:20px;height:20px;display:inline-block;image-rendering:pixelated;vertical-align:middle"> WK POOL 2026 <img src="football.gif" style="width:20px;height:20px;display:inline-block;image-rendering:pixelated;vertical-align:middle"></div>
     </div>
     <div class="header-user" id="header-user" style="display:none">
       <span data-i18n="header_logged_in_as">ingelogd als</span><strong id="header-username">—</strong>
@@ -563,12 +563,16 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
         </div>
       </div>
     </div>
-    <div class="form-row"><label>SPEELSTAD</label><input type="text" id="a-venue" placeholder="Amsterdam"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>SPEELSTAD</label><input type="text" id="a-venue" placeholder="Amsterdam"></div>
+      <div class="form-row"><label>SPEELDAG #</label><input type="number" id="a-matchday" placeholder="1" min="1"></div>
+    </div>
     <button class="btn btn-green btn-sm" onclick="adminAddMatch()">TOEVOEGEN ▶</button>
   </div>
 
   <div class="admin-panel">
     <div class="admin-title">✅ UITSLAG & SCORE INVOEREN</div>
+    <button class="btn btn-purple btn-sm" style="margin-bottom:12px" onclick="recalcAllStreaks()">🔄 HERBEREKEN STREAKS</button>
     <div id="admin-results-list"><div class="loading">Laden...</div></div>
   </div>
 
@@ -1833,10 +1837,11 @@ async function adminAddMatch(){
     group_name:document.getElementById('a-group').value.trim().toUpperCase()||null,
     round:parseInt(document.getElementById('a-round').value)||1,
     venue:document.getElementById('a-venue').value.trim()||null,
+    matchday:parseInt(document.getElementById('a-matchday').value)||null,
   });
   if(error){showToast('Fout: '+error.message);return;}
   showToast('Wedstrijd toegevoegd!');
-  ['a-home','a-away','a-ho','a-dr','a-aw','a-kickoff','a-group','a-venue'].forEach(id=>document.getElementById(id).value='');
+  ['a-home','a-away','a-ho','a-dr','a-aw','a-kickoff','a-group','a-venue','a-matchday'].forEach(id=>document.getElementById(id).value='');
   await loadAll();
 }
 
@@ -1897,6 +1902,13 @@ async function clearResult(matchId){
   await loadAll();
 }
 
+async function recalcAllStreaks(){
+  showToast('Streaks herberekenen...');
+  await updateStreaks(null,null);
+  await loadAll();
+  showToast('Streaks bijgewerkt!');
+}
+
 async function updateStreaks(matchId,result){
   // Fetch completely fresh data so new result is included
   const [{data:freshMatches},{data:freshTips},{data:freshProfiles}]=await Promise.all([
@@ -1910,15 +1922,11 @@ async function updateStreaks(matchId,result){
   // Sort once outside the loop — matchday primary, kickoff secondary, created_at tiebreaker
   const withResult=fMatches.filter(m=>m.result);
   const played=[...withResult].sort((a,b)=>{
-    const md=(b.matchday||0)-(a.matchday||0);
-    if(md!==0)return md;
     const ko=new Date(b.kickoff||0)-new Date(a.kickoff||0);
     if(ko!==0)return ko;
     return new Date(b.created_at||0)-new Date(a.created_at||0);
   });
   const chrono=[...withResult].sort((a,b)=>{
-    const md=(a.matchday||0)-(b.matchday||0);
-    if(md!==0)return md;
     const ko=new Date(a.kickoff||0)-new Date(b.kickoff||0);
     if(ko!==0)return ko;
     return new Date(a.created_at||0)-new Date(b.created_at||0);
@@ -1926,20 +1934,22 @@ async function updateStreaks(matchId,result){
 
   for(const profile of (freshProfiles||[])){
     // Current streak: go backwards from most recent match
+    // geen tip = automatisch gelijkspel (telt mee voor streak)
     let current=0;
     for(const m of played){
       const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
-      if(!tip||tip.tip!==m.result)break;
+      const effectiveTip=tip?tip.tip:'draw';
+      if(effectiveTip!==m.result)break;
       current++;
     }
 
     // Longest streak: scan all matches chronologically
+    // geen tip = automatisch gelijkspel
     let longest=0,running=0;
     for(const m of chrono){
       const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
-      if(!tip){running=0;continue;}
-      const side=tip.tip;
-      if(side===m.result){running++;if(running>longest)longest=running;}
+      const effectiveTip=tip?tip.tip:'draw';
+      if(effectiveTip===m.result){running++;if(running>longest)longest=running;}
       else running=0;
     }
     longest=Math.max(longest,current);
