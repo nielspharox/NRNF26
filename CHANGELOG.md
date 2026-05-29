@@ -4,6 +4,22 @@ Dagelijkse voortgang van het project.
 
 ---
 
+## Vrijdag 29 mei 2026
+
+### Pitch / landing voor niet-ingelogde bezoekers
+- **Pitch-sectie boven het inlogformulier** — alleen zichtbaar als je niet ingelogd bent. Login flow zelf volledig ongewijzigd.
+- Opbouw boven → onder: HERO ("IEDEREEN TIPT DE FAVORIET. JIJ NIET.") → FOMO-blok → STREAKS → complotgroepje-uitleg → scrollende ticker → stats-balk → bestaand inlogformulier
+- `#auth-screen` scrollt nu (was vast gecentreerd); pitch + login zitten in `.auth-scroll` wrapper
+- **Live Supabase data** (anonieme public-read queries via `loadPitchData()`):
+  - FOMO: hoogste totaalscore + beste tip, langste huidige streak, meest gewaagde open tip
+  - Ticker: dagtopscore, actieve streaks, gewaagde open tips, totaal gescoorde punten — 6-8 items, dubbel gerenderd voor naadloze loop
+  - Stats: aantal spelers, tips gezet, langste streak, 64 duels
+- STREAK-sectie gevoed vanuit de centrale `STREAKS` array (geen hardcoding) — bananen = `n/2`, badgekleur zilver/goud/paars per niveau
+- Volledig meertalig: nieuwe `pitch_*` keys in NL/EN/DE (`languages.js`)
+- Getest op desktop + mobiel, alle drie de talen
+
+---
+
 ## Woensdag 21 mei 2026
 
 ### Claude Code setup

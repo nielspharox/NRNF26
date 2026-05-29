@@ -110,7 +110,7 @@ const STREAKS = [
 | Paars glow | 12+ | `var(--purple-light)` | `0 0 12px var(--purple-light), 0 0 24px rgba(170,68,255,0.4)` |
 
 ### Streak telt TERUG
-Matches gesorteerd op `matchday` desc, dan `kickoff` desc, dan `created_at` desc. Één foute tip = reset naar 0. Geen tip = automatisch gelijkspel (telt mee voor streak).
+Matches gesorteerd op `kickoff` desc, dan `created_at` desc. Één foute tip = reset naar 0. Geen tip = streak breekt (telt NIET mee).
 
 ### Streak indicator
 Dansende banaan GIF (`banana.gif`). Aantal bananen = `Math.floor(streak / 2)` — dus per 2 goede tips 1 banaan erbij.
@@ -143,9 +143,9 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 | `bracket_slots` | phase, slot, home_label, away_label, home_from_phase/slot, away_from_phase/slot |
 | `settings` | key, value (bijv. odds_api_key) |
 
-**`day_wins`** (INT, default 0) — aantal keer dagwinnaar geweest. Bij gelijke dagstand krijgen alle gedeelde winnaars +1. Wordt opgehoogd in de admin bij het invoeren van een uitslag.
+**`day_wins`** (INT, default 0) — aantal keer dagwinnaar geweest. Bij gelijke dagstand krijgen alle gedeelde winnaars +1. Wordt volledig herberekend (reset naar 0, dan opnieuw optellen) via Supabase RPC `recalc_day_wins()` — nooit alleen ophogen, anders telt een speeldag dubbel bij het opnieuw opslaan van een uitslag.
 
-**`matchday`** (INT) — speeldag-nummer op een wedstrijd. Cruciaal: dagwinnaar-berekening (`updateDayWins()`), streak-berekening (`updateStreaks()`) en waaghals-statistiek (`calcWaaghals()`) groeperen allemaal op `matchday`, niet op kalenderdag.
+**`matchday`** (INT) — speeldag-nummer op een wedstrijd. Gebruikt door: dagwinnaar-berekening (`recalc_day_wins()`) en waaghals-statistiek (`calcWaaghals()`). Valt terug op kalenderdag van `kickoff` als `matchday` null is. **Niet meer gebruikt voor streak-sortering** (streak sorteert puur op `kickoff`).
 
 **`language`** (TEXT) — taalvoorkeur speler (`'nl'`/`'en'`/`'de'`), opgeslagen in `profiles`.
 
@@ -154,6 +154,15 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 
 ### RLS (Row Level Security) op `tips`
 Tips kunnen alleen worden opgeslagen als `kickoff > now()` — server-side geblokkeerd via Supabase RLS policies. Foutmelding in de UI: "⏰ Te laat — wedstrijd is al begonnen!"
+
+### RLS op `profiles` — admin-functies via Supabase RPC
+De RLS policy op `profiles` staat alleen toe dat een user zijn eigen rij updatet. Admin-functies die meerdere profielen schrijven (streaks, dagwinsten) draaien daarom via Supabase database-functies met `SECURITY DEFINER`:
+- `recalc_streaks()` — herberekent `current_streak` + `longest_streak` voor alle users
+- `recalc_day_wins()` — reset en herberekent `day_wins` voor alle users
+
+Aanroep vanuit JS: `await sb.rpc('recalc_streaks')` / `await sb.rpc('recalc_day_wins')`.
+Beide functies zijn idempotent — hoe vaak je ze aanroept, de uitkomst is altijd correct.
+Admin heeft knoppen 🔄 HERBEREKEN STREAKS en 🔄 HERBEREKEN DAGWINSTEN om dit handmatig te triggeren.
 
 ---
 
@@ -364,6 +373,24 @@ Spelers kunnen een eigen avatar uploaden in de profielmodal.
 - Upload via `<input type="file">` → `uploadAvatar()` → Supabase Storage
 - Na upload: `avatar_url` in `profiles` bijgewerkt
 - Fallback: als geen avatar, `<pixel-player>` component tonen
+
+---
+
+## PITCH / LANDING (niet-ingelogd)
+
+Boven het inlogformulier staat een pitch-sectie, alleen zichtbaar voor niet-ingelogde bezoekers. Zit in `#auth-screen` (de fixed overlay), in wrapper `.auth-scroll` die scrollt. Bij login verdwijnt de hele overlay (`showApp()` zet `display:none`).
+
+**Volgorde (boven → onder):** HERO → FOMO → STREAKS → COMPLOT → TICKER → STATS-balk → divider → bestaand inlogformulier (ongewijzigd).
+
+**Live data:** anonieme Supabase queries via `loadPitchData()` (matches/profiles/tips, public read — geen auth nodig). Resultaat in globale `pitchData`. Render-functies:
+- `renderPitchStreaks()` — statische lijst uit de centrale `STREAKS` array (18×18px banaan-icoontjes = `n/2`, badgekleur: <6 zilver, 6-10 goud `--yellow`, ≥12 paars `--purple-light`)
+- `renderPitchFomo()` — top-scorer + beste tip, langste huidige streak, meest gewaagde open tip
+- `renderPitchTicker()` — 6-8 items, dubbel gerenderd (`html+html`) voor naadloze CSS-loop (`@keyframes pitchticker`, translateX -50%)
+- `renderPitchStats()` — spelers/tips count, langste streak (max over alle profielen), duels statisch 64
+- `renderPitch()` — roept alle vier aan; gebruikt door `changeLanguage()` als niet ingelogd
+
+**Boot:** als geen sessie → `translateStaticText()` + `renderPitchStreaks()` + `loadPitchData()`.
+**i18n:** alle teksten via `pitch_*` keys in `languages.js` (NL/EN/DE). Live data is grotendeels taal-neutraal (namen/getallen/emoji) + herbruikte keys.
 
 ---
 

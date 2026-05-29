@@ -350,6 +350,29 @@ const TRANSLATIONS = {
     toast_user_not_found: "Gebruiker niet gevonden.",
     toast_error_generic: "Fout: {message}",
     toast_upload_error: "Upload fout: {message}",
+
+    // PITCH / LANDING (logged-out)
+    pitch_live_badge: "LIVE",
+    pitch_hero_kicker: "WK 2026 · DE POOL WAAR LEF LOONT",
+    pitch_hero_title_line1: "IEDEREEN TIPT",
+    pitch_hero_title_line2: "DE FAVORIET.",
+    pitch_hero_title_line3: "JIJ NIET.",
+    pitch_hero_body: "Hoe groter de underdog, hoe dikker de punten. Speel safe en verdrink in de middenmoot — of neem risico en pak de kop.",
+    pitch_fomo_label: "⚡ WAT JE MIST",
+    pitch_streak_label: "🍌 STREAKS — BOUW JE REPUTATIE OP",
+    pitch_streak_tease: "Elke correcte tip = een dansende banaan. Hoeveel durf jij er te verzamelen?",
+    pitch_complot_label: "🕵️ SPEEL MET JE MATTIES",
+    pitch_complot_title: "START EEN EIGEN COMPLOTGROEPJE",
+    pitch_complot_body: "Ontsnap samen uit de matrix. Start een eigen sub-poule met je matties en kijk wie de analisten naar huis lult. Alleen jullie tellen. Alleen jullie weten de waarheid.",
+    pitch_complot_feat1: "Eigen klassement binnen het groepje",
+    pitch_complot_feat2: "Jij als haantje bepaalt wie er in zit",
+    pitch_complot_feat3: "Trek een mattie uit de matrix met een rode pil — en kijk of ie het aandurft.",
+    pitch_divider: "— DOE MEE OF KIJK TOE HOE ANDEREN WINNEN —",
+    pitch_stat_spelers: "spelers",
+    pitch_stat_tips: "tips gezet",
+    pitch_stat_streak: "langste streak",
+    pitch_stat_duels: "duels",
+    pitch_no_data: "Nog geen data beschikbaar",
   },
 
   // ============================================================
@@ -698,6 +721,29 @@ const TRANSLATIONS = {
     toast_user_not_found: "User not found.",
     toast_error_generic: "Error: {message}",
     toast_upload_error: "Upload error: {message}",
+
+    // PITCH / LANDING (logged-out)
+    pitch_live_badge: "LIVE",
+    pitch_hero_kicker: "WORLD CUP 2026 · THE POOL WHERE GUTS PAY OFF",
+    pitch_hero_title_line1: "EVERYONE PICKS",
+    pitch_hero_title_line2: "THE FAVOURITE.",
+    pitch_hero_title_line3: "YOU DON'T.",
+    pitch_hero_body: "The bigger the underdog, the fatter the points. Play it safe and drown in mid-table — or take the risk and grab the lead.",
+    pitch_fomo_label: "⚡ WHAT YOU'RE MISSING",
+    pitch_streak_label: "🍌 STREAKS — BUILD YOUR REPUTATION",
+    pitch_streak_tease: "Every correct pick = a dancing banana. How many do you dare to stack up?",
+    pitch_complot_label: "🕵️ PLAY WITH YOUR CREW",
+    pitch_complot_title: "START YOUR OWN CONSPIRACY GROUP",
+    pitch_complot_body: "Escape the matrix together. Start your own sub-pool with your crew and see who talks the pundits into the ground. Only you count. Only you know the truth.",
+    pitch_complot_feat1: "Your own leaderboard within the group",
+    pitch_complot_feat2: "As the rooster, you decide who's in",
+    pitch_complot_feat3: "Pull a mate out of the matrix with a red pill — see if they dare.",
+    pitch_divider: "— JOIN IN OR WATCH OTHERS WIN —",
+    pitch_stat_spelers: "players",
+    pitch_stat_tips: "tips placed",
+    pitch_stat_streak: "longest streak",
+    pitch_stat_duels: "matches",
+    pitch_no_data: "No data yet",
   },
 
   // ============================================================
@@ -1046,6 +1092,29 @@ const TRANSLATIONS = {
     toast_user_not_found: "Benutzer nicht gefunden.",
     toast_error_generic: "Fehler: {message}",
     toast_upload_error: "Upload-Fehler: {message}",
+
+    // PITCH / LANDING (logged-out)
+    pitch_live_badge: "LIVE",
+    pitch_hero_kicker: "WM 2026 · DER POOL, IN DEM MUT SICH AUSZAHLT",
+    pitch_hero_title_line1: "ALLE TIPPEN",
+    pitch_hero_title_line2: "DEN FAVORITEN.",
+    pitch_hero_title_line3: "DU NICHT.",
+    pitch_hero_body: "Je größer der Außenseiter, desto fetter die Punkte. Spiel auf Sicher und versacke im Mittelfeld — oder geh ins Risiko und schnapp dir die Spitze.",
+    pitch_fomo_label: "⚡ WAS DU VERPASST",
+    pitch_streak_label: "🍌 STREAKS — BAU DIR EINEN RUF AUF",
+    pitch_streak_tease: "Jeder richtige Tipp = eine tanzende Banane. Wie viele traust du dich zu sammeln?",
+    pitch_complot_label: "🕵️ SPIEL MIT DEINEN KUMPELS",
+    pitch_complot_title: "STARTE EINE EIGENE VERSCHWÖRUNGSGRUPPE",
+    pitch_complot_body: "Entkommt gemeinsam der Matrix. Starte einen eigenen Sub-Pool mit deinen Kumpels und schau, wer die Experten in Grund und Boden redet. Nur ihr zählt. Nur ihr kennt die Wahrheit.",
+    pitch_complot_feat1: "Eigene Rangliste innerhalb der Gruppe",
+    pitch_complot_feat2: "Als Hahn bestimmst du, wer dabei ist",
+    pitch_complot_feat3: "Hol einen Kumpel mit der roten Pille aus der Matrix — mal sehen ob er's wagt.",
+    pitch_divider: "— MACH MIT ODER SCHAU ZU, WIE ANDERE GEWINNEN —",
+    pitch_stat_spelers: "Spieler",
+    pitch_stat_tips: "Tips gesetzt",
+    pitch_stat_streak: "längste Streak",
+    pitch_stat_duels: "Duelle",
+    pitch_no_data: "Noch keine Daten",
   }
 };
 
@@ -1054,7 +1123,14 @@ const TRANSLATIONS = {
 // ============================================================
 
 // Current language — loaded from localStorage, fallback to 'nl'
-let _currentLang = localStorage.getItem('nrnf_lang') || 'nl';
+function detectBrowserLanguage() {
+  const nav = (navigator.language || navigator.userLanguage || 'nl').toLowerCase();
+  if (nav.startsWith('de')) return 'de';
+  if (nav.startsWith('en')) return 'en';
+  return 'nl';
+}
+
+let _currentLang = detectBrowserLanguage();
 
 // Get current language code
 function getCurrentLanguage() {
@@ -1072,11 +1148,10 @@ function t(key, vars = {}) {
   return str;
 }
 
-// Set language in memory + localStorage
+// Set language in memory
 function setLanguage(lang) {
   if (!TRANSLATIONS[lang]) return;
   _currentLang = lang;
-  localStorage.setItem('nrnf_lang', lang);
 }
 
 // Save language preference to Supabase profiles table
@@ -1089,6 +1164,8 @@ async function saveLanguageToProfile(userId, lang, sb) {
 }
 
 // Load language preference from Supabase and apply it
+// Alleen overschrijven als gebruiker zelf een taal heeft ingesteld
+// Anders blijft browser-detectie actief
 async function loadLanguageFromProfile(userId, sb) {
   if (!userId || !sb) return;
   const { data } = await sb
@@ -1098,6 +1175,8 @@ async function loadLanguageFromProfile(userId, sb) {
     .single();
   if (data?.language && TRANSLATIONS[data.language]) {
     setLanguage(data.language);
+  } else {
+    setLanguage(detectBrowserLanguage());
   }
 }
 const TEAM_NAMES = {

@@ -88,7 +88,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .btn-sm{font-size:7px;padding:6px 10px;box-shadow:2px 2px 0 #000}
 
 /* AUTH */
-#auth-screen{position:fixed;inset:0;background:var(--bg3);display:flex;align-items:center;justify-content:center;z-index:1000;
+#auth-screen{position:fixed;inset:0;background:var(--bg3);z-index:1000;overflow-y:auto;
   background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.2) 2px,rgba(0,0,0,0.2) 4px)}
 .auth-box{background:var(--bg2);border:4px solid var(--green);box-shadow:8px 8px 0 #000;padding:2rem;width:100%;max-width:400px;text-align:center}
 .auth-mascot{width:80px;height:80px;border:3px solid var(--green);overflow:hidden;margin:0 auto 1rem;background:#000}
@@ -98,6 +98,49 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .auth-toggle{font-family:var(--vt);font-size:20px;color:var(--muted);margin-top:1rem}
 .auth-toggle span{color:var(--green);text-decoration:underline;cursor:pointer}
 .auth-err{font-family:var(--vt);font-size:20px;color:var(--red);margin-top:8px;min-height:24px}
+
+/* PITCH / LANDING (logged-out) */
+.auth-scroll{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:1.5rem 1rem 3rem;gap:1.25rem}
+.pitch{width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px}
+.pitch-block{background:var(--bg2);border:3px solid var(--border);padding:1.1rem;position:relative;box-shadow:4px 4px 0 #000}
+.pitch-block.green{border-color:var(--green)}
+.pitch-block.purple{border-color:var(--purple)}
+.pitch-live{display:inline-flex;align-items:center;gap:6px;font-family:var(--pixel);font-size:7px;color:var(--green);border:2px solid var(--green);padding:3px 8px;box-shadow:2px 2px 0 #000;letter-spacing:.12em;margin-bottom:12px}
+.pitch-live::before{content:'';width:7px;height:7px;background:var(--red);border-radius:50%;box-shadow:0 0 6px var(--red);animation:pitchblink 1s steps(2) infinite}
+@keyframes pitchblink{50%{opacity:.2}}
+.pitch-hero{text-align:center}
+.pitch-hero-kicker{font-family:var(--pixel);font-size:8px;color:var(--purple-light);letter-spacing:.12em;margin-bottom:14px;line-height:1.6}
+.pitch-hero-title{margin-bottom:14px}
+.pitch-hero-title span{font-family:var(--pixel);display:block;text-shadow:3px 3px 0 #000;line-height:1.5}
+.pitch-hero-title .l1,.pitch-hero-title .l2{font-size:clamp(15px,5vw,24px);color:var(--white)}
+.pitch-hero-title .l3{font-size:clamp(18px,6.5vw,30px);color:var(--green);text-shadow:3px 3px 0 #004422;margin-top:4px}
+.pitch-hero-body{font-family:var(--vt);font-size:20px;color:var(--muted);line-height:1.4}
+.pitch-label{font-family:var(--pixel);font-size:9px;color:var(--yellow);margin-bottom:12px;letter-spacing:.05em;line-height:1.5}
+.pitch-fomo-line{font-family:var(--vt);font-size:20px;color:var(--white);padding:9px 0;border-bottom:1px solid rgba(85,0,170,.3);line-height:1.3;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pitch-fomo-line:last-child{border-bottom:none}
+.pitch-fomo-line .nm{font-family:var(--oswald);font-weight:700;color:var(--green);font-size:20px}
+.pitch-fomo-line .v{font-family:var(--pixel);font-size:9px;color:var(--yellow)}
+.pitch-fomo-line .flag{font-size:18px}
+.pitch-streak-row{display:flex;align-items:center;gap:8px;padding:6px 0;flex-wrap:wrap}
+.pitch-streak-bananas{display:inline-flex;align-items:center;gap:1px;min-width:54px}
+.pitch-streak-bananas img{width:18px;height:18px;image-rendering:pixelated;vertical-align:middle}
+.pitch-streak-title{font-family:var(--pixel);font-size:8px;flex:1;min-width:130px;line-height:1.5}
+.pitch-streak-n{font-family:var(--pixel);font-size:8px;color:var(--muted);white-space:nowrap}
+.pitch-tease{font-family:var(--vt);font-size:18px;color:var(--muted);margin-top:12px;line-height:1.4}
+.pitch-complot-title{font-family:var(--pixel);font-size:11px;color:var(--purple-light);margin:6px 0 12px;line-height:1.5}
+.pitch-complot-body{font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.5;margin-bottom:14px}
+.pitch-feat{font-family:var(--vt);font-size:18px;color:var(--muted);line-height:1.4;padding:5px 0}
+.pitch-feat::before{content:'▶ ';color:var(--green)}
+.pitch-ticker-wrap{overflow:hidden;background:var(--bg3);border:2px solid var(--border);padding:8px 0;white-space:nowrap;box-shadow:4px 4px 0 #000}
+.pitch-ticker-track{display:inline-flex;animation:pitchticker 22s linear infinite;will-change:transform}
+.pitch-ticker-item{font-family:var(--pixel);font-size:8px;color:var(--white);padding:0 16px;border-right:1px solid var(--border);flex-shrink:0}
+.pitch-ticker-item .v{color:var(--green)}
+@keyframes pitchticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.pitch-stats{display:flex;gap:8px}
+.pitch-stat{flex:1;background:var(--bg2);border:2px solid var(--border);padding:10px 4px;text-align:center;box-shadow:2px 2px 0 #000}
+.pitch-stat .n{font-family:var(--pixel);font-size:13px;color:var(--green);display:block}
+.pitch-stat .l{font-family:var(--vt);font-size:16px;color:var(--muted);margin-top:5px;line-height:1.1}
+.pitch-divider{font-family:var(--pixel);font-size:8px;color:var(--purple-light);text-align:center;letter-spacing:.06em;line-height:1.7;padding:2px 0}
 
 /* MATCH CARD */
 .match-card{background:var(--bg2);border:2px solid var(--border);padding:1rem;margin-bottom:10px;position:relative}
@@ -301,12 +344,67 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .h2h-match-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(85,0,170,.3)}
 .h2h-match-row:last-child{border-bottom:none}
 .h2h-match-info{text-align:center}
+#sec-stand .box::-webkit-scrollbar{display:none}
 </style>
 </head>
 <body>
 
 <!-- AUTH -->
 <div id="auth-screen">
+ <div class="auth-scroll">
+
+  <!-- PITCH / LANDING (alleen zichtbaar voor niet-ingelogde bezoekers) -->
+  <section class="pitch" id="pitch-section">
+
+    <!-- 1. HERO -->
+    <div class="pitch-block green pitch-hero">
+      <div class="pitch-live"><span data-i18n="pitch_live_badge">LIVE</span></div>
+      <div class="pitch-hero-kicker" data-i18n="pitch_hero_kicker"></div>
+      <div class="pitch-hero-title">
+        <span class="l1" data-i18n="pitch_hero_title_line1"></span>
+        <span class="l2" data-i18n="pitch_hero_title_line2"></span>
+        <span class="l3" data-i18n="pitch_hero_title_line3"></span>
+      </div>
+      <div class="pitch-hero-body" data-i18n="pitch_hero_body"></div>
+    </div>
+
+    <!-- 2. FOMO -->
+    <div class="pitch-block">
+      <div class="pitch-label" data-i18n="pitch_fomo_label"></div>
+      <div id="pitch-fomo"><div class="pitch-fomo-line" data-i18n="pitch_no_data"></div></div>
+    </div>
+
+    <!-- 3. STREAKS -->
+    <div class="pitch-block">
+      <div class="pitch-label" data-i18n="pitch_streak_label"></div>
+      <div id="pitch-streak-list"></div>
+      <div class="pitch-tease" data-i18n="pitch_streak_tease"></div>
+    </div>
+
+    <!-- 4. COMPLOTGROEPJE -->
+    <div class="pitch-block purple">
+      <div class="pitch-label" data-i18n="pitch_complot_label"></div>
+      <div class="pitch-complot-title" data-i18n="pitch_complot_title"></div>
+      <div class="pitch-complot-body" data-i18n="pitch_complot_body"></div>
+      <div class="pitch-feat" data-i18n="pitch_complot_feat1"></div>
+      <div class="pitch-feat" data-i18n="pitch_complot_feat2"></div>
+      <div class="pitch-feat" data-i18n="pitch_complot_feat3"></div>
+    </div>
+
+    <!-- 5. TICKER -->
+    <div class="pitch-ticker-wrap"><div class="pitch-ticker-track" id="pitch-ticker"></div></div>
+
+    <!-- 6. STATS -->
+    <div class="pitch-stats">
+      <div class="pitch-stat"><span class="n" id="pitch-stat-spelers">–</span><span class="l" data-i18n="pitch_stat_spelers"></span></div>
+      <div class="pitch-stat"><span class="n" id="pitch-stat-tips">–</span><span class="l" data-i18n="pitch_stat_tips"></span></div>
+      <div class="pitch-stat"><span class="n" id="pitch-stat-streak">–</span><span class="l" data-i18n="pitch_stat_streak"></span></div>
+      <div class="pitch-stat"><span class="n">64</span><span class="l" data-i18n="pitch_stat_duels"></span></div>
+    </div>
+
+    <div class="pitch-divider" data-i18n="pitch_divider"></div>
+  </section>
+
   <div class="auth-box">
     <div class="auth-mascot"><img src="mascot.png" alt="De Condor" onerror="this.style.display='none'"></div>
     <div class="auth-title" data-i18n="auth_title">NO RISK NO FUN</div>
@@ -331,6 +429,8 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
       <div class="auth-toggle"><span data-i18n="auth_toggle_to_login">Al een account? </span><span onclick="toggleAuth(false)">Inloggen</span></div>
     </div>
   </div>
+
+ </div>
 </div>
 
 <!-- HEADER -->
@@ -413,7 +513,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     <button class="phase-tab" onclick="filterStand('group',this)" data-i18n="stand_filter_group">🏅 POULE MEISTER</button>
     <button class="phase-tab" onclick="filterStand('ko',this)" data-i18n="stand_filter_ko">⚡ KNOCK-OUT MEISTER</button>
   </div>
-  <div class="box" style="padding:0.5rem 1rem;overflow-x:auto">
+  <div class="box" style="padding:0.5rem 1rem;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none">
       <table class="sb-table">
         <thead><tr><th>#</th><th></th><th data-i18n="stand_table_col_player">SPELER</th><th data-i18n="stand_table_col_recent_tips">RECENTE TIPS</th><th style="text-align:right" data-i18n="stand_table_col_pts">PTS</th></tr></thead>
       <tbody id="sb-body"></tbody>
@@ -872,6 +972,7 @@ async function changeLanguage(lang){
   if(currentUser?.id) await saveLanguageToProfile(currentUser.id,lang,sb);
   translatePage();
   updateLangSwitcher();
+  if(!currentUser){renderPitch();return;}
   renderHome();
   renderTips();
   renderScoreboard();
@@ -1933,7 +2034,7 @@ async function updateDayWins(matchId){
 }
 
 async function loadOddsKey(){
-  const {data}=await sb.from('settings').select('value').eq('key','odds_api_key').single();
+  const {data}=await sb.from('settings').select('value').eq('key','odds_api_key').maybeSingle();
   if(data?.value){
     const el=document.getElementById('odds-key');
     if(el&&!el.value)el.value=data.value;
@@ -1945,7 +2046,7 @@ async function fetchOddsApi(auto=false){
   let key=keyEl?keyEl.value.trim():'';
   // Load saved key if field is empty
   if(!key){
-    const {data}=await sb.from('settings').select('value').eq('key','odds_api_key').single();
+    const {data}=await sb.from('settings').select('value').eq('key','odds_api_key').maybeSingle();
     key=data?.value||'';
   }
   const region=document.getElementById('odds-region')?.value||'eu';
@@ -2262,9 +2363,192 @@ function showToast(msg){
   clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2800);
 }
 
+// ── PITCH / LANDING (logged-out) ─────────────────────────────
+let pitchData=null;
+
+function pitchTeamForTip(m,side){
+  if(side==='home')return m.home_team;
+  if(side==='away')return m.away_team;
+  return m.home_team;
+}
+function pitchScore(uid){
+  let pts=0;
+  pitchData.matches.forEach(m=>{
+    if(!m.result)return;
+    const tip=pitchData.tips.find(t=>t.user_id===uid&&t.match_id===m.id);
+    if(!tip||tip.tip!==m.result)return;
+    const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
+    pts+=calcPts(o);
+  });
+  return pts;
+}
+function pitchBestTip(uid){
+  let best=null,bestPts=-1;
+  pitchData.matches.forEach(m=>{
+    if(!m.result)return;
+    const tip=pitchData.tips.find(t=>t.user_id===uid&&t.match_id===m.id);
+    if(!tip||tip.tip!==m.result)return;
+    const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
+    const p=calcPts(o);
+    if(p>bestPts){bestPts=p;best={m,side:tip.tip,pts:p};}
+  });
+  return best;
+}
+function pitchDaringOpenTip(){
+  let best=null,bestPts=-1;
+  pitchData.matches.forEach(m=>{
+    if(m.result)return;
+    pitchData.tips.filter(t=>t.match_id===m.id&&t.chosen_odds).forEach(t=>{
+      const p=calcPts(t.chosen_odds);
+      if(p>bestPts){bestPts=p;best={m,tip:t,pts:p};}
+    });
+  });
+  return best;
+}
+function profName(uid){return pitchData.profiles.find(p=>p.id===uid)?.username||'?';}
+
+function loadPitchData(){
+  return Promise.all([
+    sb.from('matches').select('*'),
+    sb.from('profiles').select('*'),
+    sb.from('tips').select('*'),
+  ]).then(([mr,pr,tr])=>{
+    pitchData={matches:mr.data||[],profiles:pr.data||[],tips:tr.data||[]};
+  }).catch(()=>{
+    pitchData={matches:[],profiles:[],tips:[]};
+  }).then(()=>{
+    renderPitchFomo();renderPitchTicker();renderPitchStats();
+  });
+}
+
+function renderPitchStreaks(){
+  const el=document.getElementById('pitch-streak-list');
+  if(!el)return;
+  el.innerHTML=STREAKS.map(s=>{
+    const col=s.n>=12?'var(--purple-light)':s.n>=6?'var(--yellow)':'#cccccc';
+    const bananas='<img src="banana.gif" alt="">'.repeat(Math.floor(s.n/2));
+    return `<div class="pitch-streak-row">`
+      +`<span class="pitch-streak-bananas">${bananas}</span>`
+      +`<span class="pitch-streak-title" style="color:${col}">${t('streak_title_'+s.n)}</span>`
+      +`<span class="pitch-streak-n" style="color:${col}">${t('rules_streak_threshold_label',{X:s.n})}</span>`
+      +`</div>`;
+  }).join('');
+}
+
+function renderPitchFomo(){
+  const el=document.getElementById('pitch-fomo');
+  if(!el)return;
+  if(!pitchData){el.innerHTML=`<div class="pitch-fomo-line">${t('pitch_no_data')}</div>`;return;}
+  const lines=[];
+
+  // 1. Hoogste totaalscore + beste tip
+  let top=null;
+  pitchData.profiles.forEach(p=>{const pts=pitchScore(p.id);if(pts>0&&(!top||pts>top.pts))top={id:p.id,pts};});
+  if(top){
+    const bt=pitchBestTip(top.id);
+    let extra='';
+    if(bt){const team=pitchTeamForTip(bt.m,bt.side);extra=` · <span class="flag">${flag(team)}</span> ${teamName(team)}`;}
+    lines.push(`👑 <span class="nm">${profName(top.id)}</span> <span class="v">${top.pts} PTS</span>${extra}`);
+  }
+
+  // 2. Langste huidige streak
+  const streakers=pitchData.profiles.filter(p=>(p.current_streak||0)>=1).sort((a,b)=>(b.current_streak||0)-(a.current_streak||0));
+  if(streakers.length){
+    const s=streakers[0];const si=getStreakInfo(s.current_streak);
+    const title=si?t('streak_title_'+si.n):'';
+    lines.push(`🍌 <span class="nm">${s.username}</span> <span class="v">${s.current_streak}×</span> ${title}`);
+  }
+
+  // 3. Meest gewaagde open tip
+  const daring=pitchDaringOpenTip();
+  if(daring){
+    const team=pitchTeamForTip(daring.m,daring.tip.tip);
+    lines.push(`🎯 <span class="nm">${profName(daring.tip.user_id)}</span> · <span class="flag">${flag(team)}</span> ${teamName(team)} <span class="v">+${daring.pts}</span>`);
+  }
+
+  el.innerHTML=lines.length
+    ?lines.map(l=>`<div class="pitch-fomo-line">${l}</div>`).join('')
+    :`<div class="pitch-fomo-line">${t('pitch_no_data')}</div>`;
+}
+
+function renderPitchTicker(){
+  const el=document.getElementById('pitch-ticker');
+  if(!el)return;
+  const items=[];
+  if(pitchData){
+    // Totaal gescoorde punten in toernooi
+    let totalPts=0;pitchData.profiles.forEach(p=>{totalPts+=pitchScore(p.id);});
+    if(totalPts>0)items.push(`⚡ <span class="v">${totalPts}</span> PTS`);
+
+    // Hoogste score van vandaag
+    const today=new Date().toDateString();
+    const todayMatchIds=new Set(pitchData.matches.filter(m=>m.result&&m.kickoff&&new Date(m.kickoff).toDateString()===today).map(m=>m.id));
+    if(todayMatchIds.size){
+      let best=null;
+      pitchData.profiles.forEach(p=>{
+        let pts=0;
+        pitchData.tips.filter(t=>t.user_id===p.id&&todayMatchIds.has(t.match_id)).forEach(t=>{
+          const m=pitchData.matches.find(x=>x.id===t.match_id);
+          if(m&&t.tip===m.result){const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;pts+=calcPts(o);}
+        });
+        if(pts>0&&(!best||pts>best.pts))best={name:p.username,pts};
+      });
+      if(best)items.push(`🏆 ${best.name} <span class="v">${best.pts} PTS</span>`);
+    }
+
+    // Actieve streaks
+    pitchData.profiles.filter(p=>(p.current_streak||0)>=1).sort((a,b)=>b.current_streak-a.current_streak).slice(0,3)
+      .forEach(p=>items.push(`🍌 ${p.username} <span class="v">×${p.current_streak}</span>`));
+
+    // Gewaagde open tips
+    const seen=new Set();
+    pitchData.matches.filter(m=>!m.result).forEach(m=>{
+      pitchData.tips.filter(t=>t.match_id===m.id&&t.chosen_odds).forEach(t=>{
+        const key=t.user_id+'-'+m.id;if(seen.has(key))return;seen.add(key);
+        items._candidates=items._candidates||[];
+        items._candidates.push({name:profName(t.user_id),team:pitchTeamForTip(m,t.tip),pts:calcPts(t.chosen_odds)});
+      });
+    });
+    (items._candidates||[]).sort((a,b)=>b.pts-a.pts).slice(0,2)
+      .forEach(c=>items.push(`🎯 ${c.name} · ${flag(c.team)} <span class="v">+${c.pts}</span>`));
+
+    // Aantallen als opvulling
+    items.push(`👤 <span class="v">${pitchData.profiles.length}</span> ${t('pitch_stat_spelers')}`);
+    items.push(`📋 <span class="v">${pitchData.tips.length}</span> ${t('pitch_stat_tips')}`);
+  }
+  if(!items.length){
+    items.push(`⚽ NO RISK NO FUN`,`🏆 WK POOL 2026`,`🍌 ${t('pitch_streak_label')}`);
+  }
+  delete items._candidates;
+  const html=items.map(i=>`<span class="pitch-ticker-item">${i}</span>`).join('');
+  el.innerHTML=html+html; // dubbel voor naadloze loop
+}
+
+function renderPitchStats(){
+  const elS=document.getElementById('pitch-stat-spelers');
+  const elT=document.getElementById('pitch-stat-tips');
+  const elK=document.getElementById('pitch-stat-streak');
+  if(!elS)return;
+  if(!pitchData){elS.textContent=elT.textContent=elK.textContent='–';return;}
+  elS.textContent=pitchData.profiles.length;
+  elT.textContent=pitchData.tips.length;
+  let longest=0;pitchData.profiles.forEach(p=>{longest=Math.max(longest,p.longest_streak||0,p.current_streak||0);});
+  elK.textContent=longest;
+}
+
+function renderPitch(){
+  renderPitchStreaks();renderPitchFomo();renderPitchTicker();renderPitchStats();
+}
+
 // ── BOOT ─────────────────────────────────────────────────────
 sb.auth.getSession().then(({data:{session}})=>{
-  if(session?.user)handleUser(session.user);
+  if(session?.user){
+    handleUser(session.user);
+  }else{
+    translateStaticText();
+    renderPitchStreaks();
+    loadPitchData();
+  }
 });
 updateLangSwitcher();
 </script>
