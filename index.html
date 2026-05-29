@@ -573,6 +573,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="admin-panel">
     <div class="admin-title">✅ UITSLAG & SCORE INVOEREN</div>
     <button class="btn btn-purple btn-sm" style="margin-bottom:12px" onclick="recalcAllStreaks()">🔄 HERBEREKEN STREAKS</button>
+    <button class="btn btn-purple btn-sm" style="margin-bottom:12px;margin-left:8px" onclick="recalcAllDayWins()">🔄 HERBEREKEN DAGWINSTEN</button>
     <div id="admin-results-list"><div class="loading">Laden...</div></div>
   </div>
 
@@ -1906,6 +1907,14 @@ async function clearResult(matchId){
   await loadAll();
 }
 
+async function recalcAllDayWins(){
+  showToast('Dagwinsten herberekenen...');
+  const {error}=await sb.rpc('recalc_day_wins');
+  if(error){console.error('recalc_day_wins RPC fout:',error);showToast('Fout bij herberekenen!');return;}
+  await loadAll();
+  showToast('Dagwinsten bijgewerkt!');
+}
+
 async function recalcAllStreaks(){
   showToast('Streaks herberekenen...');
   await updateStreaks();
@@ -1919,36 +1928,8 @@ async function updateStreaks(){
 }
 
 async function updateDayWins(matchId){
-  const [{data:fMatches},{data:fTips},{data:fProfiles}]=await Promise.all([
-    sb.from('matches').select('*'),
-    sb.from('tips').select('*'),
-    sb.from('profiles').select('id,day_wins'),
-  ]);
-  if(!fMatches||!fTips||!fProfiles)return;
-  const match=fMatches.find(m=>m.id===matchId);
-  if(!match?.matchday)return;
-  const day=match.matchday;
-  const allDayMatches=fMatches.filter(m=>m.matchday===day);
-  const dayMatches=allDayMatches.filter(m=>m.result);
-  // Only award when the entire matchday is complete
-  if(!dayMatches.length||dayMatches.length!==allDayMatches.length)return;
-  const scored=fProfiles.map(p=>{
-    let pts=0;
-    dayMatches.forEach(m=>{
-      const tip=fTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
-      if(!tip)return;
-      const side=tip.tip;
-      if(side===m.result){
-        const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
-        pts+=calcPts(o);
-      }
-    });
-    return{id:p.id,pts,day_wins:p.day_wins||0};
-  });
-  const maxPts=Math.max(...scored.map(s=>s.pts));
-  if(maxPts<=0)return;
-  const winners=scored.filter(s=>s.pts===maxPts);
-  await Promise.all(winners.map(w=>sb.from('profiles').update({day_wins:w.day_wins+1}).eq('id',w.id)));
+  const {error}=await sb.rpc('recalc_day_wins');
+  if(error)console.error('recalc_day_wins RPC fout:',error);
 }
 
 async function loadOddsKey(){
