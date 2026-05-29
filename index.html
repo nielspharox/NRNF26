@@ -973,13 +973,14 @@ function renderStreakBadge(streak){
   return`<span class="streak-badge" style="${getStreakBadgeStyle(s)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:s})}</span>`;
 }
 
-function renderPodiumCard(player,rank){
+function renderPodiumCard(player,rank,dayMatches){
   const pp=window.NRNFPixelPlayer.generatePlayer(player.username);
   const rankLabels=[t('podium_rank_1'),t('podium_rank_2'),t('podium_rank_3')];
   const cardClass=['podium-card-1','podium-card-2','podium-card-3'];
   const ri=rank-1;
   const posCls=pp.position==='GK'?' gk':'';
-  const risk=Math.round(getAvgRisk(player.id));
+  const dayTips=(dayMatches||[]).map(m=>allTips.find(t=>t.user_id===player.id&&t.match_id===m.id)).filter(Boolean);
+  const risk=dayTips.length?Math.round(dayTips.reduce((s,t)=>s+(t.chosen_odds||0),0)/dayTips.length):Math.round(getAvgRisk(player.id));
   const streak=player.current_streak||0;
   const badge=renderStreakBadge(streak);
   const wins=player.day_wins||0;
@@ -1007,6 +1008,9 @@ function renderPodiumCard(player,rank){
 
 function renderPodium(){
   const el=document.getElementById("podium-wrap");
+  const playedMatchdays=[...new Set(matches.filter(m=>m.result&&m.matchday!=null).map(m=>m.matchday))].sort((a,b)=>b-a);
+  const lastMatchday=playedMatchdays[0]??null;
+  const dayMatches=lastMatchday!=null?matches.filter(m=>m.result&&m.matchday===lastMatchday):[];
   const withPts=allProfiles.map(p=>{
     const {pts,day}=getYesterdayPts(p.id);
     return{...p,dayPts:pts,day};
@@ -1046,7 +1050,7 @@ function renderPodium(){
     {p:mid,rank:1},
     right?{p:right,rank:rightRank}:null,
   ];
-  el.innerHTML=`<div class="podium">${slots.map(s=>s?renderPodiumCard(s.p,s.rank):'').join('')}</div>`;
+  el.innerHTML=`<div class="podium">${slots.map(s=>s?renderPodiumCard(s.p,s.rank,dayMatches):'').join('')}</div>`;
 }
 
 // ── STATS HELPERS ───────────────────────────────────────────
