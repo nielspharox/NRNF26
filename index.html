@@ -1908,58 +1908,14 @@ async function clearResult(matchId){
 
 async function recalcAllStreaks(){
   showToast('Streaks herberekenen...');
-  await updateStreaks(null,null);
+  await updateStreaks();
   await loadAll();
   showToast('Streaks bijgewerkt!');
 }
 
-async function updateStreaks(matchId,result){
-  // Fetch completely fresh data so new result is included
-  const [{data:freshMatches},{data:freshTips},{data:freshProfiles}]=await Promise.all([
-    sb.from('matches').select('*').order('kickoff',{ascending:true}),
-    sb.from('tips').select('*'),
-    sb.from('profiles').select('*'),
-  ]);
-  const fMatches=freshMatches||[];
-  const fTips=freshTips||[];
-
-  // Sort once outside the loop — matchday primary, kickoff secondary, created_at tiebreaker
-  const withResult=fMatches.filter(m=>m.result);
-  const played=[...withResult].sort((a,b)=>{
-    const ko=new Date(b.kickoff||0)-new Date(a.kickoff||0);
-    if(ko!==0)return ko;
-    return new Date(b.created_at||0)-new Date(a.created_at||0);
-  });
-  const chrono=[...withResult].sort((a,b)=>{
-    const ko=new Date(a.kickoff||0)-new Date(b.kickoff||0);
-    if(ko!==0)return ko;
-    return new Date(a.created_at||0)-new Date(b.created_at||0);
-  });
-
-  for(const profile of (freshProfiles||[])){
-    // Current streak: go backwards from most recent match
-    // geen tip = automatisch gelijkspel (telt mee voor streak)
-    let current=0;
-    for(const m of played){
-      const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
-      const effectiveTip=tip?tip.tip:'draw';
-      if(effectiveTip!==m.result)break;
-      current++;
-    }
-
-    // Longest streak: scan all matches chronologically
-    // geen tip = automatisch gelijkspel
-    let longest=0,running=0;
-    for(const m of chrono){
-      const tip=fTips.find(t=>t.user_id===profile.id&&t.match_id===m.id);
-      const effectiveTip=tip?tip.tip:'draw';
-      if(effectiveTip===m.result){running++;if(running>longest)longest=running;}
-      else running=0;
-    }
-    longest=Math.max(longest,current);
-
-    await sb.from('profiles').update({current_streak:current,longest_streak:longest}).eq('id',profile.id);
-  }
+async function updateStreaks(){
+  const {error}=await sb.rpc('recalc_streaks');
+  if(error)console.error('recalc_streaks RPC fout:',error);
 }
 
 async function updateDayWins(matchId){
