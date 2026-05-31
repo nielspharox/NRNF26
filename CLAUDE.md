@@ -391,6 +391,7 @@ Boven het inlogformulier staat een pitch-sectie, alleen zichtbaar voor niet-inge
 
 **Boot:** als geen sessie → `translateStaticText()` + `renderPitchStreaks()` + `loadPitchData()`.
 **i18n:** alle teksten via `pitch_*` keys in `languages.js` (NL/EN/DE). Live data is grotendeels taal-neutraal (namen/getallen/emoji) + herbruikte keys.
+**Taalvlaggetjes:** rechtsboven in de hero (`.pitch-langs`, ids `plang-nl/en/de`) zodat een niet-ingelogde bezoeker kan wisselen — de header-switcher zit achter de fixed overlay. Hergebruikt `changeLanguage()`; `updateLangSwitcher()` togglet ook de `plang-*` actieve staat.
 
 ---
 

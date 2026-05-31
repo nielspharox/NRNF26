@@ -109,6 +109,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .pitch-live::before{content:'';width:7px;height:7px;background:var(--red);border-radius:50%;box-shadow:0 0 6px var(--red);animation:pitchblink 1s steps(2) infinite}
 @keyframes pitchblink{50%{opacity:.2}}
 .pitch-hero{text-align:center}
+.pitch-langs{position:absolute;top:10px;right:10px;display:flex;gap:4px;z-index:2}
 .pitch-hero-kicker{font-family:var(--pixel);font-size:8px;color:var(--purple-light);letter-spacing:.12em;margin-bottom:14px;line-height:1.6}
 .pitch-hero-title{margin-bottom:14px}
 .pitch-hero-title span{font-family:var(--pixel);display:block;text-shadow:3px 3px 0 #000;line-height:1.5}
@@ -358,6 +359,11 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 
     <!-- 1. HERO -->
     <div class="pitch-block green pitch-hero">
+      <div class="pitch-langs">
+        <span class="lang-flag" id="plang-nl" onclick="changeLanguage('nl')" title="Nederlands">🇳🇱</span>
+        <span class="lang-flag" id="plang-en" onclick="changeLanguage('en')" title="English">🇬🇧</span>
+        <span class="lang-flag" id="plang-de" onclick="changeLanguage('de')" title="Deutsch">🇩🇪</span>
+      </div>
       <div class="pitch-live"><span data-i18n="pitch_live_badge">LIVE</span></div>
       <div class="pitch-hero-kicker" data-i18n="pitch_hero_kicker"></div>
       <div class="pitch-hero-title">
@@ -963,6 +969,8 @@ function updateLangSwitcher(){
   ['nl','en','de'].forEach(l=>{
     const el=document.getElementById('lang-'+l);
     if(el)el.classList.toggle('active',l===cur);
+    const pel=document.getElementById('plang-'+l);
+    if(pel)pel.classList.toggle('active',l===cur);
   });
 }
 

@@ -16,6 +16,7 @@ Dagelijkse voortgang van het project.
   - Stats: aantal spelers, tips gezet, langste streak, 64 duels
 - STREAK-sectie gevoed vanuit de centrale `STREAKS` array (geen hardcoding) — bananen = `n/2`, badgekleur zilver/goud/paars per niveau
 - Volledig meertalig: nieuwe `pitch_*` keys in NL/EN/DE (`languages.js`)
+- **Taalvlaggetjes in de pitch-hero** (🇳🇱/🇬🇧/🇩🇪, rechtsboven) — niet-ingelogde bezoeker kan nu zelf wisselen; de header-switcher zit achter de overlay. Hergebruikt `changeLanguage()` + `updateLangSwitcher()` (extra `plang-*` ids)
 - Getest op desktop + mobiel, alle drie de talen
 
 ---
