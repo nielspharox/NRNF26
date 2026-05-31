@@ -92,10 +92,10 @@ Retro 1999/2000 internet stijl. Denk Hyves, vroege FIFA games, GeoCities.
 ### Drempelwaarden
 ```js
 const STREAKS = [
-  {n:2,  title:'PAUL',               emoji:'🐙'},
-  {n:4,  title:'EL JEFE',            emoji:'🌵🤠'},
-  {n:6,  title:'THE CHOSEN ONE',     emoji:'⚡'},
-  {n:8,  title:'SITTING BULL',       emoji:'🦬'},
+  {n:2,  title:'EL JEFE',            emoji:'🌵🤠'},
+  {n:4,  title:'THE CHOSEN ONE',     emoji:'⚡'},
+  {n:6,  title:'SITTING BULL',       emoji:'🦬'},
+  {n:8,  title:'PAUL',               emoji:'🐙'},
   {n:10, title:'THE DEEP STATE',     emoji:'🕵️'},
   {n:12, title:'THE ORACLE',         emoji:'🔮'},
   {n:14, title:'PAUL WAS AN AMATEUR',emoji:'🐙💀'},
@@ -415,9 +415,10 @@ GitHub Pages deploy ~1 minuut. Hard refresh: `Cmd+Shift+R`.
 1. **Prijzenkast in profielmodal** — behaalde streaks + hoe vaak, dagwinsten, medailles
 2. **Custom streak namen per complotgroepje** — nieuwe DB tabel: `complot_streak_names (group_id, streak_level, title, emoji)`
 3. **Bonus/nerf systeem** — superkrachten via streaks, nog te brainstormen
-4. **Paul drempel → 8** — eerbetoon aan Paul de Octopus
-5. **Streak badge in profielmodal** — toont soms niet correct (cached data issue)
-6. **Auto-odds fetch finetunen** — edge cases afvangen
+4. **Streak badge in profielmodal** — toont soms niet correct (cached data issue)
+5. **Auto-odds fetch finetunen** — edge cases afvangen
+
+> ✅ **Paul drempel → 8** (eerbetoon aan Paul de Octopus) — gedaan. Nieuwe volgorde: 2 EL JEFE · 4 THE CHOSEN ONE · 6 SITTING BULL · 8 PAUL · 10 THE DEEP STATE · 12 THE ORACLE · 14 PAUL WAS AN AMATEUR.
 
 ---
 

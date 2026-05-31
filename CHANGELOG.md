@@ -6,6 +6,11 @@ Dagelijkse voortgang van het project.
 
 ## Vrijdag 29 mei 2026
 
+### Streak-drempels herschikt (Paul → 8)
+- Eerbetoon aan Paul de Octopus: nieuwe volgorde 2 EL JEFE · 4 THE CHOSEN ONE · 6 SITTING BULL · 8 PAUL (10/12/14 ongewijzigd)
+- Aangepast in de centrale `STREAKS` array (`index.html`), de `streak_title_*` keys in NL/EN/DE (`languages.js`) en de instructies (`CLAUDE.md`)
+- Werkt automatisch door in landing, spelregels, podium en streak-badges (allemaal data-gedreven uit `STREAKS`)
+
 ### Pitch / landing voor niet-ingelogde bezoekers
 - **Pitch-sectie boven het inlogformulier** — alleen zichtbaar als je niet ingelogd bent. Login flow zelf volledig ongewijzigd.
 - Opbouw boven → onder: HERO ("IEDEREEN TIPT DE FAVORIET. JIJ NIET.") → FOMO-blok → STREAKS → complotgroepje-uitleg → scrollende ticker → stats-balk → bestaand inlogformulier

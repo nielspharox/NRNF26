@@ -194,10 +194,10 @@ const TRANSLATIONS = {
     rules_odds_body: "De kansen worden opgehaald via The Odds API. De admin haalt na elke speelronde de odds op voor de volgende ronde. Hoe actueler de odds, hoe eerlijker de puntenverdeling.",
 
     // STREAK TITLES
-    streak_title_2: "🐙 PAUL",
-    streak_title_4: "🌵🤠 EL JEFE",
-    streak_title_6: "⚡ THE CHOSEN ONE",
-    streak_title_8: "🦬 SITTING BULL",
+    streak_title_2: "🌵🤠 EL JEFE",
+    streak_title_4: "⚡ THE CHOSEN ONE",
+    streak_title_6: "🦬 SITTING BULL",
+    streak_title_8: "🐙 PAUL",
     streak_title_10: "🕵️ THE DEEP STATE",
     streak_title_12: "🔮 THE ORACLE",
     streak_title_14: "🐙💀 PAUL WAS AN AMATEUR",
@@ -571,10 +571,10 @@ const TRANSLATIONS = {
     rules_odds_body: "Odds are fetched via The Odds API. The admin fetches the odds after each round for the next one. The more up to date the odds, the fairer the points distribution.",
 
     // STREAK TITLES (same in all languages)
-    streak_title_2: "🐙 PAUL",
-    streak_title_4: "🌵🤠 EL JEFE",
-    streak_title_6: "⚡ THE CHOSEN ONE",
-    streak_title_8: "🦬 SITTING BULL",
+    streak_title_2: "🌵🤠 EL JEFE",
+    streak_title_4: "⚡ THE CHOSEN ONE",
+    streak_title_6: "🦬 SITTING BULL",
+    streak_title_8: "🐙 PAUL",
     streak_title_10: "🕵️ THE DEEP STATE",
     streak_title_12: "🔮 THE ORACLE",
     streak_title_14: "🐙💀 PAUL WAS AN AMATEUR",
@@ -948,10 +948,10 @@ const TRANSLATIONS = {
     rules_odds_body: "Die Quoten werden über The Odds API abgerufen. Der Admin holt nach jeder Runde die Quoten für die nächste. Je aktueller die Quoten, desto fairer die Punkteverteilung.",
 
     // STREAK TITLES (same in all languages)
-    streak_title_2: "🐙 PAUL",
-    streak_title_4: "🌵🤠 EL JEFE",
-    streak_title_6: "⚡ THE CHOSEN ONE",
-    streak_title_8: "🦬 SITTING BULL",
+    streak_title_2: "🌵🤠 EL JEFE",
+    streak_title_4: "⚡ THE CHOSEN ONE",
+    streak_title_6: "🦬 SITTING BULL",
+    streak_title_8: "🐙 PAUL",
     streak_title_10: "🕵️ THE DEEP STATE",
     streak_title_12: "🔮 THE ORACLE",
     streak_title_14: "🐙💀 PAUL WAS AN AMATEUR",
