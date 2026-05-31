@@ -1710,22 +1710,33 @@ function renderScoreboard(){
 
   const medals=['🥇','🥈','🥉'];
   const rc=i=>['r1','r2','r3'][i]||'';
-  // Pre-compute matchday groups once for all players
-  const playedSorted=matches.filter(m=>m.result&&m.matchday!=null).sort((a,b)=>b.matchday-a.matchday);
-  const dayMap={};
-  for(const m of playedSorted){
-    const key=m.matchday;
-    if(!dayMap[key])dayMap[key]=[];
-    dayMap[key].push(m);
+  // Speeldagen voor de tip-kolom: komende speeldag bovenaan, daaronder de 2 meest recente gespeelde dagen.
+  // Groepeert op matchday-nummer indien gezet, anders op kalenderdag van kickoff (zelfde fallback als
+  // recalc_day_wins/calcWaaghals) zodat de komende speeldag ook werkt voor wedstrijden zonder matchday.
+  const dayBuckets=new Map(); // key → {label, time, upcoming, dayMatches}
+  for(const m of matches){
+    const hasMd=m.matchday!=null;
+    if(!hasMd&&!m.kickoff)continue;
+    const key=hasMd?('md'+m.matchday):('d'+new Date(m.kickoff).toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam'}));
+    let b=dayBuckets.get(key);
+    if(!b){b={label:hasMd?`SD ${m.matchday}`:nlDate(m.kickoff),time:Infinity,upcoming:false,dayMatches:[]};dayBuckets.set(key,b);}
+    b.dayMatches.push(m);
+    if(!m.result)b.upcoming=true;
+    if(m.kickoff)b.time=Math.min(b.time,new Date(m.kickoff).getTime());
   }
-  const last3days=Object.entries(dayMap).slice(0,3);
+  const allBuckets=[...dayBuckets.values()];
+  const upcomingBucket=allBuckets.filter(b=>b.upcoming).sort((a,b)=>a.time-b.time)[0]||null; // eerstvolgende
+  const playedBuckets=allBuckets.filter(b=>!b.upcoming).sort((a,b)=>b.time-a.time).slice(0,upcomingBucket?2:3);
+  const displayDays=[];
+  if(upcomingBucket)displayDays.push({...upcomingBucket,upcoming:true});
+  playedBuckets.forEach(b=>displayDays.push({...b,upcoming:false}));
 
   document.getElementById('sb-body').innerHTML=ranked.map((p,i)=>{
     const streakInfo=getStreakInfo(p.current_streak||0);
     const streakEmoji=getStreakEmoji(p.current_streak||0);
 
     // Build tips: one flex-row per day, date label + all tips inline
-    const tipsHtml=last3days.map(([day,dayMatches])=>{
+    const tipsHtml=displayDays.map(({label,dayMatches,upcoming})=>{
       const dayTips=dayMatches.map(m=>{
         const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
         if(!tip)return '';
@@ -1733,18 +1744,22 @@ function renderScoreboard(){
         const pickedTeam=side==='home'?m.home_team:side==='away'?m.away_team:null;
         const f=pickedTeam?flag(pickedTeam):'=';
         const lbl=pickedTeam?(teamShort[pickedTeam]||pickedTeam.slice(0,3).toUpperCase()):t('tips_abbrev_draw');
-        const ok=side===m.result;
-        const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
+        const hasRes=!!m.result;                 // komende wedstrijden hebben nog geen uitslag
+        const ok=hasRes&&side===m.result;
+        const cls=!hasRes?'tip-pend':(ok?'tip-ok':'tip-fail');
+        const o=hasRes?(m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds):0;
         const pts=ok?calcPts(o):0;
         // Each tip: fixed 58px wide, flag+label on one line, pts superscript
-        return`<span class="${ok?'tip-ok':'tip-fail'}" style="display:inline-flex;align-items:center;width:58px;flex-shrink:0;white-space:nowrap" title="${teamName(m.home_team)} vs ${teamName(m.away_team)}">`
+        return`<span class="${cls}" style="display:inline-flex;align-items:center;width:58px;flex-shrink:0;white-space:nowrap" title="${teamName(m.home_team)} vs ${teamName(m.away_team)}">`
           +`<span style="font-size:15px;line-height:1">${f}</span>`
           +`<span style="font-family:var(--pixel);font-size:6px;margin-left:1px">${lbl}${ok?'<sup style="color:var(--green)">+'+pts+'</sup>':''}</span>`
           +`</span>`;
       }).join('');
-      // One row per matchday: label + tips flowing right
+      // One row per matchday: label + tips flowing right (komende dag groen gemarkeerd)
+      const lblColor=upcoming?'var(--green)':'var(--muted)';
+      const dayLabel=upcoming?`${label} ▶`:label;
       return`<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;flex-wrap:nowrap">`
-        +`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);width:54px;flex-shrink:0;white-space:nowrap">SD ${day}</span>`
+        +`<span style="font-family:var(--pixel);font-size:6px;color:${lblColor};width:54px;flex-shrink:0;white-space:nowrap">${dayLabel}</span>`
         +`<span style="display:flex;flex-wrap:nowrap;gap:2px">${dayTips}</span>`
         +`</div>`;
     }).join('');

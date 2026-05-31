@@ -6,6 +6,13 @@ Dagelijkse voortgang van het project.
 
 ## Vrijdag 29 mei 2026
 
+### Stand: komende speeldag bovenaan in de tip-kolom
+- Tip-kolom toont nu **komende speeldag bovenaan** (groen, met ▶), daaronder de 2 meest recente gespeelde dagen (gister/eergister)
+- Groepeert op `matchday`-nummer indien gezet, anders op **kalenderdag van kickoff** (zelfde fallback als `recalc_day_wins`) — werkt dus ook nu nog geen matchday op de komende wedstrijden staat
+- Komende (nog niet gespeelde) tips krijgen neutrale `tip-pend`-styling zonder punten i.p.v. de rode "fout"-kleur
+- Meteen een latente bug gefixt: oude code toonde door integer-key-ordening juist de *oudste* 3 speeldagen (SD 1/2/3) i.p.v. de recente; nu expliciet chronologisch gesorteerd
+- ⚠️ Let op: hierdoor zijn andermans tips voor de komende speeldag zichtbaar vóór aftrap
+
 ### Streak-drempels herschikt (Paul → 8)
 - Eerbetoon aan Paul de Octopus: nieuwe volgorde 2 EL JEFE · 4 THE CHOSEN ONE · 6 SITTING BULL · 8 PAUL (10/12/14 ongewijzigd)
 - Aangepast in de centrale `STREAKS` array (`index.html`), de `streak_title_*` keys in NL/EN/DE (`languages.js`) en de instructies (`CLAUDE.md`)
