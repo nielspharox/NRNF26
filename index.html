@@ -117,11 +117,13 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .pitch-hero-title .l3{font-size:clamp(18px,6.5vw,30px);color:var(--green);text-shadow:3px 3px 0 #004422;margin-top:4px}
 .pitch-hero-body{font-family:var(--vt);font-size:20px;color:var(--muted);line-height:1.4}
 .pitch-label{font-family:var(--pixel);font-size:9px;color:var(--yellow);margin-bottom:12px;letter-spacing:.05em;line-height:1.5}
-.pitch-fomo-line{font-family:var(--vt);font-size:20px;color:var(--white);padding:9px 0;border-bottom:1px solid rgba(85,0,170,.3);line-height:1.3;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pitch-fomo-line{font-family:var(--vt);font-size:20px;color:var(--muted);padding:10px 0;border-bottom:1px solid rgba(85,0,170,.3);display:flex;flex-direction:column;align-items:flex-start;gap:5px}
 .pitch-fomo-line:last-child{border-bottom:none}
-.pitch-fomo-line .nm{font-family:var(--oswald);font-weight:700;color:var(--green);font-size:20px}
-.pitch-fomo-line .v{font-family:var(--pixel);font-size:9px;color:var(--yellow)}
-.pitch-fomo-line .flag{font-size:18px}
+.pitch-fomo-tag{font-family:var(--pixel);font-size:7px;color:var(--yellow);letter-spacing:.08em;line-height:1.4}
+.pitch-fomo-body{font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.35}
+.pitch-fomo-body .nm{font-family:var(--oswald);font-weight:700;color:var(--green)}
+.pitch-fomo-body .v{color:var(--yellow);font-weight:bold}
+.pitch-fomo-body .flag{font-size:18px}
 .pitch-streak-row{display:flex;align-items:center;gap:8px;padding:6px 0;flex-wrap:wrap}
 .pitch-streak-bananas{display:inline-flex;align-items:center;gap:1px;min-width:54px}
 .pitch-streak-bananas img{width:18px;height:18px;image-rendering:pixelated;vertical-align:middle}
@@ -980,7 +982,7 @@ async function changeLanguage(lang){
   if(currentUser?.id) await saveLanguageToProfile(currentUser.id,lang,sb);
   translatePage();
   updateLangSwitcher();
-  if(!currentUser){renderPitch();return;}
+  if(!currentUser){Pitch.render();return;}
   renderHome();
   renderTips();
   renderScoreboard();
@@ -2372,181 +2374,206 @@ function showToast(msg){
 }
 
 // ── PITCH / LANDING (logged-out) ─────────────────────────────
-let pitchData=null;
+// Zelfstandige module voor de landingpagina van niet-ingelogde bezoekers.
+// Haalt eenmalig anonieme (public-read) data op, indexeert die in Maps en
+// rendert vier blokken: FOMO, streaks, ticker en stats.
+const Pitch = (() => {
+  // ── interne state ──
+  let data = null; // {matches, profiles, tips, tipsByUser, tipsByMatch} of null voor data geladen is
 
-function pitchTeamForTip(m,side){
-  if(side==='home')return m.home_team;
-  if(side==='away')return m.away_team;
-  return m.home_team;
-}
-function pitchScore(uid){
-  let pts=0;
-  pitchData.matches.forEach(m=>{
-    if(!m.result)return;
-    const tip=pitchData.tips.find(t=>t.user_id===uid&&t.match_id===m.id);
-    if(!tip||tip.tip!==m.result)return;
-    const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
-    pts+=calcPts(o);
-  });
-  return pts;
-}
-function pitchBestTip(uid){
-  let best=null,bestPts=-1;
-  pitchData.matches.forEach(m=>{
-    if(!m.result)return;
-    const tip=pitchData.tips.find(t=>t.user_id===uid&&t.match_id===m.id);
-    if(!tip||tip.tip!==m.result)return;
-    const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
-    const p=calcPts(o);
-    if(p>bestPts){bestPts=p;best={m,side:tip.tip,pts:p};}
-  });
-  return best;
-}
-function pitchDaringOpenTip(){
-  let best=null,bestPts=-1;
-  pitchData.matches.forEach(m=>{
-    if(m.result)return;
-    pitchData.tips.filter(t=>t.match_id===m.id&&t.chosen_odds).forEach(t=>{
-      const p=calcPts(t.chosen_odds);
-      if(p>bestPts){bestPts=p;best={m,tip:t,pts:p};}
-    });
-  });
-  return best;
-}
-function profName(uid){return pitchData.profiles.find(p=>p.id===uid)?.username||'?';}
+  // ── kleine helpers ──
+  const $ = id => document.getElementById(id);
+  const oddsForSide = (m, side) => side === 'home' ? m.home_odds : side === 'draw' ? m.draw_odds : m.away_odds;
+  // Representatieve vlag/teamnaam voor een tip (bij gelijkspel: thuisploeg).
+  const teamForSide = (m, side) => side === 'away' ? m.away_team : m.home_team;
+  const teamChip = team => `<span class="flag">${flag(team)}</span> ${teamName(team)}`;
+  const profileName = id => data?.profiles.find(p => p.id === id)?.username || '?';
+  const userTip = (userId, matchId) => data.tipsByUser.get(userId)?.get(matchId) || null;
 
-function loadPitchData(){
-  return Promise.all([
-    sb.from('matches').select('*'),
-    sb.from('profiles').select('*'),
-    sb.from('tips').select('*'),
-  ]).then(([mr,pr,tr])=>{
-    pitchData={matches:mr.data||[],profiles:pr.data||[],tips:tr.data||[]};
-  }).catch(()=>{
-    pitchData={matches:[],profiles:[],tips:[]};
-  }).then(()=>{
-    renderPitchFomo();renderPitchTicker();renderPitchStats();
-  });
-}
-
-function renderPitchStreaks(){
-  const el=document.getElementById('pitch-streak-list');
-  if(!el)return;
-  el.innerHTML=STREAKS.map(s=>{
-    const col=s.n>=12?'var(--purple-light)':s.n>=6?'var(--yellow)':'#cccccc';
-    const bananas='<img src="banana.gif" alt="">'.repeat(Math.floor(s.n/2));
-    return `<div class="pitch-streak-row">`
-      +`<span class="pitch-streak-bananas">${bananas}</span>`
-      +`<span class="pitch-streak-title" style="color:${col}">${t('streak_title_'+s.n)}</span>`
-      +`<span class="pitch-streak-n" style="color:${col}">${t('rules_streak_threshold_label',{X:s.n})}</span>`
-      +`</div>`;
-  }).join('');
-}
-
-function renderPitchFomo(){
-  const el=document.getElementById('pitch-fomo');
-  if(!el)return;
-  if(!pitchData){el.innerHTML=`<div class="pitch-fomo-line">${t('pitch_no_data')}</div>`;return;}
-  const lines=[];
-
-  // 1. Hoogste totaalscore + beste tip
-  let top=null;
-  pitchData.profiles.forEach(p=>{const pts=pitchScore(p.id);if(pts>0&&(!top||pts>top.pts))top={id:p.id,pts};});
-  if(top){
-    const bt=pitchBestTip(top.id);
-    let extra='';
-    if(bt){const team=pitchTeamForTip(bt.m,bt.side);extra=` · <span class="flag">${flag(team)}</span> ${teamName(team)}`;}
-    lines.push(`👑 <span class="nm">${profName(top.id)}</span> <span class="v">${top.pts} PTS</span>${extra}`);
-  }
-
-  // 2. Langste huidige streak
-  const streakers=pitchData.profiles.filter(p=>(p.current_streak||0)>=1).sort((a,b)=>(b.current_streak||0)-(a.current_streak||0));
-  if(streakers.length){
-    const s=streakers[0];const si=getStreakInfo(s.current_streak);
-    const title=si?t('streak_title_'+si.n):'';
-    lines.push(`🍌 <span class="nm">${s.username}</span> <span class="v">${s.current_streak}×</span> ${title}`);
-  }
-
-  // 3. Meest gewaagde open tip
-  const daring=pitchDaringOpenTip();
-  if(daring){
-    const team=pitchTeamForTip(daring.m,daring.tip.tip);
-    lines.push(`🎯 <span class="nm">${profName(daring.tip.user_id)}</span> · <span class="flag">${flag(team)}</span> ${teamName(team)} <span class="v">+${daring.pts}</span>`);
-  }
-
-  el.innerHTML=lines.length
-    ?lines.map(l=>`<div class="pitch-fomo-line">${l}</div>`).join('')
-    :`<div class="pitch-fomo-line">${t('pitch_no_data')}</div>`;
-}
-
-function renderPitchTicker(){
-  const el=document.getElementById('pitch-ticker');
-  if(!el)return;
-  const items=[];
-  if(pitchData){
-    // Totaal gescoorde punten in toernooi
-    let totalPts=0;pitchData.profiles.forEach(p=>{totalPts+=pitchScore(p.id);});
-    if(totalPts>0)items.push(`⚡ <span class="v">${totalPts}</span> PTS`);
-
-    // Hoogste score van vandaag
-    const today=new Date().toDateString();
-    const todayMatchIds=new Set(pitchData.matches.filter(m=>m.result&&m.kickoff&&new Date(m.kickoff).toDateString()===today).map(m=>m.id));
-    if(todayMatchIds.size){
-      let best=null;
-      pitchData.profiles.forEach(p=>{
-        let pts=0;
-        pitchData.tips.filter(t=>t.user_id===p.id&&todayMatchIds.has(t.match_id)).forEach(t=>{
-          const m=pitchData.matches.find(x=>x.id===t.match_id);
-          if(m&&t.tip===m.result){const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;pts+=calcPts(o);}
-        });
-        if(pts>0&&(!best||pts>best.pts))best={name:p.username,pts};
-      });
-      if(best)items.push(`🏆 ${best.name} <span class="v">${best.pts} PTS</span>`);
+  // ── data laden + indexeren ──
+  async function load() {
+    try {
+      const [mr, pr, tr] = await Promise.all([
+        sb.from('matches').select('*'),
+        sb.from('profiles').select('*'),
+        sb.from('tips').select('*'),
+      ]);
+      data = index(mr.data || [], pr.data || [], tr.data || []);
+    } catch (e) {
+      console.warn('Pitch: data laden mislukt', e);
+      data = index([], [], []);
     }
-
-    // Actieve streaks
-    pitchData.profiles.filter(p=>(p.current_streak||0)>=1).sort((a,b)=>b.current_streak-a.current_streak).slice(0,3)
-      .forEach(p=>items.push(`🍌 ${p.username} <span class="v">×${p.current_streak}</span>`));
-
-    // Gewaagde open tips
-    const seen=new Set();
-    pitchData.matches.filter(m=>!m.result).forEach(m=>{
-      pitchData.tips.filter(t=>t.match_id===m.id&&t.chosen_odds).forEach(t=>{
-        const key=t.user_id+'-'+m.id;if(seen.has(key))return;seen.add(key);
-        items._candidates=items._candidates||[];
-        items._candidates.push({name:profName(t.user_id),team:pitchTeamForTip(m,t.tip),pts:calcPts(t.chosen_odds)});
-      });
-    });
-    (items._candidates||[]).sort((a,b)=>b.pts-a.pts).slice(0,2)
-      .forEach(c=>items.push(`🎯 ${c.name} · ${flag(c.team)} <span class="v">+${c.pts}</span>`));
-
-    // Aantallen als opvulling
-    items.push(`👤 <span class="v">${pitchData.profiles.length}</span> ${t('pitch_stat_spelers')}`);
-    items.push(`📋 <span class="v">${pitchData.tips.length}</span> ${t('pitch_stat_tips')}`);
+    renderLiveData();
   }
-  if(!items.length){
-    items.push(`⚽ NO RISK NO FUN`,`🏆 WK POOL 2026`,`🍌 ${t('pitch_streak_label')}`);
+
+  // Bouw lookup-Maps zodat scoring O(1) lookups doet i.p.v. herhaalde .find/.filter.
+  function index(matches, profiles, tips) {
+    const tipsByUser = new Map();  // userId  → Map(matchId → tip)
+    const tipsByMatch = new Map(); // matchId → tip[]
+    for (const tip of tips) {
+      if (!tipsByUser.has(tip.user_id)) tipsByUser.set(tip.user_id, new Map());
+      tipsByUser.get(tip.user_id).set(tip.match_id, tip);
+      if (!tipsByMatch.has(tip.match_id)) tipsByMatch.set(tip.match_id, []);
+      tipsByMatch.get(tip.match_id).push(tip);
+    }
+    return { matches, profiles, tips, tipsByUser, tipsByMatch };
   }
-  delete items._candidates;
-  const html=items.map(i=>`<span class="pitch-ticker-item">${i}</span>`).join('');
-  el.innerHTML=html+html; // dubbel voor naadloze loop
-}
 
-function renderPitchStats(){
-  const elS=document.getElementById('pitch-stat-spelers');
-  const elT=document.getElementById('pitch-stat-tips');
-  const elK=document.getElementById('pitch-stat-streak');
-  if(!elS)return;
-  if(!pitchData){elS.textContent=elT.textContent=elK.textContent='–';return;}
-  elS.textContent=pitchData.profiles.length;
-  elT.textContent=pitchData.tips.length;
-  let longest=0;pitchData.profiles.forEach(p=>{longest=Math.max(longest,p.longest_streak||0,p.current_streak||0);});
-  elK.textContent=longest;
-}
+  // ── afgeleide statistieken ──
+  // Totaalscore van een speler over alle gespeelde wedstrijden.
+  function scoreFor(userId, matchFilter = m => !!m.result) {
+    let pts = 0;
+    for (const m of data.matches) {
+      if (!matchFilter(m)) continue;
+      const tip = userTip(userId, m.id);
+      if (tip && tip.tip === m.result) pts += calcPts(oddsForSide(m, m.result));
+    }
+    return pts;
+  }
+  // Best scorende correcte tip van een speler (hoogste punten).
+  function bestTipFor(userId) {
+    let best = null;
+    for (const m of data.matches) {
+      if (!m.result) continue;
+      const tip = userTip(userId, m.id);
+      if (!tip || tip.tip !== m.result) continue;
+      const pts = calcPts(oddsForSide(m, m.result));
+      if (!best || pts > best.pts) best = { match: m, side: tip.tip, pts };
+    }
+    return best;
+  }
+  // Spelers met score, hoog → laag.
+  const standings = () => data.profiles
+    .map(p => ({ profile: p, pts: scoreFor(p.id) }))
+    .sort((a, b) => b.pts - a.pts);
+  // Spelers met een actieve streak, hoog → laag.
+  const activeStreaks = () => data.profiles
+    .filter(p => (p.current_streak || 0) >= 1)
+    .sort((a, b) => (b.current_streak || 0) - (a.current_streak || 0));
+  // Open (nog niet gespeelde) tips, gewaagdste eerst (lage kans = veel punten).
+  function daringOpenTips() {
+    const out = [];
+    for (const m of data.matches) {
+      if (m.result) continue;
+      for (const tip of data.tipsByMatch.get(m.id) || []) {
+        if (!tip.chosen_odds) continue;
+        out.push({ match: m, tip, side: tip.tip, pts: calcPts(tip.chosen_odds) });
+      }
+    }
+    return out.sort((a, b) => b.pts - a.pts);
+  }
+  // Hoogste score van vandaag (op basis van kalenderdag van kickoff).
+  function topScorerToday() {
+    const today = new Date().toDateString();
+    const todayIds = new Set(data.matches
+      .filter(m => m.result && m.kickoff && new Date(m.kickoff).toDateString() === today)
+      .map(m => m.id));
+    if (!todayIds.size) return null;
+    let best = null;
+    for (const p of data.profiles) {
+      const pts = scoreFor(p.id, m => m.result && todayIds.has(m.id));
+      if (pts > 0 && (!best || pts > best.pts)) best = { name: p.username, pts };
+    }
+    return best;
+  }
 
-function renderPitch(){
-  renderPitchStreaks();renderPitchFomo();renderPitchTicker();renderPitchStats();
-}
+  // ── render: streaks (statisch, uit de centrale STREAKS array) ──
+  function renderStreaks() {
+    const host = $('pitch-streak-list');
+    if (!host) return;
+    host.innerHTML = STREAKS.map(s => {
+      const color = s.n >= 12 ? 'var(--purple-light)' : s.n >= 6 ? 'var(--yellow)' : '#cccccc';
+      const bananas = '<img src="banana.gif" alt="">'.repeat(Math.floor(s.n / 2));
+      return `<div class="pitch-streak-row">`
+        + `<span class="pitch-streak-bananas">${bananas}</span>`
+        + `<span class="pitch-streak-title" style="color:${color}">${t('streak_title_' + s.n)}</span>`
+        + `<span class="pitch-streak-n" style="color:${color}">${t('rules_streak_threshold_label', { X: s.n })}</span>`
+        + `</div>`;
+    }).join('');
+  }
+
+  // ── render: FOMO (3 live regels, elk met label + herkenbaar zinnetje) ──
+  function renderFomo() {
+    const host = $('pitch-fomo');
+    if (!host) return;
+    const nm = s => `<span class="nm">${s}</span>`;  // spelersnaam (groen)
+    const v = s => `<span class="v">${s}</span>`;     // getal (geel)
+    const lines = [];
+    if (data) {
+      const leader = standings().find(s => s.pts > 0);
+      if (leader) {
+        const best = bestTipFor(leader.profile.id);
+        lines.push({ tag: t('pitch_fomo_leader_label'), body: t('pitch_fomo_leader', {
+          name: nm(leader.profile.username),
+          pts: v(leader.pts),
+          team: best ? teamChip(teamForSide(best.match, best.side)) : '—',
+        }) });
+      }
+      const streaker = activeStreaks()[0];
+      if (streaker) {
+        const info = getStreakInfo(streaker.current_streak);
+        lines.push({ tag: t('pitch_fomo_streak_label'), body: t('pitch_fomo_streak', {
+          name: nm(streaker.username),
+          n: v(streaker.current_streak),
+          title: info ? t('streak_title_' + info.n) : '',
+        }) });
+      }
+      const daring = daringOpenTips()[0];
+      if (daring) {
+        lines.push({ tag: t('pitch_fomo_daring_label'), body: t('pitch_fomo_daring', {
+          name: nm(profileName(daring.tip.user_id)),
+          team: teamChip(teamForSide(daring.match, daring.side)),
+          pts: v('+' + daring.pts),
+        }) });
+      }
+    }
+    host.innerHTML = lines.length
+      ? lines.map(l => `<div class="pitch-fomo-line"><span class="pitch-fomo-tag">${l.tag}</span><span class="pitch-fomo-body">${l.body}</span></div>`).join('')
+      : `<div class="pitch-fomo-line">${t('pitch_no_data')}</div>`;
+  }
+
+  // ── render: ticker (6-8 items, dubbel gerenderd voor naadloze loop) ──
+  function renderTicker() {
+    const host = $('pitch-ticker');
+    if (!host) return;
+    const items = [];
+    if (data) {
+      const totalPts = data.profiles.reduce((sum, p) => sum + scoreFor(p.id), 0);
+      if (totalPts > 0) items.push(`⚡ <span class="v">${totalPts}</span> PTS`);
+
+      const today = topScorerToday();
+      if (today) items.push(`🏆 ${today.name} <span class="v">${today.pts} PTS</span>`);
+
+      activeStreaks().slice(0, 3)
+        .forEach(p => items.push(`🍌 ${p.username} <span class="v">×${p.current_streak}</span>`));
+
+      daringOpenTips().slice(0, 2)
+        .forEach(d => items.push(`🎯 ${profileName(d.tip.user_id)} · ${flag(teamForSide(d.match, d.side))} <span class="v">+${d.pts}</span>`));
+
+      items.push(`👤 <span class="v">${data.profiles.length}</span> ${t('pitch_stat_spelers')}`);
+      items.push(`📋 <span class="v">${data.tips.length}</span> ${t('pitch_stat_tips')}`);
+    }
+    if (!items.length) items.push('⚽ NO RISK NO FUN', '🏆 WK POOL 2026', `🍌 ${t('pitch_streak_label')}`);
+    const html = items.map(i => `<span class="pitch-ticker-item">${i}</span>`).join('');
+    host.innerHTML = html + html; // dubbel → naadloze CSS-loop (translateX -50%)
+  }
+
+  // ── render: stats-balk ──
+  function renderStats() {
+    if (!$('pitch-stat-spelers')) return;
+    const longest = data
+      ? data.profiles.reduce((mx, p) => Math.max(mx, p.longest_streak || 0, p.current_streak || 0), 0)
+      : '–';
+    $('pitch-stat-spelers').textContent = data ? data.profiles.length : '–';
+    $('pitch-stat-tips').textContent = data ? data.tips.length : '–';
+    $('pitch-stat-streak').textContent = longest;
+  }
+
+  // ── publieke API ──
+  const renderLiveData = () => { renderFomo(); renderTicker(); renderStats(); };
+  const render = () => { renderStreaks(); renderLiveData(); }; // volledige her-render (bv. bij taalwissel)
+  return { load, render, renderStreaks };
+})();
 
 // ── BOOT ─────────────────────────────────────────────────────
 sb.auth.getSession().then(({data:{session}})=>{
@@ -2554,8 +2581,8 @@ sb.auth.getSession().then(({data:{session}})=>{
     handleUser(session.user);
   }else{
     translateStaticText();
-    renderPitchStreaks();
-    loadPitchData();
+    Pitch.renderStreaks(); // statische streaks direct tonen; live data volgt async
+    Pitch.load();
   }
 });
 updateLangSwitcher();

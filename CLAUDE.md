@@ -382,14 +382,16 @@ Boven het inlogformulier staat een pitch-sectie, alleen zichtbaar voor niet-inge
 
 **Volgorde (boven → onder):** HERO → FOMO → STREAKS → COMPLOT → TICKER → STATS-balk → divider → bestaand inlogformulier (ongewijzigd).
 
-**Live data:** anonieme Supabase queries via `loadPitchData()` (matches/profiles/tips, public read — geen auth nodig). Resultaat in globale `pitchData`. Render-functies:
-- `renderPitchStreaks()` — statische lijst uit de centrale `STREAKS` array (18×18px banaan-icoontjes = `n/2`, badgekleur: <6 zilver, 6-10 goud `--yellow`, ≥12 paars `--purple-light`)
-- `renderPitchFomo()` — top-scorer + beste tip, langste huidige streak, meest gewaagde open tip
-- `renderPitchTicker()` — 6-8 items, dubbel gerenderd (`html+html`) voor naadloze CSS-loop (`@keyframes pitchticker`, translateX -50%)
-- `renderPitchStats()` — spelers/tips count, langste streak (max over alle profielen), duels statisch 64
-- `renderPitch()` — roept alle vier aan; gebruikt door `changeLanguage()` als niet ingelogd
+**Architectuur:** alle pitch-logica zit in één zelfstandige module `const Pitch = (() => { ... })()` (IIFE) onderaan het script — geen globals behalve `Pitch` zelf. Bij het laden worden matches/profiles/tips éénmalig anoniem (public read, geen auth) opgehaald en geïndexeerd in Maps (`tipsByUser`, `tipsByMatch`) zodat scoring O(1) lookups doet i.p.v. herhaalde `.find/.filter`.
 
-**Boot:** als geen sessie → `translateStaticText()` + `renderPitchStreaks()` + `loadPitchData()`.
+**Publieke API (`Pitch.*`):**
+- `Pitch.load()` — async: haalt data op, indexeert, rendert de live blokken (FOMO/ticker/stats). Faalt veilig terug op lege data.
+- `Pitch.renderStreaks()` — statische lijst uit de centrale `STREAKS` array (18×18px banaan-icoontjes = `n/2`, badgekleur: <6 zilver, 6-10 goud `--yellow`, ≥12 paars `--purple-light`)
+- `Pitch.render()` — volledige her-render (streaks + live data); gebruikt door `changeLanguage()` als niet ingelogd
+
+**Interne afgeleide stats (privé):** `scoreFor(userId, filter?)`, `bestTipFor`, `standings`, `activeStreaks`, `daringOpenTips`, `topScorerToday`. FOMO = leider + beste tip, langste streak, gewaagdste open tip. Ticker = totaalpunten, dagtopscore, streaks, gewaagde tips, aantallen (6-8 items, dubbel gerenderd voor naadloze loop). Stats = spelers/tips count + langste streak; duels statisch 64.
+
+**Boot:** als geen sessie → `translateStaticText()` + `Pitch.renderStreaks()` (direct) + `Pitch.load()` (async).
 **i18n:** alle teksten via `pitch_*` keys in `languages.js` (NL/EN/DE). Live data is grotendeels taal-neutraal (namen/getallen/emoji) + herbruikte keys.
 **Taalvlaggetjes:** rechtsboven in de hero (`.pitch-langs`, ids `plang-nl/en/de`) zodat een niet-ingelogde bezoeker kan wisselen — de header-switcher zit achter de fixed overlay. Hergebruikt `changeLanguage()`; `updateLangSwitcher()` togglet ook de `plang-*` actieve staat.
 

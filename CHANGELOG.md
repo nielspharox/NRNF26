@@ -19,6 +19,21 @@ Dagelijkse voortgang van het project.
 - **Taalvlaggetjes in de pitch-hero** (🇳🇱/🇬🇧/🇩🇪, rechtsboven) — niet-ingelogde bezoeker kan nu zelf wisselen; de header-switcher zit achter de overlay. Hergebruikt `changeLanguage()` + `updateLangSwitcher()` (extra `plang-*` ids)
 - Getest op desktop + mobiel, alle drie de talen
 
+### Pitch-code geherstructureerd (robuuster & professioneler)
+- Alle losse `pitch*`/`renderPitch*` globals (11 stuks) samengevoegd in één zelfstandige module `const Pitch = (() => { ... })()` — alleen `Pitch` blijft globaal
+- Data wordt nu éénmalig geïndexeerd in Maps (`tipsByUser`, `tipsByMatch`) → scoring doet O(1) lookups i.p.v. herhaalde `.find/.filter` in geneste loops
+- Gedeelde helpers: `oddsForSide`, `teamForSide`, `teamChip`, `scoreFor(userId, filter?)`, `standings`, `activeStreaks`, `daringOpenTips`, `topScorerToday`
+- Lelijke `items._candidates`-hack op het array verwijderd; `try/catch` met `console.warn` bij faalde fetch
+- Publieke API: `Pitch.load()`, `Pitch.render()`, `Pitch.renderStreaks()` — gedrag identiek, geverifieerd in preview
+
+### FOMO-regels leesbaar gemaakt voor nieuwe bezoekers
+- Was cryptische data (`👑 sem 89 PTS · Turkije`) → nu een herkenbaar label + volzin per regel:
+  - 👑 KOPLOPER — "{naam} staat bovenaan met {pts} punten — dikste tip: {team}"
+  - 🍌 HEETSTE STREAK — "{naam} heeft {n} goede tips op rij · {titel}"
+  - 🎯 GROOTSTE GOK — "{naam} gokt op {team} — goed voor {pts} punten als het lukt"
+- Nieuwe i18n-keys `pitch_fomo_leader/streak/daring(_label)` in NL/EN/DE
+- Layout: pixel-label (7px) boven, VT-zin (20px) eronder; naam groen, getal geel, vlag inline
+
 ---
 
 ## Woensdag 21 mei 2026
