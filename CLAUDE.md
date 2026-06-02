@@ -360,7 +360,8 @@ Stats zijn klikbaar op homepagina → `openStatsModal('waaghals'/'streaks'/'odds
 
 Bron van waarheid voor de échte WK-data; **odds blijven van the-odds-api** (football-data heeft geen odds, en geen friendlies).
 
-- **Module:** `const FD = (()=>{…})()` (IIFE, stijl zoals `Pitch`). Key in `settings` (`key='fd_api_key'`), header `X-Auth-Token`. CORS is toegestaan → client-side. Free tier: 10 calls/min (rate-guard in `FD`), WK = competitie `WC`.
+- **Module:** `const FD = (()=>{…})()` (IIFE, stijl zoals `Pitch`). Key in `settings` (`key='fd_api_key'`). Free tier: 10 calls/min (rate-guard in `FD`), WK = competitie `WC`.
+- **CORS / proxy:** football-data staat browser-CORS **alleen toe vanaf `http://localhost`**, dus vanaf GitHub Pages kan de client niet rechtstreeks bellen. `FD.api()` gaat daarom via de Supabase Edge Function **`fd-proxy`** (`supabase/functions/fd-proxy/index.ts`), aangeroepen met `sb.functions.invoke('fd-proxy',{body:{path}})`. De functie leest de key uit `settings` (of secret `FD_API_KEY`) en belt football-data server-side. Deploy: `supabase functions deploy fd-proxy` (of via Dashboard → Edge Functions).
 - **Mapping:** `NAME_ALIAS` (football-data naam → onze canonieke naam) + `STAGE_PHASE` (`GROUP_STAGE→group`, `LAST_32→r32`, … `FINAL→final`). `syncMatches()` matcht op **(fase + teampaar)** met onze rijen uit `setup_final.sql`, zodat `bracket_pos`/`match_number`/bracket-logica intact blijven. Raakt odds nooit aan.
 - **`FD.fullImport()`** (admin: 📥 WK VOLLEDIG IMPORTEREN): teams+crests (`teams`-tabel) + alle wedstrijden; loopt max 8 passes zodat KO-uitslagen via `updateBracket()` doorschuiven en de volgende ronde gematcht wordt.
 - **`FD.syncUpcoming()`** (🔄 SYNC KOMENDE): werkt kickoffs/teams bij.

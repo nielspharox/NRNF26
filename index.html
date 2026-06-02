@@ -2227,14 +2227,19 @@ const FD = (() => {
     }
     _calls.push(Date.now());
   }
+  // Belt football-data via de Supabase Edge Function 'fd-proxy' (football-data staat
+  // browser-CORS alleen toe vanaf http://localhost; serverside proxyen lost dat op + houdt de key serverside).
   async function api(path){
-    const key=await getKey();
-    if(!key)throw new Error('Geen football-data API key');
     await rateGuard();
-    const res=await fetch(BASE+path,{headers:{'X-Auth-Token':key}});
-    if(res.status===429){status('⏳ 429 — 7s wachten…','');await new Promise(r=>setTimeout(r,7000));return api(path);}
-    if(!res.ok)throw new Error('API '+res.status);
-    return res.json();
+    const {data,error}=await sb.functions.invoke('fd-proxy',{body:{path}});
+    if(error){
+      // Niet-2xx van de proxy. 429 = rate-limit → kort wachten en opnieuw.
+      const msg=(error.context&&error.context.status)?('proxy '+error.context.status):(error.message||String(error));
+      if(/429/.test(msg)){status('⏳ 429 — 7s wachten…','');await new Promise(r=>setTimeout(r,7000));return api(path);}
+      throw new Error(msg);
+    }
+    if(data&&data.error)throw new Error(data.error);
+    return data;
   }
 
   // Uitslag uit football-data score (KO = stand na 120 min; penalty-edgecases evt. handmatig in admin).
