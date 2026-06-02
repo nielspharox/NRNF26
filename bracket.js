@@ -136,6 +136,7 @@
         : '<span class="bkt-tbd">TBD</span>';
     }
     const short = (window.teamShort || {})[t] || t;
+    if (window.crestImg) return `${window.crestImg(t, 16)}&nbsp;${short}`;
     const f = window.flag ? window.flag(t) : '';
     return `${f ? f + '&nbsp;' : ''}${short}`;
   }

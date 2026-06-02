@@ -497,6 +497,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="sec-sub" data-i18n="tips_section_sub">Vergrendeld bij aftrap · Knockout na 120 min</div>
   <div class="phase-tabs">
     <button class="phase-tab active" onclick="filterPhase('all',this)" data-i18n="tips_filter_all">ALLES</button>
+    <button class="phase-tab" onclick="filterPhase('warmup',this)" data-i18n="tips_filter_warmup">🔥 WARM-UP</button>
     <button class="phase-tab" onclick="filterPhase('group',this)" data-i18n="tips_filter_group">GROEPSFASE</button>
     <button class="phase-tab" onclick="filterPhase('group1',this)" data-i18n="tips_filter_round1">RONDE 1</button>
     <button class="phase-tab" onclick="filterPhase('group2',this)" data-i18n="tips_filter_round2">RONDE 2</button>
@@ -709,6 +710,22 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     <div id="odds-status" style="margin-top:8px"></div>
     <div id="odds-error" style="margin-top:8px"></div>
   </div>
+
+  <div class="admin-panel">
+    <div class="admin-title">🌐 FOOTBALL-DATA.ORG (FIXTURES · UITSLAGEN · CRESTS)</div>
+    <div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:10px">
+      Gratis key op <a href="https://www.football-data.org/client/register" target="_blank" style="color:var(--green)">football-data.org</a> · dekt het WK (niet de oefeninterlands) · 10 calls/min · Key wordt opgeslagen
+    </div>
+    <div class="form-row"><label>API KEY (X-Auth-Token)</label><input type="text" id="fd-key" placeholder="Plak je football-data key..."></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-ghost btn-sm" onclick="FD.saveKey()">💾 KEY OPSLAAN</button>
+      <button class="btn btn-green btn-sm" onclick="FD.fullImport()">📥 WK VOLLEDIG IMPORTEREN</button>
+      <button class="btn btn-purple btn-sm" onclick="FD.syncUpcoming()">🔄 SYNC KOMENDE</button>
+      <button class="btn btn-purple btn-sm" onclick="FD.startLivePoll()">▶️ LIVE-POLL</button>
+      <button class="btn btn-ghost btn-sm" onclick="FD.stopLivePoll()">⏹ STOP</button>
+    </div>
+    <div id="fd-status" style="margin-top:8px"></div>
+  </div>
 </div>
 
 </main>
@@ -797,8 +814,20 @@ const FLAGS = {
   'Argentina':'🇦🇷','Algeria':'🇩🇿','Austria':'🇦🇹','Jordan':'🇯🇴',
   'Portugal':'🇵🇹','DR Congo':'🇨🇩','Uzbekistan':'🇺🇿','Colombia':'🇨🇴',
   'England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Croatia':'🇭🇷','Ghana':'🇬🇭','Panama':'🇵🇦',
+  // Warm-up tegenstanders (oefeninterlands, niet in football-data free tier)
+  'Denmark':'🇩🇰','Greece':'🇬🇷','Chile':'🇨🇱','Honduras':'🇭🇳','Aruba':'🇦🇼',
 };
 function flag(team){return FLAGS[team]||'🏳️';}
+
+// ── CRESTS (football-data.org) ────────────────────────────────
+// teamCrest wordt in loadAll() gevuld vanuit de teams-tabel (naam → crest_url).
+// crestImg toont het logo als we het hebben, anders de emoji-vlag (16-18px, typografie-standaard).
+let teamCrest={};
+function crestImg(team,size=22){
+  const url=teamCrest[team];
+  if(url)return`<img src="${url}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;vertical-align:middle;display:inline-block">`;
+  return`<span style="font-size:${Math.min(size,18)}px;line-height:1;vertical-align:middle">${flag(team)}</span>`;
+}
 
 const STREAKS = [
   {n:2,title:'EL JEFE',emoji:'🌵🤠'},
@@ -828,9 +857,9 @@ let viewingProfile=null;
 // ── HELPERS ──────────────────────────────────────────────────
 function calcPts(o){return Math.round(1000/Math.max(o,1))}
 function isLocked(m){return m.kickoff?new Date(m.kickoff)<=new Date():false}
-function getPhaseLabel(p){return{group:t('tips_phase_label_group'),r32:t('tips_phase_label_r32'),r16:t('tips_phase_label_r16'),qf:t('tips_phase_label_qf'),sf:t('tips_phase_label_sf'),third:t('tips_phase_label_third'),final:t('tips_phase_label_final')}[p]||p;}
+function getPhaseLabel(p){return{warmup:t('tips_phase_label_warmup'),group:t('tips_phase_label_group'),r32:t('tips_phase_label_r32'),r16:t('tips_phase_label_r16'),qf:t('tips_phase_label_qf'),sf:t('tips_phase_label_sf'),third:t('tips_phase_label_third'),final:t('tips_phase_label_final')}[p]||p;}
 const koPhases=['r32','r16','qf','sf','third','final'];
-const teamShort={'DR Congo':'DRC','Saudi Arabia':'SAU','Cape Verde':'CPV','Czech Republic':'CZE','New Zealand':'NZL','Ivory Coast':'CIV','South Korea':'KOR','South Africa':'RSA','El Salvador':'SAL','Costa Rica':'CRC'};
+const teamShort={'DR Congo':'DRC','Saudi Arabia':'SAU','Cape Verde':'CPV','Czech Republic':'CZE','New Zealand':'NZL','Ivory Coast':'CIV','South Korea':'KOR','South Africa':'RSA','El Salvador':'SAL','Costa Rica':'CRC','Northern Ireland':'NIR'};
 
 function getStreakInfo(n){
   let info=null;
@@ -996,20 +1025,24 @@ async function changeLanguage(lang){
 
 // ── LOAD ─────────────────────────────────────────────────────
 async function loadAll(){
-  const [mr,tr,pr,cgr,cmr]=await Promise.all([
+  const [mr,tr,pr,cgr,cmr,tmr]=await Promise.all([
     sb.from('matches').select('*').order('kickoff',{ascending:true}),
     sb.from('tips').select('*'),
     sb.from('profiles').select('*'),
     sb.from('complot_groups').select('*'),
     sb.from('complot_members').select('*'),
+    sb.from('teams').select('name,crest_url'),
   ]);
   matches=mr.data||[];allTips=tr.data||[];allProfiles=pr.data||[];
   complotGroups=cgr.data||[];complotMembers=cmr.data||[];
+  // Crests (football-data.org); tabel kan nog ontbreken → veilig leeg, valt terug op emoji-vlag.
+  teamCrest={};(tmr.data||[]).forEach(t=>{if(t.crest_url)teamCrest[t.name]=t.crest_url;});
   myTips={};
   allTips.filter(t=>t.user_id===currentUser.id).forEach(t=>{myTips[t.match_id]=t.tip;});
   pendingTips={...myTips};
   renderHome();renderTips();renderScoreboard();renderTournament();
   if(currentProfile?.is_admin)renderAdminResults();
+  if(typeof FD!=='undefined')FD.maybeAutoStart();
 }
 
 // ── TABS ─────────────────────────────────────────────────────
@@ -1018,7 +1051,7 @@ function showTab(id,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
   btn.classList.add('active');
-  if(id==='admin')loadOddsKey();
+  if(id==='admin'){loadOddsKey();FD.loadKey();}
   if(id==='tips'){
     const phase=getNextTipPhaseFilter();
     if(phase){
@@ -1548,25 +1581,25 @@ function renderTips(){
     const pickRow=res?`
       <div class="pick-row">
         <button class="${hBtnClass}" disabled>
-          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.home_team)}</span>${teamName(m.home_team)}
+          <span style="display:block;margin-bottom:4px">${crestImg(m.home_team,28)}</span>${teamName(m.home_team)}
           ${tip==='home'?`<span class="team-pts" style="font-size:9px;color:${res==='home'?'var(--green)':'var(--red)'}">${res==='home'?'+'+earnedPts:'X'}</span>`:''}
         </button>
         <div style="display:flex;align-items:center;justify-content:center;flex-direction:column;width:80px;text-align:center">${scoreDisplay}${drawTipLabel}</div>
         <button class="${aBtnClass}" disabled>
-          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.away_team)}</span>${teamName(m.away_team)}
+          <span style="display:block;margin-bottom:4px">${crestImg(m.away_team,28)}</span>${teamName(m.away_team)}
           ${tip==='away'?`<span class="team-pts" style="font-size:9px;color:${res==='away'?'var(--green)':'var(--red)'}">${res==='away'?'+'+earnedPts:'X'}</span>`:''}
         </button>
       </div>`:`
       <div class="pick-row">
         <button class="pick-btn ${tip==='home'?'sel-home':''}" onclick="pickTip(${m.id},'home',this)" ${locked?'disabled':''}>
-          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.home_team)}</span>${teamName(m.home_team)}<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>
+          <span style="display:block;margin-bottom:4px">${crestImg(m.home_team,28)}</span>${teamName(m.home_team)}<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>
         </button>
         <button class="pick-draw ${tip==='draw'?'sel-draw':''}" onclick="pickTip(${m.id},'draw',this)" ${locked?'disabled':''}>
           ${t('tips_match_draw')}<br><span style="font-size:6px">${m.draw_odds}%</span><br>
           <span style="font-family:var(--pixel);font-size:6px;color:var(--yellow)">${calcPts(m.draw_odds)}</span>
         </button>
         <button class="pick-btn ${tip==='away'?'sel-away':''}" onclick="pickTip(${m.id},'away',this)" ${locked?'disabled':''}>
-          <span style="font-size:22px;display:block;margin-bottom:4px">${flag(m.away_team)}</span>${teamName(m.away_team)}<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>
+          <span style="display:block;margin-bottom:4px">${crestImg(m.away_team,28)}</span>${teamName(m.away_team)}<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>
         </button>
       </div>`;
 
@@ -1681,6 +1714,9 @@ function filterStand(mode,btn){
 function getScore(userId,filter){
   let pts=0,correct=0,wrong=0;
   matches.forEach(m=>{
+    // Warm-up telt mee in het totaal ('all') als generale repetitie; valt buiten poule/knockout
+    // omdat phase 'warmup' geen 'group' is en niet in koPhases zit. Eigen 'warmup'-filter voor de mini-stand.
+    if(filter==='warmup'&&m.phase!=='warmup')return;
     if(filter==='group'&&m.phase!=='group')return;
     if(filter==='ko'&&!koPhases.includes(m.phase))return;
     const tip=allTips.find(t=>t.user_id===userId&&t.match_id===m.id);
@@ -1817,7 +1853,7 @@ function renderTournament(){
         <table class="group-table">
           <thead><tr><th style="text-align:left">${t('toernooi_table_col_team')}</th><th>${t('toernooi_table_col_g')}</th><th>${t('toernooi_table_col_w')}</th><th>${t('toernooi_table_col_d')}</th><th>${t('toernooi_table_col_v')}</th><th>${t('toernooi_table_col_gv')}</th><th>${t('toernooi_table_col_gt')}</th><th>${t('toernooi_table_col_diff')}</th><th>${t('toernooi_table_col_pts')}</th></tr></thead>
           <tbody>${standings.length?standings.map((s,i)=>`<tr style="${i<2?'color:var(--green)':i===2?'color:var(--yellow)':''}">
-            <td>${flag(s.name)} ${teamShort[s.name]||teamName(s.name)}</td>
+            <td>${crestImg(s.name,16)} ${teamShort[s.name]||teamName(s.name)}</td>
             <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
             <td>${s.gf}</td><td>${s.ga}</td><td>${s.gf-s.ga>=0?'+':''}${s.gf-s.ga}</td>
             <td style="font-weight:700">${s.pts}</td>
@@ -1840,7 +1876,7 @@ function renderTournament(){
           return`<div class="group-match" style="flex-direction:column;align-items:flex-start;gap:3px">
             ${timeStr}
             <div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">
-              <span style="font-family:var(--oswald);font-weight:700;font-size:17px">${flag(m.home_team)} ${teamName(m.home_team)} - ${teamName(m.away_team)} ${flag(m.away_team)}</span>${pill}
+              <span style="font-family:var(--oswald);font-weight:700;font-size:17px">${crestImg(m.home_team,18)} ${teamName(m.home_team)} - ${teamName(m.away_team)} ${crestImg(m.away_team,18)}</span>${pill}
             </div>
           </div>`;
         }).join('')}
@@ -1863,9 +1899,9 @@ function renderTournament(){
           const winner=r==='home'?teamName(m.home_team):r==='away'?teamName(m.away_team):r==='draw'?t('toernooi_ko_extended'):null;
           const timeStr=m.kickoff?`${nlDate(m.kickoff)} · ${nlTimeOnly(m.kickoff)}${m.venue?' · '+m.venue:''}`:m.venue||'';
           return`<div class="ko-match ${r?'has-result':''}">
-            <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${flag(m.home_team)} ${teamName(m.home_team)}</div>
+            <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${crestImg(m.home_team,20)} ${teamName(m.home_team)}</div>
             <div style="font-family:var(--pixel);font-size:9px;color:var(--white);margin:6px 0;opacity:0.6">VS</div>
-            <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${flag(m.away_team)} ${teamName(m.away_team)}</div>
+            <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${crestImg(m.away_team,20)} ${teamName(m.away_team)}</div>
             ${r?`<div style="margin-top:6px;font-family:var(--pixel);font-size:7px;color:var(--green)">▶ ${winner}${score}</div>`:`<div style="font-family:var(--vt);font-size:18px;color:var(--white);margin-top:6px;opacity:0.7">${t('toernooi_ko_not_played')}</div>`}
             ${timeStr?`<div style="font-family:var(--vt);font-size:18px;color:var(--white);margin-top:6px;opacity:0.8">${timeStr}</div>`:''}
           </div>`;
@@ -1982,7 +2018,7 @@ function renderAdminResults(){
   el.innerHTML=matches.map(m=>`
     <div class="box" style="margin-bottom:8px;padding:0.75rem 1rem">
       <div style="font-family:var(--oswald);font-weight:700;font-size:15px;margin-bottom:8px">
-        ${flag(m.home_team)} ${teamName(m.home_team)} vs ${flag(m.away_team)} ${teamName(m.away_team)}
+        ${crestImg(m.home_team,18)} ${teamName(m.home_team)} vs ${crestImg(m.away_team,18)} ${teamName(m.away_team)}
         ${m.kickoff?`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-left:8px">${nlDate(m.kickoff)} ${nlTimeOnly(m.kickoff)}</span>`:''}
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
@@ -2141,6 +2177,187 @@ async function fetchOddsApi(auto=false){
   }
 }
 
+// ── FOOTBALL-DATA.ORG SYNC ────────────────────────────────────
+// Bron van waarheid voor WK-fixtures, uitslagen, teams + crests. Odds blijven van the-odds-api.
+// Client-side (CORS staat football-data toe). Key in settings (key='fd_api_key').
+// Matcht football-data wedstrijden op (fase + teampaar) met onze rijen uit setup_final.sql,
+// zodat onze bracket_pos/match_number/bracket-logica intact blijft.
+const FD = (() => {
+  const BASE='https://api.football-data.org/v4', COMP='WC';
+  let _calls=[], _interval=null, _autoStarted=false, _busy=false;
+
+  // football-data teamnaam → onze canonieke naam (= FLAGS / matches.home_team)
+  const NAME_ALIAS={
+    'Côte d\'Ivoire':'Ivory Coast','Cote d\'Ivoire':'Ivory Coast','Korea Republic':'South Korea',
+    'IR Iran':'Iran','United States':'USA','Czechia':'Czech Republic','Curaçao':'Curacao',
+    'Türkiye':'Turkey','Cabo Verde':'Cape Verde','Congo DR':'DR Congo','Saudi Arabia':'Saudi Arabia',
+  };
+  const canon=n=>n?(NAME_ALIAS[n]||n):null;
+  // football-data stage → onze phase (LAST_32 = eerste KO bij 48-teams WK)
+  const STAGE_PHASE={GROUP_STAGE:'group',LAST_32:'r32',LAST_16:'r16',QUARTER_FINALS:'qf',SEMI_FINALS:'sf',THIRD_PLACE:'third',FINAL:'final'};
+
+  function status(msg,cls){const el=document.getElementById('fd-status');if(el)el.innerHTML=`<div class="${cls||'loading'}">${msg}</div>`;console.log('[FD]',msg);}
+
+  async function getKey(){
+    const el=document.getElementById('fd-key');
+    let k=el?el.value.trim():'';
+    if(!k){const {data}=await sb.from('settings').select('value').eq('key','fd_api_key').maybeSingle();k=data?.value||'';}
+    return k;
+  }
+  async function loadKey(){
+    const {data}=await sb.from('settings').select('value').eq('key','fd_api_key').maybeSingle();
+    if(data?.value){const el=document.getElementById('fd-key');if(el&&!el.value)el.value=data.value;}
+  }
+  async function saveKey(){
+    const k=await getKey();
+    if(!k){status('Vul een football-data key in.','err');return;}
+    await sb.from('settings').upsert({key:'fd_api_key',value:k,updated_at:new Date().toISOString()});
+    status('Key opgeslagen.','');
+  }
+
+  // Rate-limit guard: max 10 calls / 60s (free tier).
+  async function rateGuard(){
+    const now=Date.now();
+    _calls=_calls.filter(t=>now-t<60000);
+    if(_calls.length>=10){
+      const wait=60000-(now-_calls[0])+300;
+      status(`⏳ Rate-limit: ${Math.ceil(wait/1000)}s wachten…`,'');
+      await new Promise(r=>setTimeout(r,wait));
+      return rateGuard();
+    }
+    _calls.push(Date.now());
+  }
+  async function api(path){
+    const key=await getKey();
+    if(!key)throw new Error('Geen football-data API key');
+    await rateGuard();
+    const res=await fetch(BASE+path,{headers:{'X-Auth-Token':key}});
+    if(res.status===429){status('⏳ 429 — 7s wachten…','');await new Promise(r=>setTimeout(r,7000));return api(path);}
+    if(!res.ok)throw new Error('API '+res.status);
+    return res.json();
+  }
+
+  // Uitslag uit football-data score (KO = stand na 120 min; penalty-edgecases evt. handmatig in admin).
+  function resultOf(fm){
+    const ft=fm.score&&fm.score.fullTime;
+    if(!ft||ft.home==null||ft.away==null)return null;
+    return ft.home>ft.away?'home':ft.away>ft.home?'away':'draw';
+  }
+
+  async function importTeams(){
+    status('Teams + crests ophalen…','');
+    const data=await api(`/competitions/${COMP}/teams`);
+    const teams=(data.teams||[]).map(tm=>({name:canon(tm.name),fd_id:tm.id,crest_url:tm.crest||null,area_code:tm.area?.code||null,updated_at:new Date().toISOString()}));
+    if(teams.length){
+      const {error}=await sb.from('teams').upsert(teams,{onConflict:'name'});
+      if(error)throw new Error('teams upsert: '+error.message);
+    }
+    return teams.length;
+  }
+
+  // Werk onze wedstrijdrijen bij vanuit football-data data. Matcht op (fase + teampaar).
+  // Raakt odds NIET aan. Retourneert {newResults, updated}.
+  async function syncMatches(fmatches){
+    let newResults=0,updated=0;
+    for(const fm of fmatches){
+      const phase=STAGE_PHASE[fm.stage];if(!phase)continue;
+      const home=canon(fm.homeTeam&&fm.homeTeam.name), away=canon(fm.awayTeam&&fm.awayTeam.name);
+      if(!home||!away)continue; // KO-slot nog niet bekend → wacht op bracket-doorschuiving
+      const ours=matches.find(m=>m.phase===phase&&m.home_team===home&&m.away_team===away);
+      if(!ours)continue;
+      const upd={};
+      if(fm.utcDate&&(!ours.kickoff||Math.abs(new Date(fm.utcDate)-new Date(ours.kickoff))>60000))upd.kickoff=fm.utcDate;
+      if(fm.venue&&fm.venue!==ours.venue)upd.venue=fm.venue;
+      const r=resultOf(fm);
+      if(fm.status==='FINISHED'&&r){
+        const hs=fm.score.fullTime.home, as=fm.score.fullTime.away;
+        if(ours.result!==r||ours.home_score!==hs||ours.away_score!==as){
+          upd.result=r;upd.home_score=hs;upd.away_score=as;
+          if(ours.result!==r)newResults++;
+        }
+      }
+      if(Object.keys(upd).length){
+        const {error}=await sb.from('matches').update(upd).eq('id',ours.id);
+        if(!error){updated++;Object.assign(ours,upd);} // lokale cache bijwerken zodat de cascade-loop het ziet
+      }
+    }
+    return {newResults,updated};
+  }
+
+  // Volledige import: teams+crests, daarna alle wedstrijden. Loopt door fases zodat KO-uitslagen
+  // doorschuiven via updateBracket() en de volgende ronde gematcht kan worden.
+  async function fullImport(){
+    if(_busy)return; _busy=true;
+    try{
+      const nT=await importTeams();
+      status('Wedstrijden ophalen…','');
+      const data=await api(`/competitions/${COMP}/matches`);
+      const fmatches=data.matches||[];
+      let totalNew=0,totalUpd=0;
+      for(let pass=0;pass<8;pass++){
+        const {newResults,updated}=await syncMatches(fmatches);
+        totalNew+=newResults;totalUpd+=updated;
+        if(typeof updateBracket==='function')await updateBracket();
+        await loadAll();
+        if(newResults===0)break; // geen nieuwe uitslagen meer → geen verdere doorschuiving
+      }
+      if(totalNew&&typeof updateStreaks==='function'){await updateStreaks();await updateDayWins();await loadAll();}
+      status(`✔ Import klaar — ${nT} teams, ${totalUpd} wedstrijden bijgewerkt, ${totalNew} uitslagen.`,'');
+    }catch(e){status('Fout: '+e.message,'err');}
+    finally{_busy=false;}
+  }
+
+  // Lichte sync: alle wedstrijden ophalen en bijwerken. recalc=true bij (mogelijke) nieuwe uitslagen.
+  async function syncAll(recalc){
+    if(_busy)return {newResults:0,updated:0}; _busy=true;
+    try{
+      const data=await api(`/competitions/${COMP}/matches`);
+      const r=await syncMatches(data.matches||[]);
+      if(r.newResults&&typeof updateBracket==='function')await updateBracket();
+      await loadAll();
+      if(recalc&&r.newResults&&typeof updateStreaks==='function'){await updateStreaks();await updateDayWins();await loadAll();}
+      return r;
+    }finally{_busy=false;}
+  }
+  async function syncUpcoming(){
+    try{const r=await syncAll(false);status(`✔ Komende wedstrijden bijgewerkt (${r.updated}).`,'');}
+    catch(e){status('Fout: '+e.message,'err');}
+  }
+
+  function hasLiveMatch(){
+    const now=Date.now();
+    return matches.some(m=>{
+      if(m.phase==='warmup'||m.result||!m.kickoff)return false;
+      const k=new Date(m.kickoff).getTime();
+      return k<=now&&(now-k)<3*3600*1000; // afgetrapt, binnen 3 uur, nog geen uitslag
+    });
+  }
+  async function pollTick(){
+    if(_busy||!currentProfile?.is_admin)return;
+    if(!hasLiveMatch())return;
+    try{const r=await syncAll(true);if(r.newResults)console.log('[FD] live: '+r.newResults+' nieuwe uitslag(en)');}
+    catch(e){console.warn('[FD] live poll fout:',e.message);}
+  }
+  function startLivePoll(){
+    if(_interval)return;
+    _interval=setInterval(pollTick,60000);
+    status('▶️ Live-poll actief (elke 60s tijdens wedstrijden).','');
+    pollTick();
+  }
+  function stopLivePoll(){if(_interval){clearInterval(_interval);_interval=null;}status('⏹ Live-poll gestopt.','');}
+
+  // Start de live-poll automatisch (alleen admin, alleen als er een key is). Eén keer per sessie.
+  async function maybeAutoStart(){
+    if(_autoStarted||!currentProfile?.is_admin)return;
+    const key=await getKey();
+    if(!key)return;
+    _autoStarted=true;
+    if(!_interval)_interval=setInterval(pollTick,60000);
+  }
+
+  return {fullImport,syncUpcoming,startLivePoll,stopLivePoll,saveKey,loadKey,maybeAutoStart};
+})();
+
 
 // ── PROFILE MODAL ────────────────────────────────────────────
 // ── HEAD-TO-HEAD ─────────────────────────────────────────────
@@ -2216,11 +2433,11 @@ function renderH2H(){
     const t2=p2?allTips.find(t=>t.user_id===p2.id&&t.match_id===m.id):null;
     const s2=t2?t2.tip:'draw';
     const score=m.home_score!=null?`${m.home_score}-${m.away_score}`:'';
-    const mid=`${flag(m.home_team)} ${teamName(m.home_team)}`
+    const mid=`${crestImg(m.home_team,18)} ${teamName(m.home_team)}`
       +(score
         ?` <span style="font-family:var(--pixel);font-size:10px;color:var(--yellow);vertical-align:middle">${score}</span> `
         :`<span style="color:var(--muted);font-family:var(--vt);font-size:22px"> — </span>`)
-      +`${teamName(m.away_team)} ${flag(m.away_team)}`;
+      +`${teamName(m.away_team)} ${crestImg(m.away_team,18)}`;
     return`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">`
       +`<div style="flex:0 0 120px;text-align:left">${tipBadge(s1,m,'left')}</div>`
       +`<div style="flex:1;text-align:center;font-family:var(--vt);font-size:22px;line-height:1.4;padding:0 6px">${mid}</div>`

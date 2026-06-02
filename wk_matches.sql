@@ -1,142 +1,25 @@
 -- ============================================================
--- NO RISK NO FUN 2026 — COMPLETE DATABASE SETUP
--- Dit is het enige bestand dat je nodig hebt.
--- Voer eerst uit:
---   delete from public.tips;
---   delete from public.matches;
--- Dan dit hele bestand in één keer runnen.
+-- NO RISK NO FUN 2026 — WK 2026 WEDSTRIJDEN (104 stuks)
+-- ------------------------------------------------------------
+-- Zet de échte WK-wedstrijden er alvast in, NAAST de warm-up
+-- (die blijft staan). WK en warm-up zijn gescheiden via `phase`:
+-- warm-up = 'warmup', WK = 'group'/'r32'/'r16'/'qf'/'sf'/'third'/'final'.
+--
+-- WK-wedstrijden hebben (nog) geen uitslag → tellen niet mee in de
+-- test-totalen. De football-data sync UPDATET deze rijen (teams,
+-- crests, kickoffs, uitslagen); hij maakt zelf geen wedstrijden aan.
+--
+-- Idempotent: ruimt eerst bestaande NIET-warmup wedstrijden + hun
+-- tips op, dan opnieuw invoeren. Warm-up + gebruikers blijven intact.
+-- bracket_slots staan los (worden door reset niet gewist).
+--
+-- ⚠️  ALLEEN VOOR SETUP/HERSTEL. Dit wist alle niet-warmup
+--     wedstrijden + hun tips — dus NIET draaien tijdens het echte
+--     WK (anders ben je ingevoerde uitslagen/tips kwijt).
 -- ============================================================
 
--- ── STAP 1: BESTAANDE TABELLEN UITBREIDEN ───────────────────
-
-alter table public.profiles
-  add column if not exists avatar_url text default null,
-  add column if not exists current_streak integer default 0,
-  add column if not exists longest_streak integer default 0;
-
-alter table public.matches
-  add column if not exists round integer default 1,
-  add column if not exists home_score integer default null,
-  add column if not exists away_score integer default null,
-  add column if not exists bracket_pos integer default null,
-  add column if not exists venue text default null,
-  add column if not exists match_number integer default null;
-
-alter table public.tips
-  add column if not exists chosen_odds numeric default null,
-  add column if not exists max_odds numeric default null;
-
--- ── STAP 2: BRACKET SLOTS TABEL ─────────────────────────────
-
-create table if not exists public.bracket_slots (
-  id serial primary key,
-  phase text not null,
-  slot integer not null,
-  home_from_phase text,
-  home_from_slot integer,
-  away_from_phase text,
-  away_from_slot integer,
-  home_label text,
-  away_label text,
-  unique(phase, slot)
-);
-
-alter table public.bracket_slots enable row level security;
-drop policy if exists "bracket_read" on public.bracket_slots;
-drop policy if exists "bracket_write" on public.bracket_slots;
-create policy "bracket_read" on public.bracket_slots for select using (true);
-create policy "bracket_write" on public.bracket_slots for all
-  using (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
-
--- ── STAP 2b: TEAMS TABEL (crests via football-data.org) ─────
-
-create table if not exists public.teams (
-  name       text primary key,
-  fd_id      integer,
-  crest_url  text,
-  area_code  text,
-  updated_at timestamptz default now()
-);
-
-alter table public.teams enable row level security;
-drop policy if exists "teams_read"  on public.teams;
-drop policy if exists "teams_write" on public.teams;
-create policy "teams_read" on public.teams for select using (true);
-create policy "teams_write" on public.teams for all
-  using      (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true))
-  with check (exists (select 1 from public.profiles where id = auth.uid() and is_admin = true));
-
--- ── STAP 3: COMPLOT GROUPS TABEL ────────────────────────────
-
-create table if not exists public.complot_groups (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  invite_code text unique not null default substring(md5(random()::text) from 1 for 8),
-  created_by uuid references public.profiles(id) on delete set null,
-  created_at timestamptz default now()
-);
-
-alter table public.complot_groups enable row level security;
-drop policy if exists "cg_read" on public.complot_groups;
-drop policy if exists "cg_insert" on public.complot_groups;
-drop policy if exists "cg_update" on public.complot_groups;
-drop policy if exists "cg_delete" on public.complot_groups;
-create policy "cg_read" on public.complot_groups for select using (true);
-create policy "cg_insert" on public.complot_groups for insert with check (auth.uid() = created_by);
-create policy "cg_update" on public.complot_groups for update
-  using (exists (select 1 from public.complot_members where group_id = id and user_id = auth.uid() and is_haantje = true));
-create policy "cg_delete" on public.complot_groups for delete
-  using (auth.uid() = created_by);
-
--- ── STAP 4: COMPLOT MEMBERS TABEL ───────────────────────────
--- (aangemaakt NA complot_groups zodat de foreign key werkt)
-
-create table if not exists public.complot_members (
-  id uuid default gen_random_uuid() primary key,
-  group_id uuid references public.complot_groups(id) on delete cascade,
-  user_id uuid references public.profiles(id) on delete cascade,
-  is_haantje boolean default false,
-  joined_at timestamptz default now(),
-  unique(group_id, user_id)
-);
-
-alter table public.complot_members enable row level security;
-drop policy if exists "cm_read" on public.complot_members;
-drop policy if exists "cm_insert" on public.complot_members;
-drop policy if exists "cm_update" on public.complot_members;
-drop policy if exists "cm_delete" on public.complot_members;
-create policy "cm_read" on public.complot_members for select using (true);
-create policy "cm_insert" on public.complot_members for insert
-  with check (
-    auth.uid() = user_id
-    or exists (
-      select 1 from public.complot_members cm2
-      where cm2.group_id = complot_members.group_id
-        and cm2.user_id = auth.uid()
-        and cm2.is_haantje = true
-    )
-  );
-create policy "cm_update" on public.complot_members for update
-  using (
-    exists (
-      select 1 from public.complot_members cm2
-      where cm2.group_id = complot_members.group_id
-        and cm2.user_id = auth.uid()
-        and cm2.is_haantje = true
-    )
-  );
-create policy "cm_delete" on public.complot_members for delete
-  using (
-    user_id = auth.uid()
-    or exists (
-      select 1 from public.complot_members cm2
-      where cm2.group_id = complot_members.group_id
-        and cm2.user_id = auth.uid()
-        and cm2.is_haantje = true
-    )
-  );
-
--- ── STAP 5: ALLE 104 WEDSTRIJDEN ────────────────────────────
+delete from public.tips where match_id in (select id from public.matches where phase <> 'warmup');
+delete from public.matches where phase <> 'warmup';
 
 -- GROEP A
 insert into public.matches (match_number, home_team, away_team, home_odds, draw_odds, away_odds, phase, group_name, round, kickoff, venue) values
@@ -295,63 +178,3 @@ insert into public.matches (match_number, home_team, away_team, home_odds, draw_
 -- FINALE
 insert into public.matches (match_number, home_team, away_team, home_odds, draw_odds, away_odds, phase, bracket_pos, kickoff, venue) values
 (104,'Winner SF-1','Winner SF-2',33,34,33,'final',1,'2026-07-19 21:00:00+00','New York/New Jersey');
-
--- ── STAP 6: BRACKET SLOTS ───────────────────────────────────
-
-delete from public.bracket_slots;
-
--- Ronde van 32
-insert into public.bracket_slots (phase, slot, home_label, away_label) values
-('r32',1,'2nd Group A','2nd Group B'),
-('r32',2,'1st Group E','Best 3rd A/B/C/D/F'),
-('r32',3,'1st Group F','2nd Group C'),
-('r32',4,'1st Group C','2nd Group F'),
-('r32',5,'1st Group I','Best 3rd C/D/F/G/H'),
-('r32',6,'2nd Group E','2nd Group I'),
-('r32',7,'1st Group A','Best 3rd C/E/F/H/I'),
-('r32',8,'1st Group L','Best 3rd E/H/I/J/K'),
-('r32',9,'1st Group D','Best 3rd B/E/F/I/J'),
-('r32',10,'1st Group G','Best 3rd A/E/H/I/J'),
-('r32',11,'2nd Group K','2nd Group L'),
-('r32',12,'1st Group H','2nd Group J'),
-('r32',13,'1st Group B','Best 3rd E/F/G/I/J'),
-('r32',14,'1st Group J','2nd Group H'),
-('r32',15,'1st Group K','Best 3rd D/E/I/J/L'),
-('r32',16,'2nd Group D','2nd Group G');
-
--- Ronde van 16
-insert into public.bracket_slots (phase, slot, home_from_phase, home_from_slot, away_from_phase, away_from_slot, home_label, away_label) values
-('r16',1,'r32',2,'r32',5,'Winner M74','Winner M77'),
-('r16',2,'r32',1,'r32',3,'Winner M73','Winner M75'),
-('r16',3,'r32',4,'r32',6,'Winner M76','Winner M78'),
-('r16',4,'r32',7,'r32',8,'Winner M79','Winner M80'),
-('r16',5,'r32',11,'r32',12,'Winner M83','Winner M84'),
-('r16',6,'r32',9,'r32',10,'Winner M81','Winner M82'),
-('r16',7,'r32',14,'r32',16,'Winner M86','Winner M88'),
-('r16',8,'r32',13,'r32',15,'Winner M85','Winner M87');
-
--- Kwartfinale
-insert into public.bracket_slots (phase, slot, home_from_phase, home_from_slot, away_from_phase, away_from_slot, home_label, away_label) values
-('qf',1,'r16',1,'r16',2,'Winner R16-1','Winner R16-2'),
-('qf',2,'r16',5,'r16',6,'Winner R16-5','Winner R16-6'),
-('qf',3,'r16',3,'r16',4,'Winner R16-3','Winner R16-4'),
-('qf',4,'r16',7,'r16',8,'Winner R16-7','Winner R16-8');
-
--- Halve finale
-insert into public.bracket_slots (phase, slot, home_from_phase, home_from_slot, away_from_phase, away_from_slot, home_label, away_label) values
-('sf',1,'qf',1,'qf',2,'Winner QF-1','Winner QF-2'),
-('sf',2,'qf',3,'qf',4,'Winner QF-3','Winner QF-4');
-
--- 3e plaats
-insert into public.bracket_slots (phase, slot, home_from_phase, home_from_slot, away_from_phase, away_from_slot, home_label, away_label) values
-('third',1,'sf',1,'sf',2,'Loser SF-1','Loser SF-2');
-
--- Finale
-insert into public.bracket_slots (phase, slot, home_from_phase, home_from_slot, away_from_phase, away_from_slot, home_label, away_label) values
-('final',1,'sf',1,'sf',2,'Winner SF-1','Winner SF-2');
-
--- ============================================================
--- KLAAR
--- Vergeet niet het avatars storage bucket aan te maken:
--- Storage → New bucket → naam: avatars → Public: AAN
--- ============================================================

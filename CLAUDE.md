@@ -141,7 +141,8 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 | `complot_groups` | id, name, invite_code, created_by |
 | `complot_members` | id, group_id, user_id, is_haantje |
 | `bracket_slots` | phase, slot, home_label, away_label, home_from_phase/slot, away_from_phase/slot |
-| `settings` | key, value (bijv. odds_api_key) |
+| `teams` | name (canonieke Engelse naam = join-key met matches.home/away_team), fd_id, crest_url, area_code |
+| `settings` | key, value (bijv. `odds_api_key`, `fd_api_key`) |
 
 **`day_wins`** (INT, default 0) — aantal keer dagwinnaar geweest. Bij gelijke dagstand krijgen alle gedeelde winnaars +1. Wordt volledig herberekend (reset naar 0, dan opnieuw optellen) via Supabase RPC `recalc_day_wins()` — nooit alleen ophogen, anders telt een speeldag dubbel bij het opnieuw opslaan van een uitslag.
 
@@ -149,7 +150,9 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 
 **`language`** (TEXT) — taalvoorkeur speler (`'nl'`/`'en'`/`'de'`), opgeslagen in `profiles`.
 
-**Fases:** `group`, `r32`, `r16`, `qf`, `sf`, `third`, `final`
+**Fases:** `warmup`, `group`, `r32`, `r16`, `qf`, `sf`, `third`, `final`
+
+**`warmup`** — aparte oefenronde (friendlies) als **generale repetitie**. Telt tijdens de testperiode gewoon mee voor totaal, streaks, dagwinsten, waaghals, oddsbeater en podium (zodat alle gamification getest wordt). Heeft een eigen WARM-UP filter in de TIPS-tab + "WARM-UP" fase-badge. Valt vanzelf buiten POULE MEISTER/KNOCK-OUT MEISTER want phase ≠ `group` en niet in `koPhases`. **"Telt niet mee voor het WK" = de reset vóór het WK**: draai `reset_voor_warmup.sql` opnieuw (wist matches+tips, zet streaks/dagwinsten op 0) en importeer daarna het WK schoon. Geen RPC-aanpassing nodig. `getScore(uid,'warmup')` geeft de warm-up-only score (handig om vóór de reset een testronde-winnaar te bepalen).
 **Speelrondes groep:** round 1, 2, 3
 
 ### RLS (Row Level Security) op `tips`
@@ -350,6 +353,20 @@ Stats zijn klikbaar op homepagina → `openStatsModal('waaghals'/'streaks'/'odds
 - Key opgeslagen in `settings` tabel (`key = 'odds_api_key'`)
 - Automatisch laden bij openen Admin tab via `loadOddsKey()`
 - Na laatste wedstrijd speelronde: automatisch odds voor volgende ronde via `autoFetchOddsIfRoundComplete()`
+
+---
+
+## FOOTBALL-DATA.ORG (FIXTURES · UITSLAGEN · CRESTS)
+
+Bron van waarheid voor de échte WK-data; **odds blijven van the-odds-api** (football-data heeft geen odds, en geen friendlies).
+
+- **Module:** `const FD = (()=>{…})()` (IIFE, stijl zoals `Pitch`). Key in `settings` (`key='fd_api_key'`), header `X-Auth-Token`. CORS is toegestaan → client-side. Free tier: 10 calls/min (rate-guard in `FD`), WK = competitie `WC`.
+- **Mapping:** `NAME_ALIAS` (football-data naam → onze canonieke naam) + `STAGE_PHASE` (`GROUP_STAGE→group`, `LAST_32→r32`, … `FINAL→final`). `syncMatches()` matcht op **(fase + teampaar)** met onze rijen uit `setup_final.sql`, zodat `bracket_pos`/`match_number`/bracket-logica intact blijven. Raakt odds nooit aan.
+- **`FD.fullImport()`** (admin: 📥 WK VOLLEDIG IMPORTEREN): teams+crests (`teams`-tabel) + alle wedstrijden; loopt max 8 passes zodat KO-uitslagen via `updateBracket()` doorschuiven en de volgende ronde gematcht wordt.
+- **`FD.syncUpcoming()`** (🔄 SYNC KOMENDE): werkt kickoffs/teams bij.
+- **`FD.startLivePoll()` / `stopLivePoll()`**: elke 60s, alleen als er een wedstrijd live is (`kickoff<=now`, <3u, geen uitslag); schrijft scores/result en draait dan `updateBracket`+`updateStreaks`+`updateDayWins`. `FD.maybeAutoStart()` (in `loadAll`, alleen admin + key) start de poller automatisch.
+- **Crests:** `teamCrest` (naam→crest_url) wordt in `loadAll()` uit de `teams`-tabel geladen; `crestImg(team,size)` toont het logo of valt terug op de emoji-vlag. Gebruikt in tip-kaarten, bracket (`bracket.js td()`), toernooi, admin-resultaten en H2H.
+- **Onbewaakte scheduling** (draaien zonder open tab): nog niet gebouwd — zou een Supabase Edge Function + pg_cron vereisen (zie stappenplan stap 7). Nu draait de poller alleen met een open admin-tab.
 
 ---
 
