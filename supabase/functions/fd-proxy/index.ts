@@ -9,9 +9,13 @@
 // admin via de UI opslaat. Optioneel kun je 'm ook als secret zetten:
 //   supabase secrets set FD_API_KEY=...
 //
-// Deploy (CLI):      supabase functions deploy fd-proxy
-//   of via Dashboard → Edge Functions → Create function → naam 'fd-proxy' → plak deze code → Deploy.
-// JWT-verificatie mag aan blijven (alleen ingelogde gebruikers kunnen bellen).
+// Deploy (CLI):      supabase functions deploy fd-proxy --no-verify-jwt
+//   of via Dashboard → Edge Functions → fd-proxy → Details → "Verify JWT" UIT zetten.
+//
+// ⚠️ JWT-verificatie MOET UIT. Met JWT aan blokkeert de Supabase-gateway de
+//    CORS-preflight (OPTIONS heeft geen token) met 401, nog vóór deze handler
+//    draait → "preflight ... does not have HTTP ok status". Het endpoint proxyt
+//    alleen read-only WK-data en de key blijft server-side, dus dit is veilig.
 // ============================================================
 
 const FD_BASE = "https://api.football-data.org/v4";
