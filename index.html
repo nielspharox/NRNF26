@@ -2184,6 +2184,9 @@ async function fetchOddsApi(auto=false){
 // zodat onze bracket_pos/match_number/bracket-logica intact blijft.
 const FD = (() => {
   const BASE='https://api.football-data.org/v4', COMP='WC';
+  // Slug van de gedeployde Supabase Edge Function (proxy). Dashboard genereert een
+  // willekeurige naam bij aanmaken; vandaar 'swift-function'. Pas dit aan als je 'm hernoemt.
+  const FN='swift-function';
   let _calls=[], _interval=null, _autoStarted=false, _busy=false;
 
   // football-data teamnaam → onze canonieke naam (= FLAGS / matches.home_team)
@@ -2231,7 +2234,7 @@ const FD = (() => {
   // browser-CORS alleen toe vanaf http://localhost; serverside proxyen lost dat op + houdt de key serverside).
   async function api(path){
     await rateGuard();
-    const {data,error}=await sb.functions.invoke('fd-proxy',{body:{path}});
+    const {data,error}=await sb.functions.invoke(FN,{body:{path}});
     if(error){
       // Niet-2xx van de proxy. 429 = rate-limit → kort wachten en opnieuw.
       const msg=(error.context&&error.context.status)?('proxy '+error.context.status):(error.message||String(error));
