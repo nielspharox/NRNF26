@@ -84,6 +84,9 @@
   text-align:center;line-height:1.2;
 }
 .bkt-tbd{color:var(--muted);font-family:var(--pixel);font-size:6px}
+.bkt-live{font-family:var(--vt);font-size:12px;color:#ff5a77;text-align:center;line-height:1.2;
+  white-space:nowrap;animation:bktlive 1.4s ease-in-out infinite}
+@keyframes bktlive{0%,100%{opacity:1}50%{opacity:.5}}
 `;
     document.head.appendChild(s);
   }
@@ -162,6 +165,7 @@
   function card(m, x, y, w, phase, isFinal, fallback) {
     const played = m && m.result;
     const win    = winTeam(m);
+    const live   = !played && window.isLive && window.isLive(m);
     const fb = fallback || ['', ''];
     const ht = td(m && m.home_team, fb[0]);
     const at = td(m && m.away_team, fb[1]);
@@ -170,12 +174,16 @@
     if (win) {
       const ws = (window.teamShort || {})[win] || win;
       bottom = `<div class="bkt-win">&#9658; ${ws}</div>`;
+    } else if (live) {
+      const mn = m.minute != null ? ' ' + m.minute + "'" : '';
+      bottom = `<div class="bkt-live">&#9679; ${m.live_home}-${m.live_away}${mn}</div>`;
     } else if (m && m.kickoff) {
       bottom = `<div class="bkt-date">${dateShort(m.kickoff)}</div>`;
     }
 
     const bc = isFinal && played ? 'var(--yellow)'
              : played            ? 'var(--green)'
+             : live              ? 'var(--red)'
              :                     'var(--border)';
 
     return `<div class="bkt-card${played ? ' bkt-played' : ''}"

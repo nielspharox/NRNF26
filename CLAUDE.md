@@ -146,7 +146,7 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 
 **`day_wins`** (INT, default 0) — aantal keer dagwinnaar geweest. Bij gelijke dagstand krijgen alle gedeelde winnaars +1. Wordt volledig herberekend (reset naar 0, dan opnieuw optellen) via Supabase RPC `recalc_day_wins()` — nooit alleen ophogen, anders telt een speeldag dubbel bij het opnieuw opslaan van een uitslag.
 
-**`matchday`** (INT) — speeldag-nummer op een wedstrijd. Gebruikt door: dagwinnaar-berekening (`recalc_day_wins()`) en waaghals-statistiek (`calcWaaghals()`). Valt terug op kalenderdag van `kickoff` als `matchday` null is. **Niet meer gebruikt voor streak-sortering** (streak sorteert puur op `kickoff`).
+**`matchday`** (INT) — speeldag-nummer op een wedstrijd. Gebruikt door: dagwinnaar-berekening (`recalc_day_wins()`), dagpodium (`renderPodium`/`getYesterdayPts` via `lastPlayedDayMatches()`/`dayKeyOf()`) en waaghals (`calcWaaghals()`). **WK-speeldagen zijn gegroepeerd op US/Pacific-datum** (UTC−7, geen DST-wissel in juni/juli) zodat één slate niet over 2 NL-dagen valt: SD1 = 11 juni … SD34 = finale. **Warm-up telt aflopend naar de WK-start**: laatste warm-up-dag = SD0, ervoor −1, enz. Nummering staat in **`set_matchdays.sql`** (118 updates, idempotent — run na `warmup_matches.sql` + `wk_matches.sql`). Runtime-fallback (`dayKeyOf`) gebruikt de kalenderdag van `kickoff` (Europe/Amsterdam) als `matchday` null is. **Niet gebruikt voor streak-sortering** (streak sorteert puur op `kickoff`).
 
 **`language`** (TEXT) — taalvoorkeur speler (`'nl'`/`'en'`/`'de'`), opgeslagen in `profiles`.
 
@@ -291,10 +291,11 @@ Elke chip: 62px breed, `display:inline-flex`, vlag (16px) + 3-letter code (pixel
 **Teamnaam afkortingen:**
 ```js
 const teamShort = {
-  'DR Congo':'DRC', 'Saudi Arabia':'SAU', 'Cape Verde':'CPV',
+  'Netherlands':'NED', 'DR Congo':'DRC', 'Saudi Arabia':'SAU', 'Cape Verde':'CPV',
   'Czech Republic':'CZE', 'New Zealand':'NZL', 'Ivory Coast':'CIV',
   'South Korea':'KOR', 'South Africa':'RSA', 'El Salvador':'SAL',
-  'Costa Rica':'CRC', 'Bosnia':'BOS', 'Iran':'IRA'
+  'Costa Rica':'CRC', 'Northern Ireland':'NIR',
+  'Australia':'AUS', 'Austria':'AUT', 'Iran':'IRN', 'Iraq':'IRQ'
 };
 ```
 
@@ -342,7 +343,7 @@ Stats zijn klikbaar op homepagina → `openStatsModal('waaghals'/'streaks'/'odds
 ## BRACKET LOGICA
 
 - Groepswinnaars + nummers 2 → automatisch R32 via `updateBracket()`
-- Beste nummers 3 → handmatig via `nummers3_invullen.sql`
+- **Beste nummers 3 → automatisch** via `FD.fillThirds()` (client) / `fillThirds()` (edge function): leest football-data's R32-opstelling en vult elk "Best 3rd …"-slot met de tegenstander van het al bekende anker-team. `nummers3_invullen.sql` is daardoor niet meer nodig (blijft als handmatige fallback bestaan). De cron haalt hiervoor ook op zodra de groepsfase klaar is en er nog R32-slots open staan.
 - Knockout winnaars → automatisch doorgeschoven na elke uitslag
 - `updateBracket()` herkent: `Winner M73`, `Winner R32-1`, `Loser SF-1` etc.
 
@@ -367,6 +368,7 @@ Bron van waarheid voor de échte WK-data; **odds blijven van the-odds-api** (foo
 - **`FD.syncUpcoming()`** (🔄 SYNC KOMENDE): werkt kickoffs/teams bij.
 - **`FD.startLivePoll()` / `stopLivePoll()`**: client-side fallback, elke 60s, alleen als er een wedstrijd live is (`kickoff<=now`, <3u, geen uitslag); schrijft scores/result en draait dan `updateBracket`+`updateStreaks`+`updateDayWins`. `FD.maybeAutoStart()` (in `loadAll`, alleen admin + key) start de poller automatisch — maar werkt alleen met open admin-tab.
 - **Crests:** `teamCrest` (naam→crest_url) wordt in `loadAll()` uit de `teams`-tabel geladen; `crestImg(team,size)` toont het logo of valt terug op de emoji-vlag. Gebruikt in tip-kaarten, bracket (`bracket.js td()`), toernooi, admin-resultaten en H2H.
+- **LIVE TUSSENSTAND:** kolommen `live_home`/`live_away`/`minute` op `matches` (`live_columns.sql`). De sync schrijft bij `IN_PLAY`/`PAUSED` de tussenstand weg **zonder `result`** te zetten; bij `FINISHED` wordt `result` gezet en worden de live-velden geleegd. Helpers `isLive(m)`/`liveSide(m)`/`liveMinuteLabel(m)`. Frontend toont `🔴 LIVE`-badge + score op: home **NU BEZIG-strip** (`renderLiveStrip`, boven de marquee), tip-kaarten, toernooi (groep + KO). **Voorlopige klassement-stand**: `getScore` geeft `livePts`/`liveCorrect` (tip vs huidige live-stand); `renderScoreboard` sorteert op `pts+livePts`, toont `+N` (`.live-prov`) en een "niet definitief"-banner (`live_stand_note`). **Client-refresh**: `FD.maybeAutoStart()` start voor álle ingelogde users een 60s-poller — admin synct (schrijft), niet-admins doen een read-only `loadAll()` zodat de live-weergave bijwerkt; draait alleen als er een wedstrijd live is.
 - **Onbewaakte live-sync (server-cron):** de edge function heeft naast de proxy een tweede modus `{mode:'sync'}` die volledig server-side draait: leest matches, checkt of er een WK-wedstrijd live is (anders stop, geen FD-call), haalt uitslagen op, schrijft scores/result, schuift de bracket door (geporte `updateBracket`/`calcGroupStandings` in de functie) en draait `recalc_streaks`/`recalc_day_wins`. **pg_cron** (`cron_fd_sync.sql`) roept dit elke minuut aan — werkt dus ook zonder open tab. Beveilig `mode:sync` evt. met secret `CRON_SECRET` (dan `{"mode":"sync","secret":"…"}` in de cron-body). De client-side poller blijft als fallback bestaan.
 
 ---
@@ -435,6 +437,8 @@ GitHub Pages deploy ~1 minuut. Hard refresh: `Cmd+Shift+R`.
 3. **Bonus/nerf systeem** — superkrachten via streaks, nog te brainstormen
 4. **Streak badge in profielmodal** — toont soms niet correct (cached data issue)
 5. **Auto-odds fetch finetunen** — edge cases afvangen
+
+> ✅ **Live tussenstand** — gebouwd. Zie de football-data sectie (LIVE TUSSENSTAND).
 
 > ✅ **Paul drempel → 8** (eerbetoon aan Paul de Octopus) — gedaan. Nieuwe volgorde: 2 EL JEFE · 4 THE CHOSEN ONE · 6 SITTING BULL · 8 PAUL · 10 THE DEEP STATE · 12 THE ORACLE · 14 PAUL WAS AN AMATEUR.
 

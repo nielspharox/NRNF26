@@ -138,6 +138,27 @@ async function updateBracket(M: any[]) {
   }
 }
 
+// Vult de "Best 3rd ..."-slots in R32 vanuit football-data's R32-opstelling (anker = bekend team).
+function isPlaceholderName(s: string) { return !s || /^(1st|2nd|3rd|Best)\s/i.test(s); }
+async function fillThirds(fmatches: any[], M: any[]) {
+  const fdR32 = fmatches.filter((f) => STAGE_PHASE[f.stage] === "r32" && f.homeTeam?.name && f.awayTeam?.name);
+  if (!fdR32.length) return 0;
+  let n = 0;
+  for (const m of M.filter((x) => x.phase === "r32")) {
+    const hP = isPlaceholderName(m.home_team), aP = isPlaceholderName(m.away_team);
+    if (hP === aP) continue;
+    const anchor = hP ? m.away_team : m.home_team;
+    const f = fdR32.find((x) => canon(x.homeTeam.name) === anchor || canon(x.awayTeam.name) === anchor);
+    if (!f) continue;
+    const opp = canon(f.homeTeam.name) === anchor ? canon(f.awayTeam.name) : canon(f.homeTeam.name);
+    if (!opp || opp === anchor) continue;
+    const upd = hP ? { home_team: opp } : { away_team: opp };
+    await dbPatch(`matches?id=eq.${m.id}`, upd);
+    Object.assign(m, upd); n++;
+  }
+  return n;
+}
+
 // ── Onbewaakte live-sync ──
 async function doSync() {
   const M = await dbGet("matches?select=*");
@@ -147,7 +168,10 @@ async function doSync() {
     const k = new Date(m.kickoff).getTime();
     return k <= now && (now - k) < 3 * 3600 * 1000; // afgetrapt, binnen 3u, geen uitslag
   });
-  if (!live) return { skipped: true, reason: "geen live WK-wedstrijd" };
+  // Ook ophalen als de groepsfase klaar is en er nog R32-slots (beste nrs 3) open staan.
+  const groupDone = M.some((m) => m.phase === "group") && M.filter((m) => m.phase === "group").every((m) => m.result);
+  const thirdsPending = groupDone && M.some((m) => m.phase === "r32" && (isPlaceholderName(m.home_team) || isPlaceholderName(m.away_team)));
+  if (!live && !thirdsPending) return { skipped: true, reason: "niets te doen" };
 
   const key = await getKey();
   if (!key) return { error: "geen fd_api_key" };
@@ -155,29 +179,50 @@ async function doSync() {
   if (!res.ok) return { error: "football-data " + res.status };
   const fmatches = (await res.json()).matches || [];
 
-  let newResults = 0;
+  let newResults = 0, liveUpdates = 0;
   for (const fm of fmatches) {
-    if (fm.status !== "FINISHED") continue;
     const phase = STAGE_PHASE[fm.stage]; if (!phase) continue;
     const home = canon(fm.homeTeam?.name), away = canon(fm.awayTeam?.name);
     if (!home || !away) continue;
-    const ft = fm.score?.fullTime; if (!ft || ft.home == null || ft.away == null) continue;
-    // Match op (fase + ongeordend teampaar); resultaat bepalen op teamnaam (volgorde-onafhankelijk).
+    // Match op (fase + ongeordend teampaar).
     const our = M.find((m) => m.phase === phase && ((m.home_team === home && m.away_team === away) || (m.home_team === away && m.away_team === home)));
     if (!our) continue;
-    const hs = our.home_team === home ? ft.home : ft.away;
-    const as = our.home_team === home ? ft.away : ft.home;
-    const result = hs > as ? "home" : as > hs ? "away" : "draw";
-    if (our.result !== result || our.home_score !== hs || our.away_score !== as) {
-      await dbPatch(`matches?id=eq.${our.id}`, { home_score: hs, away_score: as, result });
-      if (our.result !== result) newResults++;
-      our.home_score = hs; our.away_score = as; our.result = result;
+    const ft = fm.score?.fullTime;
+
+    // Live tussenstand (geen result zetten) bij IN_PLAY/PAUSED.
+    if (fm.status === "IN_PLAY" || fm.status === "PAUSED") {
+      if (our.result != null) continue; // al definitief
+      const lh = our.home_team === home ? (ft?.home ?? 0) : (ft?.away ?? 0);
+      const la = our.home_team === home ? (ft?.away ?? 0) : (ft?.home ?? 0);
+      const min = fm.minute ?? null;
+      if (our.live_home !== lh || our.live_away !== la || our.minute !== min) {
+        await dbPatch(`matches?id=eq.${our.id}`, { live_home: lh, live_away: la, minute: min });
+        our.live_home = lh; our.live_away = la; our.minute = min; liveUpdates++;
+      }
+      continue;
+    }
+
+    // Eindstand.
+    if (fm.status === "FINISHED") {
+      if (!ft || ft.home == null || ft.away == null) continue;
+      const hs = our.home_team === home ? ft.home : ft.away;
+      const as = our.home_team === home ? ft.away : ft.home;
+      const result = hs > as ? "home" : as > hs ? "away" : "draw";
+      // Resultaat bepalen op teamnaam (volgorde-onafhankelijk). Live-velden wissen.
+      if (our.result !== result || our.home_score !== hs || our.away_score !== as || our.live_home != null) {
+        await dbPatch(`matches?id=eq.${our.id}`, { home_score: hs, away_score: as, result, live_home: null, live_away: null, minute: null });
+        if (our.result !== result) newResults++;
+        our.home_score = hs; our.away_score = as; our.result = result; our.live_home = null; our.live_away = null; our.minute = null;
+      }
     }
   }
-  await updateBracket(M);
-  await rpc("recalc_streaks");
-  await rpc("recalc_day_wins");
-  return { ok: true, newResults };
+  if (newResults) {
+    await updateBracket(M);
+    await rpc("recalc_streaks");
+    await rpc("recalc_day_wins");
+  }
+  const thirds = await fillThirds(fmatches, M); // beste nummers 3 invullen vanuit FD R32-opstelling
+  return { ok: true, newResults, liveUpdates, thirds };
 }
 
 Deno.serve(async (req) => {

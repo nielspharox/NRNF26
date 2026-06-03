@@ -57,6 +57,12 @@ const TRANSLATIONS = {
     podium_stat_risk: "RISICO",
     podium_stat_day_wins: "DAGWINSTEN",
     podium_day_total: "dag totaal",
+    podium_marquee: "DAGWINNAARS",
+    podium_marquee_event: "WK 2026",
+    podium_marquee_warmup: "WARM-UP",
+    live_badge: "LIVE",
+    live_now: "NU BEZIG",
+    live_stand_note: "Voorlopige stand — wedstrijd bezig, nog niet definitief.",
 
     // STATS TICKERS
     stat_ticker_waaghals_label: "🎲 WAAGHALS VAN VANDAAG",
@@ -438,6 +444,12 @@ const TRANSLATIONS = {
     podium_stat_risk: "RISK",
     podium_stat_day_wins: "DAY WINS",
     podium_day_total: "day total",
+    podium_marquee: "DAY WINNERS",
+    podium_marquee_event: "WORLD CUP 2026",
+    podium_marquee_warmup: "WARM-UP",
+    live_badge: "LIVE",
+    live_now: "LIVE NOW",
+    live_stand_note: "Provisional standing — match in progress, not final yet.",
 
     // STATS TICKERS
     stat_ticker_waaghals_label: "🎲 RISK TAKER OF THE DAY",
@@ -819,6 +831,12 @@ const TRANSLATIONS = {
     podium_stat_risk: "RISIKO",
     podium_stat_day_wins: "TAGESSIEGE",
     podium_day_total: "Tagessumme",
+    podium_marquee: "TAGESSIEGER",
+    podium_marquee_event: "WM 2026",
+    podium_marquee_warmup: "WARM-UP",
+    live_badge: "LIVE",
+    live_now: "JETZT LIVE",
+    live_stand_note: "Vorläufiger Stand — Spiel läuft, noch nicht endgültig.",
 
     // STATS TICKERS
     stat_ticker_waaghals_label: "🎲 DRAUFGÄNGER DES TAGES",

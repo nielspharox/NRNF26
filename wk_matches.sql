@@ -9,6 +9,9 @@
 -- test-totalen. De football-data sync UPDATET deze rijen (teams,
 -- crests, kickoffs, uitslagen); hij maakt zelf geen wedstrijden aan.
 --
+-- ⚠️ Run hierna set_matchdays.sql — dat zet de speeldag-nummers (matchday):
+--    WK gegroepeerd op US/Pacific-datum (SD1 = 11 juni … SD34 = finale).
+--
 -- Idempotent: ruimt eerst bestaande NIET-warmup wedstrijden + hun
 -- tips op, dan opnieuw invoeren. Warm-up + gebruikers blijven intact.
 -- bracket_slots staan los (worden door reset niet gewist).

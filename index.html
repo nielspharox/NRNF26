@@ -475,13 +475,37 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <button class="tab" id="admin-tab" onclick="showTab('admin',this)" style="display:none" data-i18n="nav_admin">⚙ ADMIN</button>
 </nav>
 
+<div id="live-ticker" style="display:none"></div>
+
 <main id="main-content" style="display:none">
 
 <!-- HOME -->
+<style>
+.podium-marquee{
+  font-family:var(--pixel);font-size:11px;text-align:center;color:var(--yellow);
+  text-shadow:0 0 8px var(--yellow),3px 3px 0 #000;letter-spacing:.15em;
+  padding:14px 8px;border:2px solid var(--border);margin-bottom:18px;position:relative;background:var(--bg2);
+}
+.podium-marquee::before,.podium-marquee::after{content:'';position:absolute;left:0;right:0;height:4px;
+  background:repeating-linear-gradient(90deg,var(--purple) 0,var(--purple) 12px,var(--green) 12px,var(--green) 24px,var(--yellow) 24px,var(--yellow) 36px);}
+.podium-marquee::before{top:0;} .podium-marquee::after{bottom:0;}
+.live-badge{display:inline-block;font-family:var(--pixel);font-size:7px;color:#fff;background:var(--red);
+  padding:3px 6px;letter-spacing:.05em;vertical-align:middle;box-shadow:0 0 6px rgba(255,34,68,0.6);animation:livepulse 1.4s ease-in-out infinite;}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.5}}
+.live-prov{font-family:var(--pixel);font-size:9px;color:var(--yellow);text-shadow:0 0 4px rgba(255,230,0,0.5);}
+#live-ticker{background:rgba(255,34,68,0.12);border-bottom:2px solid var(--red);padding:6px 10px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;
+  font-family:var(--oswald);font-weight:700;font-size:14px;color:var(--white)}
+#live-ticker .lt-badge{font-family:var(--pixel);font-size:7px;color:#fff;background:var(--red);padding:3px 6px;animation:livepulse 1.4s ease-in-out infinite}
+#live-ticker .lt-item b{color:var(--yellow)}
+#live-ticker .lt-item i{font-style:normal;font-family:var(--pixel);font-size:7px;color:var(--muted);margin-left:2px}
+#live-ticker .lt-sep{color:var(--border)}
+</style>
 <div id="sec-home" class="section active">
   <div class="sec-title" data-i18n="home_section_title">▶ HOME</div>
 
-  <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:8px" data-i18n="home_label_podium">PODIUM GISTEREN</div>
+  <div id="live-strip"></div>
+  <div id="podium-marquee" class="podium-marquee" style="display:none"></div>
   <div id="podium-wrap"><div class="loading">Laden...</div></div>
 
   <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin:1.5rem 0 8px" data-i18n="home_label_stats">STATISTIEKEN</div>
@@ -522,6 +546,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     <button class="phase-tab" onclick="filterStand('group',this)" data-i18n="stand_filter_group">🏅 POULE MEISTER</button>
     <button class="phase-tab" onclick="filterStand('ko',this)" data-i18n="stand_filter_ko">⚡ KNOCK-OUT MEISTER</button>
   </div>
+  <div id="stand-live-note"></div>
   <div class="box" style="padding:0.5rem 1rem;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none">
       <table class="sb-table">
         <thead><tr><th>#</th><th></th><th data-i18n="stand_table_col_player">SPELER</th><th data-i18n="stand_table_col_recent_tips">RECENTE TIPS</th><th style="text-align:right" data-i18n="stand_table_col_pts">PTS</th></tr></thead>
@@ -819,6 +844,12 @@ const FLAGS = {
 };
 function flag(team){return FLAGS[team]||'🏳️';}
 
+// ── LIVE TUSSENSTAND ──────────────────────────────────────────
+// Een wedstrijd is "live" als er een tussenstand staat maar nog geen definitieve uitslag.
+function isLive(m){return m&&!m.result&&m.live_home!=null&&m.live_away!=null;}
+function liveSide(m){return m.live_home>m.live_away?'home':m.live_away>m.live_home?'away':'draw';}
+function liveMinuteLabel(m){return m.minute!=null?(m.minute+"'"):t('live_badge');}
+
 // ── CRESTS (football-data.org) ────────────────────────────────
 // teamCrest wordt in loadAll() gevuld vanuit de teams-tabel (naam → crest_url).
 // crestImg toont het logo als we het hebben, anders de emoji-vlag (16-18px, typografie-standaard).
@@ -859,7 +890,7 @@ function calcPts(o){return Math.round(1000/Math.max(o,1))}
 function isLocked(m){return m.kickoff?new Date(m.kickoff)<=new Date():false}
 function getPhaseLabel(p){return{warmup:t('tips_phase_label_warmup'),group:t('tips_phase_label_group'),r32:t('tips_phase_label_r32'),r16:t('tips_phase_label_r16'),qf:t('tips_phase_label_qf'),sf:t('tips_phase_label_sf'),third:t('tips_phase_label_third'),final:t('tips_phase_label_final')}[p]||p;}
 const koPhases=['r32','r16','qf','sf','third','final'];
-const teamShort={'DR Congo':'DRC','Saudi Arabia':'SAU','Cape Verde':'CPV','Czech Republic':'CZE','New Zealand':'NZL','Ivory Coast':'CIV','South Korea':'KOR','South Africa':'RSA','El Salvador':'SAL','Costa Rica':'CRC','Northern Ireland':'NIR'};
+const teamShort={'Netherlands':'NED','DR Congo':'DRC','Saudi Arabia':'SAU','Cape Verde':'CPV','Czech Republic':'CZE','New Zealand':'NZL','Ivory Coast':'CIV','South Korea':'KOR','South Africa':'RSA','El Salvador':'SAL','Costa Rica':'CRC','Northern Ireland':'NIR','Australia':'AUS','Austria':'AUT','Iran':'IRN','Iraq':'IRQ'};
 
 function getStreakInfo(n){
   let info=null;
@@ -1040,7 +1071,7 @@ async function loadAll(){
   myTips={};
   allTips.filter(t=>t.user_id===currentUser.id).forEach(t=>{myTips[t.match_id]=t.tip;});
   pendingTips={...myTips};
-  renderHome();renderTips();renderScoreboard();renderTournament();
+  renderHome();renderTips();renderScoreboard();renderTournament();renderLiveTicker();
   if(currentProfile?.is_admin)renderAdminResults();
   if(typeof FD!=='undefined')FD.maybeAutoStart();
 }
@@ -1084,17 +1115,68 @@ function getNextTipPhaseFilter(){
 
 // ── HOME ─────────────────────────────────────────────────────
 function renderHome(){
+  renderLiveStrip();
   renderPodium();
   renderGlobalStats();
   renderComplotHome();
 }
 
+// Header-ticker: lopende wedstrijden, zichtbaar op elke tab (alleen bij live).
+function renderLiveTicker(){
+  const el=document.getElementById('live-ticker');
+  if(!el)return;
+  const live=matches.filter(isLive).sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0));
+  if(!live.length){el.style.display='none';el.innerHTML='';return;}
+  const sh=tm=>teamShort[tm]||tm.slice(0,3).toUpperCase();
+  el.innerHTML=`<span class="lt-badge">🔴 ${t('live_badge')}</span>`+live.map(m=>
+    `<span class="lt-item">${flag(m.home_team)} ${sh(m.home_team)} <b>${m.live_home}-${m.live_away}</b> ${sh(m.away_team)} ${flag(m.away_team)}${m.minute!=null?` <i>${m.minute}'</i>`:''}</span>`
+  ).join('<span class="lt-sep">·</span>');
+  el.style.display='';
+}
+
+// "NU BEZIG"-strip: lopende wedstrijden met live tussenstand (niet definitief).
+function renderLiveStrip(){
+  const el=document.getElementById('live-strip');
+  if(!el)return;
+  const live=matches.filter(isLive).sort((a,b)=>new Date(a.kickoff||0)-new Date(b.kickoff||0));
+  if(!live.length){el.innerHTML='';return;}
+  el.innerHTML=`<div style="border:2px solid var(--red);background:rgba(255,34,68,0.08);padding:10px 12px;margin-bottom:14px">
+    <div style="font-family:var(--pixel);font-size:9px;color:var(--red);margin-bottom:8px;letter-spacing:.1em">🔴 ${t('live_now')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+    ${live.map(m=>`<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);padding:6px 10px">
+      <span style="display:flex;align-items:center;gap:5px;font-family:var(--oswald);font-weight:700;font-size:16px">${crestImg(m.home_team,20)} ${teamShort[m.home_team]||teamName(m.home_team)}</span>
+      <span style="font-family:var(--vt);font-size:24px;color:var(--white);line-height:1">${m.live_home} – ${m.live_away}</span>
+      <span style="display:flex;align-items:center;gap:5px;font-family:var(--oswald);font-weight:700;font-size:16px">${teamShort[m.away_team]||teamName(m.away_team)} ${crestImg(m.away_team,20)}</span>
+      <span class="live-badge">${liveMinuteLabel(m)}</span>
+    </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// Speeldag-sleutel: matchday indien gezet, anders kalenderdag (Europe/Amsterdam) van kickoff.
+// Zelfde fallback als recalc_day_wins() en de STAND-tab → dagpodium/waaghals werken óók voor
+// WK-wedstrijden zonder matchday (warm-up heeft 101-105, WK valt terug op de kalenderdag).
+function dayKeyOf(m){
+  if(m.matchday!=null)return 'md'+m.matchday;
+  if(m.kickoff)return 'd'+new Date(m.kickoff).toLocaleDateString('nl-NL',{timeZone:'Europe/Amsterdam'});
+  return null;
+}
+function lastPlayedDayMatches(){
+  const groups=new Map();
+  for(const m of matches){
+    if(!m.result)continue;
+    const k=dayKeyOf(m);if(!k)continue;
+    let g=groups.get(k);if(!g){g={matches:[],time:0};groups.set(k,g);}
+    g.matches.push(m);
+    if(m.kickoff)g.time=Math.max(g.time,new Date(m.kickoff).getTime());
+  }
+  const arr=[...groups.values()].sort((a,b)=>b.time-a.time);
+  return arr.length?arr[0].matches:[];
+}
 function getYesterdayPts(userId){
-  const playedMatchdays=[...new Set(matches.filter(m=>m.result&&m.matchday!=null).map(m=>m.matchday))].sort((a,b)=>b-a);
-  if(!playedMatchdays.length)return{pts:0,day:null};
-  const lastMatchday=playedMatchdays[0];
-  const dayMatches=matches.filter(m=>m.result&&m.matchday===lastMatchday);
-  return{pts:calcDayPts(userId,dayMatches),day:lastMatchday};
+  const dayMatches=lastPlayedDayMatches();
+  if(!dayMatches.length)return{pts:0,day:null};
+  return{pts:calcDayPts(userId,dayMatches),day:null};
 }
 function calcDayPts(userId,dayMatches){
   let pts=0;
@@ -1153,16 +1235,32 @@ function renderPodiumCard(player,rank,dayMatches){
 
 function renderPodium(){
   const el=document.getElementById("podium-wrap");
-  const playedMatchdays=[...new Set(matches.filter(m=>m.result&&m.matchday!=null).map(m=>m.matchday))].sort((a,b)=>b-a);
-  const lastMatchday=playedMatchdays[0]??null;
-  const dayMatches=lastMatchday!=null?matches.filter(m=>m.result&&m.matchday===lastMatchday):[];
+  const mq=document.getElementById("podium-marquee");
+  const dayMatches=lastPlayedDayMatches();
   const withPts=allProfiles.map(p=>{
     const {pts,day}=getYesterdayPts(p.id);
     return{...p,dayPts:pts,day};
   }).sort((a,b)=>b.dayPts-a.dayPts);
   if(!withPts.length||withPts[0].dayPts===0){
+    if(mq)mq.style.display='none';
     el.innerHTML=`<div style="font-family:var(--vt);font-size:22px;color:var(--muted);padding:1rem 0">${t('home_no_matches_yet')}</div>`;
     return;
+  }
+  // Marquee-header boven het podium: ★ DAGWINNAARS · <datum> · WK 2026/WARM-UP ★
+  if(mq){
+    const isWk=dayMatches.some(m=>m.matchday!=null&&m.matchday>=1);
+    const tz=isWk?'America/Los_Angeles':'Europe/Amsterdam'; // zelfde dag-definitie als de SD
+    const locMap={nl:'nl-NL',en:'en-GB',de:'de-DE'};
+    const loc=locMap[typeof getCurrentLanguage==='function'?getCurrentLanguage():'nl']||'nl-NL';
+    const latest=dayMatches.filter(m=>m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff))[0];
+    let dateLabel='';
+    if(latest){
+      const d=new Date(latest.kickoff);
+      dateLabel=d.toLocaleDateString(loc,{day:'numeric',timeZone:tz})+' '+d.toLocaleDateString(loc,{month:'long',timeZone:tz}).toUpperCase();
+    }
+    const evt=isWk?t('podium_marquee_event'):t('podium_marquee_warmup');
+    mq.innerHTML=`★ &nbsp;${t('podium_marquee')}${dateLabel?' · '+dateLabel:''} · ${evt}&nbsp; ★`;
+    mq.style.display='';
   }
   // Assign dense ranks: tied scores get the same rank
   let rank=1;
@@ -1207,9 +1305,7 @@ function calcAllStreaks(){
   })).filter(p=>p.current_streak>=1).sort((a,b)=>b.current_streak-a.current_streak);
 }
 function calcWaaghals(){
-  const playedMatchdays=[...new Set(matches.filter(m=>m.result&&m.matchday!=null).map(m=>m.matchday))].sort((a,b)=>b-a);
-  const lastMatchday=playedMatchdays[0];
-  const src=lastMatchday!=null?matches.filter(m=>m.result&&m.matchday===lastMatchday):matches.filter(m=>m.result);
+  const src=lastPlayedDayMatches();
   return allProfiles.map(p=>{
     let risk=0,cnt=0;
     src.forEach(m=>{
@@ -1612,6 +1708,7 @@ function renderTips(){
         ${locked?`<span class="locked-badge">${t('tips_match_locked')}</span>`:''}
         ${koPhases.includes(m.phase)?`<span style="color:var(--yellow);font-size:7px">${t('tips_match_after_120')}</span>`:''}
         ${res?`<span style="color:var(--green);font-size:9px;font-family:var(--pixel)">${t('tips_match_result_known')}</span>`:''}
+        ${isLive(m)?`<span class="live-badge">${liveMinuteLabel(m)} · ${m.live_home}-${m.live_away}</span>`:''}
       </div>
       ${pickRow}
       ${total>0?`<div class="tip-counts">
@@ -1712,7 +1809,7 @@ function filterStand(mode,btn){
 }
 
 function getScore(userId,filter){
-  let pts=0,correct=0,wrong=0;
+  let pts=0,correct=0,wrong=0,livePts=0,liveCorrect=0;
   matches.forEach(m=>{
     // Warm-up telt mee in het totaal ('all') als generale repetitie; valt buiten poule/knockout
     // omdat phase 'warmup' geen 'group' is en niet in koPhases zit. Eigen 'warmup'-filter voor de mini-stand.
@@ -1722,11 +1819,18 @@ function getScore(userId,filter){
     const tip=allTips.find(t=>t.user_id===userId&&t.match_id===m.id);
     if(!tip)return;
     const side=tip.tip;
-    if(!m.result)return;
+    if(!m.result){
+      // Voorlopige punten o.b.v. live tussenstand (niet definitief).
+      if(isLive(m)){
+        const ls=liveSide(m);
+        if(side===ls){const o=ls==='home'?m.home_odds:ls==='draw'?m.draw_odds:m.away_odds;livePts+=calcPts(o);liveCorrect++;}
+      }
+      return;
+    }
     if(side===m.result){const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;pts+=calcPts(o);correct++;}
     else{wrong++;}
   });
-  return{pts,correct,wrong};
+  return{pts,correct,wrong,livePts,liveCorrect};
 }
 
 function getAvgRisk(userId){
@@ -1737,7 +1841,11 @@ function getAvgRisk(userId){
 
 function renderScoreboard(){
   const filter=currentStandFilter==='total'?'all':currentStandFilter;
-  const ranked=allProfiles.map(p=>({...p,...getScore(p.id,filter),avgRisk:getAvgRisk(p.id)})).sort((a,b)=>b.pts-a.pts);
+  // Sorteer op voorlopig totaal (pts + live), met definitieve pts als tiebreak.
+  const ranked=allProfiles.map(p=>({...p,...getScore(p.id,filter),avgRisk:getAvgRisk(p.id)})).sort((a,b)=>((b.pts+b.livePts)-(a.pts+a.livePts))||(b.pts-a.pts));
+  const anyLive=ranked.some(p=>p.livePts>0)||matches.some(isLive);
+  const noteEl=document.getElementById('stand-live-note');
+  if(noteEl)noteEl.innerHTML=anyLive?`<div style="font-family:var(--vt);font-size:18px;color:var(--yellow);background:rgba(255,230,0,0.08);border:1px solid var(--yellow);padding:6px 10px;margin-bottom:10px">🔴 ${t('live_stand_note')}</div>`:'';
   const played=matches.filter(m=>m.result).length;
   document.getElementById('stats-row').innerHTML=`
     <div class="stat-box"><span class="stat-val">${allProfiles.length}</span><div class="stat-lbl">${t('stand_stat_players')}</div></div>
@@ -1811,7 +1919,7 @@ function renderScoreboard(){
         ${streakInfo?`<div style="margin:2px 0"><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:streakInfo.emoji,title:streakInfo.title,X:p.current_streak})}</span></div>`:''}
       </td>
       <td style="overflow:hidden">${tipsHtml}</td>
-      <td class="pts-cell" style="width:70px">${p.pts}</td>
+      <td class="pts-cell" style="width:70px">${p.pts}${p.livePts>0?`<span class="live-prov" title="${t('live_stand_note')}"> +${p.livePts}</span>`:''}</td>
     </tr>`;
   }).join('');
 }
@@ -1871,7 +1979,7 @@ function renderTournament(){
         ${gMatches.map(m=>{
           const r=m.result;
           const score=(m.home_score!==null&&m.away_score!==null)?` ${m.home_score}-${m.away_score}`:'';
-          const pill=r?`<span class="rp rp-${r}">${r==='home'?m.home_team.slice(0,3).toUpperCase():r==='away'?m.away_team.slice(0,3).toUpperCase():t('tips_abbrev_draw')}${score}</span>`:'<span style="color:var(--muted);font-size:16px">—</span>';
+          const pill=r?`<span class="rp rp-${r}">${r==='home'?m.home_team.slice(0,3).toUpperCase():r==='away'?m.away_team.slice(0,3).toUpperCase():t('tips_abbrev_draw')}${score}</span>`:(isLive(m)?`<span class="live-badge">${liveMinuteLabel(m)} ${m.live_home}-${m.live_away}</span>`:'<span style="color:var(--muted);font-size:16px">—</span>');
           const timeStr=m.kickoff?`<div style="font-family:var(--vt);font-size:17px;color:var(--muted)">${nlDate(m.kickoff)} · ${nlTimeOnly(m.kickoff)}</div>`:'';
           return`<div class="group-match" style="flex-direction:column;align-items:flex-start;gap:3px">
             ${timeStr}
@@ -1902,7 +2010,7 @@ function renderTournament(){
             <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${crestImg(m.home_team,20)} ${teamName(m.home_team)}</div>
             <div style="font-family:var(--pixel);font-size:9px;color:var(--white);margin:6px 0;opacity:0.6">VS</div>
             <div style="font-family:var(--oswald);font-weight:700;font-size:18px">${crestImg(m.away_team,20)} ${teamName(m.away_team)}</div>
-            ${r?`<div style="margin-top:6px;font-family:var(--pixel);font-size:7px;color:var(--green)">▶ ${winner}${score}</div>`:`<div style="font-family:var(--vt);font-size:18px;color:var(--white);margin-top:6px;opacity:0.7">${t('toernooi_ko_not_played')}</div>`}
+            ${r?`<div style="margin-top:6px;font-family:var(--pixel);font-size:7px;color:var(--green)">▶ ${winner}${score}</div>`:(isLive(m)?`<div style="margin-top:6px"><span class="live-badge">${liveMinuteLabel(m)} · ${m.live_home}-${m.live_away}</span></div>`:`<div style="font-family:var(--vt);font-size:18px;color:var(--white);margin-top:6px;opacity:0.7">${t('toernooi_ko_not_played')}</div>`)}
             ${timeStr?`<div style="font-family:var(--vt);font-size:18px;color:var(--white);margin-top:6px;opacity:0.8">${timeStr}</div>`:''}
           </div>`;
         }).join('')}
@@ -2021,6 +2129,13 @@ function renderAdminResults(){
         ${crestImg(m.home_team,18)} ${teamName(m.home_team)} vs ${crestImg(m.away_team,18)} ${teamName(m.away_team)}
         ${m.kickoff?`<span style="font-family:var(--pixel);font-size:6px;color:var(--muted);margin-left:8px">${nlDate(m.kickoff)} ${nlTimeOnly(m.kickoff)}</span>`:''}
       </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <span style="font-family:var(--pixel);font-size:6px;color:var(--muted);width:38px">ODDS %</span>
+        <input type="number" id="ho-${m.id}" value="${m.home_odds??''}" title="Thuis-kans %" placeholder="thuis" style="width:54px;padding:4px 6px;font-size:16px">
+        <input type="number" id="do-${m.id}" value="${m.draw_odds??''}" title="Gelijk-kans %" placeholder="gelijk" style="width:54px;padding:4px 6px;font-size:16px">
+        <input type="number" id="ao-${m.id}" value="${m.away_odds??''}" title="Uit-kans %" placeholder="uit" style="width:54px;padding:4px 6px;font-size:16px">
+        <button class="btn btn-sm btn-ghost" onclick="saveOdds(${m.id})">💾 ODDS</button>
+      </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">
         <input type="number" placeholder="Thuis" id="hs-${m.id}" value="${m.home_score??''}" style="width:60px;padding:4px 6px;font-size:16px">
         <span style="font-family:var(--pixel);font-size:8px;padding:6px 2px;color:var(--muted)">-</span>
@@ -2034,6 +2149,17 @@ function renderAdminResults(){
         ${m.result?`<button class="btn btn-sm btn-ghost" onclick="clearResult(${m.id})">✗</button>`:''}
       </div>
     </div>`).join('');
+}
+
+async function saveOdds(matchId){
+  const ho=parseFloat(document.getElementById('ho-'+matchId).value);
+  const dr=parseFloat(document.getElementById('do-'+matchId).value);
+  const aw=parseFloat(document.getElementById('ao-'+matchId).value);
+  if([ho,dr,aw].some(v=>isNaN(v)||v<=0)){showToast('Vul geldige odds (%) in — alle drie > 0.');return;}
+  const {error}=await sb.from('matches').update({home_odds:ho,draw_odds:dr,away_odds:aw}).eq('id',matchId);
+  if(error){showToast('Fout: '+error.message);return;}
+  showToast('Odds opgeslagen!');
+  await loadAll();
 }
 
 async function saveScore(matchId){
@@ -2293,6 +2419,29 @@ const FD = (() => {
     return {newResults,updated};
   }
 
+  // Vult de "Best 3rd ..."-slots in R32 automatisch vanuit football-data's R32-opstelling.
+  // Anker = het al bekende team (groepswinnaar/nr2); de tegenstander in diezelfde FD-wedstrijd
+  // is de nummer 3. Zo hoeft nummers3_invullen.sql niet meer handmatig. Retourneert # ingevuld.
+  function isPlaceholderName(s){return !s||/^(1st|2nd|3rd|Best)\s/i.test(s);}
+  async function fillThirds(fmatches){
+    const fdR32=fmatches.filter(f=>STAGE_PHASE[f.stage]==='r32'&&f.homeTeam&&f.homeTeam.name&&f.awayTeam&&f.awayTeam.name);
+    if(!fdR32.length)return 0;
+    let n=0;
+    for(const m of matches.filter(x=>x.phase==='r32')){
+      const hP=isPlaceholderName(m.home_team), aP=isPlaceholderName(m.away_team);
+      if(hP===aP)continue; // beide bekend of beide placeholder → geen anker
+      const anchor=hP?m.away_team:m.home_team;
+      const f=fdR32.find(x=>canon(x.homeTeam.name)===anchor||canon(x.awayTeam.name)===anchor);
+      if(!f)continue;
+      const opp=canon(f.homeTeam.name)===anchor?canon(f.awayTeam.name):canon(f.homeTeam.name);
+      if(!opp||opp===anchor)continue;
+      const upd=hP?{home_team:opp}:{away_team:opp};
+      const {error}=await sb.from('matches').update(upd).eq('id',m.id);
+      if(!error){Object.assign(m,upd);n++;}
+    }
+    return n;
+  }
+
   // Volledige import: teams+crests, daarna alle wedstrijden. Loopt door fases zodat KO-uitslagen
   // doorschuiven via updateBracket() en de volgende ronde gematcht kan worden.
   async function fullImport(){
@@ -2302,16 +2451,19 @@ const FD = (() => {
       status('Wedstrijden ophalen…','');
       const data=await api(`/competitions/${COMP}/matches`);
       const fmatches=data.matches||[];
-      let totalNew=0,totalUpd=0;
-      for(let pass=0;pass<8;pass++){
+      let totalNew=0,totalUpd=0,totalThirds=0;
+      for(let pass=0;pass<10;pass++){
         const {newResults,updated}=await syncMatches(fmatches);
         totalNew+=newResults;totalUpd+=updated;
         if(typeof updateBracket==='function')await updateBracket();
         await loadAll();
-        if(newResults===0)break; // geen nieuwe uitslagen meer → geen verdere doorschuiving
+        const filled=await fillThirds(fmatches); // beste nummers 3 invullen
+        totalThirds+=filled;
+        if(filled)await loadAll();
+        if(newResults===0&&filled===0&&pass>0)break; // niets meer te doen
       }
       if(totalNew&&typeof updateStreaks==='function'){await updateStreaks();await updateDayWins();await loadAll();}
-      status(`✔ Import klaar — ${nT} teams, ${totalUpd} wedstrijden bijgewerkt, ${totalNew} uitslagen.`,'');
+      status(`✔ Import klaar — ${nT} teams, ${totalUpd} wedstrijden bijgewerkt, ${totalNew} uitslagen, ${totalThirds} nrs 3 ingevuld.`,'');
     }catch(e){status('Fout: '+e.message,'err');}
     finally{_busy=false;}
   }
@@ -2321,9 +2473,12 @@ const FD = (() => {
     if(_busy)return {newResults:0,updated:0}; _busy=true;
     try{
       const data=await api(`/competitions/${COMP}/matches`);
-      const r=await syncMatches(data.matches||[]);
+      const fmatches=data.matches||[];
+      const r=await syncMatches(fmatches);
       if(r.newResults&&typeof updateBracket==='function')await updateBracket();
       await loadAll();
+      const filled=await fillThirds(fmatches); // beste nummers 3 invullen vanuit FD R32-opstelling
+      if(filled)await loadAll();
       if(recalc&&r.newResults&&typeof updateStreaks==='function'){await updateStreaks();await updateDayWins();await loadAll();}
       return r;
     }finally{_busy=false;}
@@ -2342,10 +2497,14 @@ const FD = (() => {
     });
   }
   async function pollTick(){
-    if(_busy||!currentProfile?.is_admin)return;
-    if(!hasLiveMatch())return;
-    try{const r=await syncAll(true);if(r.newResults)console.log('[FD] live: '+r.newResults+' nieuwe uitslag(en)');}
-    catch(e){console.warn('[FD] live poll fout:',e.message);}
+    if(_busy)return;
+    if(!hasLiveMatch()&&!matches.some(isLive))return; // alleen rond/ tijdens wedstrijden
+    if(currentProfile?.is_admin){
+      try{const r=await syncAll(true);if(r.newResults)console.log('[FD] live: '+r.newResults+' nieuwe uitslag(en)');}
+      catch(e){console.warn('[FD] live poll fout:',e.message);}
+    }else{
+      try{await loadAll();}catch(e){} // read-only refresh van de live-weergave voor niet-admins
+    }
   }
   function startLivePoll(){
     if(_interval)return;
@@ -2355,11 +2514,10 @@ const FD = (() => {
   }
   function stopLivePoll(){if(_interval){clearInterval(_interval);_interval=null;}status('⏹ Live-poll gestopt.','');}
 
-  // Start de live-poll automatisch (alleen admin, alleen als er een key is). Eén keer per sessie.
+  // Start de live-poll automatisch (alle ingelogde users; admin synct, anderen refreshen
+  // read-only). Eén keer per sessie; pollTick doet alleen iets als er een wedstrijd live is.
   async function maybeAutoStart(){
-    if(_autoStarted||!currentProfile?.is_admin)return;
-    const key=await getKey();
-    if(!key)return;
+    if(_autoStarted)return;
     _autoStarted=true;
     if(!_interval)_interval=setInterval(pollTick,60000);
   }
