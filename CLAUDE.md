@@ -135,7 +135,7 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 
 | Tabel | Inhoud |
 |-------|--------|
-| `profiles` | id, username, is_admin, avatar_url, current_streak, longest_streak, **day_wins**, language |
+| `profiles` | id, username, is_admin, avatar_url, current_streak, longest_streak, **day_wins**, language, **fav_complot** |
 | `matches` | id, match_number, home_team, away_team, home_odds, draw_odds, away_odds, phase, group_name, round, **matchday**, kickoff, venue, result, home_score, away_score, bracket_pos |
 | `tips` | id, user_id, match_id, tip (home/draw/away), chosen_odds, max_odds, points_scored |
 | `complot_groups` | id, name, invite_code, created_by |
@@ -285,6 +285,7 @@ Rechts: SF → QF → R16 → R32 (gespiegeld)
 ### Uitnodigen, accepteren, uitstappen
 - **Bestaande speler uitnodigen** → géén directe member-insert meer, maar een **pending rij in `complot_invites`** (`status='pending'`). Alleen een haantje mag uitnodigen (RLS `ci_insert`).
 - **Melding + accept/decline:** `loadAll()` laadt `myInvites` (mijn pending invites). `renderInvitePanel()` toont bovenaan HOME een paneel met **✅ Accepteren / ✕ Weigeren**; `updateInviteBadge()` zet een rood telbadge op de HOME-nav. `acceptInvite()` → self-insert in `complot_members` (RLS `cm_insert` staat `auth.uid()=user_id` toe) + invite `accepted`. `declineInvite()` → invite `declined`.
+- **Favoriet:** ster rechtsboven op de complot-kaart (`setFavComplot`) zet `profiles.fav_complot` (uuid). `renderComplotHome` sorteert die groep als eerste (en eerste tab). Toggle: nogmaals klikken zet 'm uit. Kolom via `fav_complot.sql` (+ in `setup_final.sql`).
 - **Uitstappen:** `leaveGroup(groupId)` (knop "🚪 Uitstappen" per groep) verwijdert je eigen membership (RLS `cm_delete` staat self-delete toe). Blokkeert als je de enige haantje bent terwijl er nog leden zijn.
 - **Niet-speler uitnodigen (marketing):** `shareInvite(groupId)` deelt de invite-link via de **native share-sheet** (mobiel → WhatsApp etc.) of valt terug op **WhatsApp Web** (`wa.me/?text=`). Knoppen: "📲 Deel via WhatsApp" in de haantje-acties, de beheer-modal en de invite-modal ("nog niet in het spel?"-blok), plus "🔗 Kopieer link" (`copyInviteFor`). Link = `Invite.html?code=<invite_code>` (hoofdletter-`I` voor GitHub Pages). `Invite.html` is de landing (leest `?code=`, login/registreer → auto-join) en is opgemaakt als pakkende uitnodiging (mascotte + pitch + og/preview).
 - **E-mail (optioneel, geparkeerd):** er is een `send-invite` edge function (Resend) + admin-veld voor `resend_api_key`/afzender, maar de standaard-flow gebruikt WhatsApp/link — e-mail is niet nodig en wordt niet aangeroepen tenzij je het zelf inschakelt.

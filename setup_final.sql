@@ -12,7 +12,8 @@
 alter table public.profiles
   add column if not exists avatar_url text default null,
   add column if not exists current_streak integer default 0,
-  add column if not exists longest_streak integer default 0;
+  add column if not exists longest_streak integer default 0,
+  add column if not exists fav_complot uuid default null;
 
 alter table public.matches
   add column if not exists round integer default 1,

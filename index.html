@@ -1509,6 +1509,9 @@ function closeStatsModal(){document.getElementById("stats-modal").classList.remo
 function renderComplotHome(){
   const el=document.getElementById('complot-home-wrap');
   const myGroups=complotGroups.filter(g=>complotMembers.some(m=>m.group_id===g.id&&m.user_id===currentUser.id));
+  // Favoriet complot eerst tonen.
+  const fav=currentProfile?.fav_complot;
+  myGroups.sort((a,b)=>(b.id===fav?1:0)-(a.id===fav?1:0));
 
   if(!myGroups.length){
     el.innerHTML=`<div class="box">
@@ -1581,8 +1584,10 @@ function renderComplotGroup(group){
       +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.pts}</div>`
       +`</div>`;
   }).join('');
-  let html=`<div class="complot-card">`
-    +`<div class="complot-name">🐓 ${group.name.toUpperCase()}</div>`
+  const isFav=currentProfile?.fav_complot===group.id;
+  let html=`<div class="complot-card" style="position:relative">`
+    +`<button onclick="setFavComplot('${group.id}')" title="${t('complot_fav_title')}" style="position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:24px;line-height:1;padding:2px;color:${isFav?'var(--yellow)':'var(--muted)'};text-shadow:${isFav?'0 0 8px var(--yellow)':'none'}">${isFav?'★':'☆'}</button>`
+    +`<div class="complot-name" style="padding-right:34px">🐓 ${group.name.toUpperCase()}</div>`
     +`<div style="font-family:var(--vt);font-size:16px;color:var(--muted);margin-bottom:10px">${t('complot_member_count',{X:members.length})}</div>`
     +`<div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-bottom:8px">${t('complot_label_ranking')}</div>`
     +rankedHtml;
@@ -1617,6 +1622,17 @@ async function leaveGroup(groupId){
 
 function copyInvite(url){
   navigator.clipboard.writeText(url).then(()=>showToast(t('invite_link_copied')));
+}
+// Favoriet complot (ster). Toggle: nogmaals klikken zet 'm uit.
+async function setFavComplot(groupId){
+  const cur=currentProfile?.fav_complot;
+  const next=cur===groupId?null:groupId;
+  const {error}=await sb.from('profiles').update({fav_complot:next}).eq('id',currentUser.id);
+  if(error){showToast('Fout: '+error.message);return;}
+  if(currentProfile)currentProfile.fav_complot=next;
+  const me=allProfiles.find(p=>p.id===currentUser.id); if(me)me.fav_complot=next;
+  showToast(next?t('complot_fav_set'):t('complot_fav_unset'));
+  renderComplotHome();
 }
 // Let op: hoofdletter-Invite.html zodat de link werkt op (case-sensitive) GitHub Pages.
 function inviteLink(group){
