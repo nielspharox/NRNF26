@@ -819,12 +819,18 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 <div id="invite-modal">
   <div class="invite-box">
     <div style="font-family:var(--pixel);font-size:9px;color:var(--green);margin-bottom:1rem">MAAK EEN SLAPER WAKKER 🐑</div>
-    <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px" data-i18n="invite_modal_label">Gebruikersnaam of e-mail:</div>
-    <input id="invite-username-input" type="text" placeholder="gebruikersnaam of e-mail…" style="width:100%;box-sizing:border-box;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:8px 10px;margin-bottom:8px" onkeypress="if(event.key==='Enter')confirmInvite()">
+    <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px" data-i18n="invite_modal_label">Gebruikersnaam van een speler:</div>
+    <input id="invite-username-input" type="text" placeholder="gebruikersnaam…" style="width:100%;box-sizing:border-box;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:8px 10px;margin-bottom:8px" onkeypress="if(event.key==='Enter')confirmInvite()">
     <div id="invite-error" style="font-family:var(--vt);font-size:20px;color:var(--red);margin-bottom:8px;display:none"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-purple" style="padding:8px 14px" onclick="confirmInvite()">💊 RODE PIL GEVEN ▶</button>
       <button class="btn btn-ghost" style="padding:8px 14px" onclick="closeInviteModal()">✕ ANNULEER</button>
+    </div>
+    <hr style="border:none;border-top:2px solid var(--border);margin:14px 0">
+    <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:8px" data-i18n="invite_modal_share_label">Nog niet in het spel? Deel de uitnodiging:</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-green" style="padding:8px 14px" onclick="shareInvite(_inviteGroupId)">📲 WHATSAPP</button>
+      <button class="btn btn-ghost" style="padding:8px 14px" onclick="copyInviteFor(_inviteGroupId)" data-i18n="complot_manage_btn_copy_link">🔗 KOPIEER LINK</button>
     </div>
   </div>
 </div>
@@ -1585,6 +1591,7 @@ function renderComplotGroup(group){
       +`<div style="font-family:var(--pixel);font-size:7px;color:var(--yellow);margin-bottom:8px">${t('complot_haantje_powers_label')}</div>`
       +`<div style="display:flex;gap:6px;flex-wrap:wrap">`
       +`<button class="btn btn-sm btn-purple" onclick="showInviteByUsername('${group.id}')">${t('complot_btn_wake_up')}</button>`
+      +`<button class="btn btn-sm btn-green" onclick="shareInvite('${group.id}')">${t('complot_btn_share')}</button>`
       +`<button class="btn btn-sm btn-ghost" onclick="manageMembers('${group.id}')">${t('complot_btn_manage')}</button>`
       +`</div></div>`;
   }
@@ -1617,17 +1624,21 @@ function inviteLink(group){
 }
 function showErr(el,msg){ if(el){el.textContent=msg;el.style.display='block';} else showToast(msg); }
 
-// Probeer een uitnodigingsmail te sturen via de 'send-invite' edge function.
-// Geen key / niet gedeployed / fout → false, zodat de UI terugvalt op de deel-link.
-async function trySendInviteEmail(email,group,link){
-  try{
-    const {data,error}=await sb.functions.invoke('send-invite',{body:{
-      toEmail:email, groupName:group?group.name:'', inviteUrl:link, inviterName:(currentProfile?.username||'')
-    }});
-    if(error)return false;
-    if(data&&data.error)return false;
-    return true;
-  }catch(e){return false;}
+// Deel de uitnodigingslink: native share-sheet (mobiel → WhatsApp etc.), anders WhatsApp Web.
+async function shareInvite(groupId){
+  const group=complotGroups.find(g=>g.id===groupId);
+  if(!group)return;
+  const link=inviteLink(group);
+  const text=t('invite_share_text',{X:group.name});
+  if(navigator.share){
+    try{ await navigator.share({title:'NO RISK NO FUN',text,url:link}); return; }
+    catch(e){ if(e&&e.name==='AbortError')return; } // user annuleerde → niet doorvallen naar wa.me
+  }
+  window.open('https://wa.me/?text='+encodeURIComponent(text+' '+link),'_blank');
+}
+function copyInviteFor(groupId){
+  const g=complotGroups.find(x=>x.id===groupId);
+  if(g)copyInvite(inviteLink(g));
 }
 
 // Centrale uitnodig-flow: bestaande speler → pending invite; niet-speler → e-mail of deel-link.
@@ -1648,17 +1659,9 @@ async function sendInvite(groupId,raw,errEl,closeFn){
     await loadAll();
     return;
   }
-  // Geen bestaande speler → marketing-invite via e-mail of deelbare link.
-  const link=group?inviteLink(group):'';
-  if(input.includes('@')){
-    const ok=await trySendInviteEmail(input,group,link);
-    if(ok){if(closeFn)closeFn();showToast(t('invite_email_sent',{X:input}));return;}
-    try{await navigator.clipboard.writeText(link);}catch(e){}
-    showErr(errEl,t('invite_link_copied_for',{X:input}));
-    showToast(t('invite_link_copied'));
-    return;
-  }
-  showErr(errEl,t('invite_need_email'));
+  // Geen bestaande speler → deel de uitnodigingslink via WhatsApp / native share.
+  if(closeFn)closeFn();
+  shareInvite(groupId);
 }
 
 function showCreateComplot(){
@@ -1718,7 +1721,8 @@ function renderComplotModal(){
     <div class="box" style="margin-bottom:10px">
       <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">${t('complot_manage_invite_link_label')}</div>
       <div style="font-family:var(--vt);font-size:18px;color:var(--green);cursor:pointer;word-break:break-all;margin-bottom:8px" onclick="copyInvite('${inviteUrl}')">${inviteUrl}</div>
-      <button class="btn btn-ghost" style="padding:8px 14px" onclick="copyInvite('${inviteUrl}')">${t('complot_manage_btn_copy_link')}</button>
+      <button class="btn btn-green" style="padding:8px 14px" onclick="shareInvite('${_complotManageId}')">${t('complot_btn_share')}</button>
+      <button class="btn btn-ghost" style="padding:8px 14px;margin-left:6px" onclick="copyInvite('${inviteUrl}')">${t('complot_manage_btn_copy_link')}</button>
     </div>
     <div class="box">
       <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">${t('complot_manage_recruit_label')}</div>
