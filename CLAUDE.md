@@ -140,6 +140,7 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 | `tips` | id, user_id, match_id, tip (home/draw/away), chosen_odds, max_odds, points_scored |
 | `complot_groups` | id, name, invite_code, created_by |
 | `complot_members` | id, group_id, user_id, is_haantje |
+| `complot_invites` | id, group_id, inviter_id, invitee_id, status (pending/accepted/declined), created_at; unique(group_id,invitee_id) |
 | `bracket_slots` | phase, slot, home_label, away_label, home_from_phase/slot, away_from_phase/slot |
 | `teams` | name (canonieke Engelse naam = join-key met matches.home/away_team), fd_id, crest_url, area_code |
 | `settings` | key, value (bijv. `odds_api_key`, `fd_api_key`) |
@@ -277,9 +278,15 @@ Rechts: SF → QF → R16 → R32 (gespiegeld)
 | Lid verwijderen | 😴 Laten slapen |
 | Haantje maken | 🐓👑 Kronen |
 
-**Invite modal:** "💊 RODE PIL GEVEN", succes: "[naam] is ontwaakt. Welkom in het complot."
+**Invite modal:** "💊 RODE PIL GEVEN" → `sendInvite(groupId, input, errEl, closeFn)`. Input = **username óf e-mail**.
 **Kronen:** "👑 [naam] IS NU DE WAARHEID."
 **Laten slapen:** "[naam] slaapt weer. De matrix heeft hem terug."
+
+### Uitnodigen, accepteren, uitstappen
+- **Bestaande speler uitnodigen** → géén directe member-insert meer, maar een **pending rij in `complot_invites`** (`status='pending'`). Alleen een haantje mag uitnodigen (RLS `ci_insert`).
+- **Melding + accept/decline:** `loadAll()` laadt `myInvites` (mijn pending invites). `renderInvitePanel()` toont bovenaan HOME een paneel met **✅ Accepteren / ✕ Weigeren**; `updateInviteBadge()` zet een rood telbadge op de HOME-nav. `acceptInvite()` → self-insert in `complot_members` (RLS `cm_insert` staat `auth.uid()=user_id` toe) + invite `accepted`. `declineInvite()` → invite `declined`.
+- **Uitstappen:** `leaveGroup(groupId)` (knop "🚪 Uitstappen" per groep) verwijdert je eigen membership (RLS `cm_delete` staat self-delete toe). Blokkeert als je de enige haantje bent terwijl er nog leden zijn.
+- **Niet-speler uitnodigen (marketing):** input is een e-mail of onbekende username → de app probeert een **uitnodigingsmail** via edge function **`send-invite`** (Resend; gated op `resend_api_key` in `settings`, deploy met JWT-verify UIT). Geen key/mislukt → de **deelbare invite-link** wordt gekopieerd (`Invite.html?code=<invite_code>` — let op hoofdletter-`I` voor GitHub Pages). `Invite.html` is de landing (leest `?code=`, login/registreer → auto-join) en is opgemaakt als pakkende uitnodiging. Admin-veld voor de Resend-key + afzender staat in de admin-tab (`saveResendSettings`/`loadResendSettings`).
 
 ---
 

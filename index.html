@@ -514,10 +514,12 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 #live-ticker .lt-item b{color:var(--yellow)}
 #live-ticker .lt-item i{font-style:normal;font-family:var(--pixel);font-size:7px;color:var(--muted);margin-left:2px}
 #live-ticker .lt-sep{color:var(--border)}
+.nav-badge{display:inline-block;background:var(--red);color:#fff;font-family:var(--pixel);font-size:7px;padding:2px 5px;border-radius:8px;margin-left:5px;vertical-align:middle;box-shadow:0 0 6px rgba(255,34,68,0.6)}
 </style>
 <div id="sec-home" class="section active">
   <div class="sec-title" data-i18n="home_section_title">▶ HOME</div>
 
+  <div id="invite-panel"></div>
   <div id="live-strip"></div>
   <div id="podium-marquee" class="podium-marquee" style="display:none"></div>
   <div id="podium-wrap"><div class="loading">Laden...</div></div>
@@ -765,6 +767,17 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     </div>
     <div id="fd-status" style="margin-top:8px"></div>
   </div>
+
+  <div class="admin-panel">
+    <div class="admin-title">✉️ UITNODIGINGSMAIL (RESEND)</div>
+    <div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:10px">
+      Optioneel: gratis key op <a href="https://resend.com" target="_blank" style="color:var(--green)">resend.com</a> → uitnodigingen aan niet-spelers gaan dan automatisch per mail. Zonder key valt 't terug op een deelbare link. Vereist ook de <code>send-invite</code> edge function (deploy met JWT-verificatie UIT).
+    </div>
+    <div class="form-row"><label>RESEND API KEY</label><input type="text" id="resend-key" placeholder="re_..."></div>
+    <div class="form-row"><label>AFZENDER (geverifieerd domein)</label><input type="text" id="resend-from" placeholder="NO RISK NO FUN &lt;noreply@jouwdomein.nl&gt;"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="saveResendSettings()">💾 OPSLAAN</button>
+    <div id="resend-status" style="margin-top:8px"></div>
+  </div>
 </div>
 
 </main>
@@ -806,8 +819,8 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 <div id="invite-modal">
   <div class="invite-box">
     <div style="font-family:var(--pixel);font-size:9px;color:var(--green);margin-bottom:1rem">MAAK EEN SLAPER WAKKER 🐑</div>
-    <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">Gebruikersnaam van de slaapkop:</div>
-    <input id="invite-username-input" type="text" placeholder="gebruikersnaam..." style="width:100%;box-sizing:border-box;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:8px 10px;margin-bottom:8px" onkeypress="if(event.key==='Enter')confirmInvite()">
+    <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px" data-i18n="invite_modal_label">Gebruikersnaam of e-mail:</div>
+    <input id="invite-username-input" type="text" placeholder="gebruikersnaam of e-mail…" style="width:100%;box-sizing:border-box;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:8px 10px;margin-bottom:8px" onkeypress="if(event.key==='Enter')confirmInvite()">
     <div id="invite-error" style="font-family:var(--vt);font-size:20px;color:var(--red);margin-bottom:8px;display:none"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-purple" style="padding:8px 14px" onclick="confirmInvite()">💊 RODE PIL GEVEN ▶</button>
@@ -895,7 +908,7 @@ const RISK_PROFILES = [
 let currentUser=null, currentProfile=null;
 let matches=[], allTips=[], allProfiles=[];
 let myTips={}, pendingTips={};
-let complotGroups=[], complotMembers=[];
+let complotGroups=[], complotMembers=[], myInvites=[];
 let currentPhaseFilter='all', currentStandFilter='total', currentTournamentFilter='group_standings';
 let viewingProfile=null;
 
@@ -1070,16 +1083,19 @@ async function changeLanguage(lang){
 
 // ── LOAD ─────────────────────────────────────────────────────
 async function loadAll(){
-  const [mr,tr,pr,cgr,cmr,tmr]=await Promise.all([
+  const [mr,tr,pr,cgr,cmr,tmr,civ]=await Promise.all([
     sb.from('matches').select('*').order('kickoff',{ascending:true}),
     sb.from('tips').select('*'),
     sb.from('profiles').select('*'),
     sb.from('complot_groups').select('*'),
     sb.from('complot_members').select('*'),
     sb.from('teams').select('name,crest_url'),
+    sb.from('complot_invites').select('*'),
   ]);
   matches=mr.data||[];allTips=tr.data||[];allProfiles=pr.data||[];
   complotGroups=cgr.data||[];complotMembers=cmr.data||[];
+  // Openstaande uitnodigingen voor mij (tabel kan nog ontbreken → veilig leeg).
+  myInvites=(civ.data||[]).filter(i=>i.invitee_id===currentUser.id&&i.status==='pending');
   // Crests (football-data.org); tabel kan nog ontbreken → veilig leeg, valt terug op emoji-vlag.
   teamCrest={};(tmr.data||[]).forEach(t=>{if(t.crest_url)teamCrest[t.name]=t.crest_url;});
   myTips={};
@@ -1096,7 +1112,7 @@ function showTab(id,btn){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
   btn.classList.add('active');
-  if(id==='admin'){loadOddsKey();FD.loadKey();}
+  if(id==='admin'){loadOddsKey();FD.loadKey();loadResendSettings();}
   if(id==='tips'){
     const phase=getNextTipPhaseFilter();
     if(phase){
@@ -1129,10 +1145,59 @@ function getNextTipPhaseFilter(){
 
 // ── HOME ─────────────────────────────────────────────────────
 function renderHome(){
+  renderInvitePanel();
   renderLiveStrip();
   renderPodium();
   renderGlobalStats();
   renderComplotHome();
+  updateInviteBadge();
+}
+
+// Paneel met openstaande complot-uitnodigingen (accepteren/weigeren).
+function renderInvitePanel(){
+  const el=document.getElementById('invite-panel');
+  if(!el)return;
+  if(!myInvites.length){el.innerHTML='';return;}
+  el.innerHTML=`<div class="box box-green" style="margin-bottom:16px;border-color:var(--green)">
+    <div style="font-family:var(--pixel);font-size:10px;color:var(--green);margin-bottom:10px">${t('invite_panel_title')}</div>
+    ${myInvites.map(inv=>{
+      const g=complotGroups.find(x=>x.id===inv.group_id);
+      const inviter=allProfiles.find(p=>p.id===inv.inviter_id);
+      const gname=g?g.name:'?';
+      return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--border)">
+        <div style="flex:1;min-width:160px;font-family:var(--vt);font-size:20px;color:var(--white)">🐓 <b style="font-family:var(--oswald)">${gname}</b><br><span style="font-size:17px;color:var(--muted)">${t('invite_panel_from',{X:inviter?inviter.username:'?'})}</span></div>
+        <button class="btn btn-green btn-sm" onclick="acceptInvite('${inv.id}','${inv.group_id}')">${t('invite_accept')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="declineInvite('${inv.id}')">${t('invite_decline')}</button>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// Rood telbadge op de HOME-nav-knop.
+function updateInviteBadge(){
+  const btn=[...document.querySelectorAll('#main-nav .tab')].find(b=>b.getAttribute('onclick')?.includes("showTab('home'"));
+  if(!btn)return;
+  btn.querySelector('.nav-badge')?.remove();
+  if(myInvites.length){
+    const b=document.createElement('span');
+    b.className='nav-badge';
+    b.textContent=myInvites.length;
+    btn.appendChild(b);
+  }
+}
+
+async function acceptInvite(inviteId,groupId){
+  // Word lid (self-insert; cm_insert staat auth.uid()=user_id toe), markeer invite accepted.
+  const {error}=await sb.from('complot_members').insert({group_id:groupId,user_id:currentUser.id,is_haantje:false});
+  if(error&&error.code!=='23505'){showToast('Fout: '+error.message);return;}
+  await sb.from('complot_invites').update({status:'accepted'}).eq('id',inviteId);
+  showToast(t('invite_accepted_toast'));
+  await loadAll();
+}
+async function declineInvite(inviteId){
+  await sb.from('complot_invites').update({status:'declined'}).eq('id',inviteId);
+  showToast(t('invite_declined_toast'));
+  await loadAll();
 }
 
 // Header-ticker: lopende wedstrijden, zichtbaar op elke tab (alleen bij live).
@@ -1469,7 +1534,7 @@ function renderComplotGroup(group){
   const members=complotMembers.filter(m=>m.group_id===group.id);
   const memberProfiles=members.map(m=>{const prof=allProfiles.find(p=>p.id===m.user_id);return prof?{...m,...prof}:null;}).filter(Boolean);
   const isHaantje=members.find(m=>m.user_id===currentUser.id&&m.is_haantje);
-  const inviteUrl=`${window.location.origin}${window.location.pathname.replace('index.html','')}invite.html?code=${group.invite_code}`;
+  const inviteUrl=inviteLink(group);
   const ranked=memberProfiles.map(p=>({...p,pts:getScore(p.id,'all').pts})).sort((a,b)=>b.pts-a.pts);
   const playedMatchdays=[...new Set(matches.filter(m=>m.result&&m.matchday!=null).map(m=>m.matchday))].sort((a,b)=>b-a);
   let lastDayStr=null,lastDayMatches=[];
@@ -1523,12 +1588,77 @@ function renderComplotGroup(group){
       +`<button class="btn btn-sm btn-ghost" onclick="manageMembers('${group.id}')">${t('complot_btn_manage')}</button>`
       +`</div></div>`;
   }
+  html+=`<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">`
+    +`<button class="btn btn-sm btn-ghost" onclick="leaveGroup('${group.id}')">${t('complot_btn_leave')}</button></div>`;
   html+=`</div>`;
   return html;
 }
 
+async function leaveGroup(groupId){
+  const members=complotMembers.filter(m=>m.group_id===groupId);
+  const me=members.find(m=>m.user_id===currentUser.id);
+  if(!me)return;
+  const haantjes=members.filter(m=>m.is_haantje);
+  // Niet de laatste haantje laten weglopen terwijl er nog leden zijn.
+  if(me.is_haantje&&haantjes.length===1&&members.length>1){showToast(t('complot_leave_last_haantje'));return;}
+  if(!confirm(t('complot_leave_confirm')))return;
+  const {error}=await sb.from('complot_members').delete().eq('group_id',groupId).eq('user_id',currentUser.id);
+  if(error){showToast('Fout: '+error.message);return;}
+  showToast(t('complot_leave_toast'));
+  await loadAll();
+}
+
 function copyInvite(url){
-  navigator.clipboard.writeText(url).then(()=>showToast('Link gekopieerd!'));
+  navigator.clipboard.writeText(url).then(()=>showToast(t('invite_link_copied')));
+}
+// Let op: hoofdletter-Invite.html zodat de link werkt op (case-sensitive) GitHub Pages.
+function inviteLink(group){
+  return `${window.location.origin}${window.location.pathname.replace('index.html','')}Invite.html?code=${group.invite_code}`;
+}
+function showErr(el,msg){ if(el){el.textContent=msg;el.style.display='block';} else showToast(msg); }
+
+// Probeer een uitnodigingsmail te sturen via de 'send-invite' edge function.
+// Geen key / niet gedeployed / fout → false, zodat de UI terugvalt op de deel-link.
+async function trySendInviteEmail(email,group,link){
+  try{
+    const {data,error}=await sb.functions.invoke('send-invite',{body:{
+      toEmail:email, groupName:group?group.name:'', inviteUrl:link, inviterName:(currentProfile?.username||'')
+    }});
+    if(error)return false;
+    if(data&&data.error)return false;
+    return true;
+  }catch(e){return false;}
+}
+
+// Centrale uitnodig-flow: bestaande speler → pending invite; niet-speler → e-mail of deel-link.
+async function sendInvite(groupId,raw,errEl,closeFn){
+  const input=(raw||'').trim();
+  if(!input)return;
+  if(errEl)errEl.style.display='none';
+  const group=complotGroups.find(g=>g.id===groupId);
+  const profile=allProfiles.find(p=>p.username===input.toLowerCase());
+  if(profile){
+    // Bestaande speler → pending uitnodiging (accept/decline), niet direct toevoegen.
+    if(complotMembers.some(m=>m.group_id===groupId&&m.user_id===profile.id)){showErr(errEl,t('invite_already_member',{X:input}));return;}
+    const {error}=await sb.from('complot_invites').insert({group_id:groupId,inviter_id:currentUser.id,invitee_id:profile.id,status:'pending'});
+    if(error&&error.code==='23505'){showErr(errEl,t('invite_already_invited',{X:input}));return;}
+    if(error){showErr(errEl,'Fout: '+error.message);return;}
+    if(closeFn)closeFn();
+    showToast(t('invite_sent_toast',{X:input}));
+    await loadAll();
+    return;
+  }
+  // Geen bestaande speler → marketing-invite via e-mail of deelbare link.
+  const link=group?inviteLink(group):'';
+  if(input.includes('@')){
+    const ok=await trySendInviteEmail(input,group,link);
+    if(ok){if(closeFn)closeFn();showToast(t('invite_email_sent',{X:input}));return;}
+    try{await navigator.clipboard.writeText(link);}catch(e){}
+    showErr(errEl,t('invite_link_copied_for',{X:input}));
+    showToast(t('invite_link_copied'));
+    return;
+  }
+  showErr(errEl,t('invite_need_email'));
 }
 
 function showCreateComplot(){
@@ -1555,28 +1685,7 @@ function showInviteByUsername(groupId){
 }
 function closeInviteModal(){document.getElementById('invite-modal').classList.remove('open');}
 async function confirmInvite(){
-  const username=document.getElementById('invite-username-input').value.trim().toLowerCase();
-  if(!username)return;
-  const errEl=document.getElementById('invite-error');
-  errEl.style.display='none';
-  const profile=allProfiles.find(p=>p.username===username);
-  if(!profile){errEl.textContent='Deze slaapkop bestaat niet in de matrix.';errEl.style.display='block';return;}
-  const {error}=await sb.from('complot_members').insert({group_id:_inviteGroupId,user_id:profile.id,is_haantje:false});
-  if(error&&error.code==='23505'){errEl.textContent=username+' zit al in het complot.';errEl.style.display='block';return;}
-  if(error){errEl.textContent='Fout: '+error.message;errEl.style.display='block';return;}
-  closeInviteModal();
-  showToast(username+' is ontwaakt. Welkom in het complot.');
-  await loadAll();
-}
-
-async function inviteByUsername(groupId,username){
-  const profile=allProfiles.find(p=>p.username===username);
-  if(!profile){showToast('Gebruiker niet gevonden.');return;}
-  const {error}=await sb.from('complot_members').insert({group_id:groupId,user_id:profile.id,is_haantje:false});
-  if(error&&error.code==='23505'){showToast(username+' is al lid.');return;}
-  if(error){showToast('Fout: '+error.message);return;}
-  showToast(username+' toegevoegd aan het complot! 🐑');
-  await loadAll();
+  await sendInvite(_inviteGroupId, document.getElementById('invite-username-input').value, document.getElementById('invite-error'), closeInviteModal);
 }
 
 let _complotManageId=null;
@@ -1591,7 +1700,7 @@ function renderComplotModal(){
   if(!group){document.getElementById('complot-modal-content').innerHTML='';return;}
   const members=complotMembers.filter(m=>m.group_id===_complotManageId);
   const mProfiles=members.map(m=>({...allProfiles.find(p=>p.id===m.user_id),...m})).filter(Boolean);
-  const inviteUrl=`${window.location.origin}${window.location.pathname.replace('index.html','')}invite.html?code=${group.invite_code}`;
+  const inviteUrl=inviteLink(group);
   const memberRows=mProfiles.map(p=>{
     const isMe=p.user_id===currentUser.id;
     return`<div class="member-row" style="padding:8px 0;border-bottom:1px solid rgba(85,0,170,.3)">`
@@ -1635,17 +1744,7 @@ async function makeHaantje(groupId,userId,username){
   renderComplotModal();
 }
 async function complotInviteFromModal(){
-  const username=document.getElementById('complot-invite-input').value.trim().toLowerCase();
-  if(!username)return;
-  const errEl=document.getElementById('complot-invite-error');
-  errEl.style.display='none';
-  const profile=allProfiles.find(p=>p.username===username);
-  if(!profile){errEl.textContent='Deze slaapkop bestaat niet in de matrix.';errEl.style.display='block';return;}
-  const {error}=await sb.from('complot_members').insert({group_id:_complotManageId,user_id:profile.id,is_haantje:false});
-  if(error&&error.code==='23505'){errEl.textContent=username+' zit al in het complot.';errEl.style.display='block';return;}
-  if(error){errEl.textContent='Fout: '+error.message;errEl.style.display='block';return;}
-  showToast(username+' is ontwaakt. Welkom in het complot.');
-  await loadAll();
+  await sendInvite(_complotManageId, document.getElementById('complot-invite-input').value, document.getElementById('complot-invite-error'), null);
   renderComplotModal();
 }
 
@@ -2232,6 +2331,25 @@ async function updateStreaks(){
 async function updateDayWins(matchId){
   const {error}=await sb.rpc('recalc_day_wins');
   if(error)console.error('recalc_day_wins RPC fout:',error);
+}
+
+async function loadResendSettings(){
+  const {data}=await sb.from('settings').select('key,value').in('key',['resend_api_key','invite_from_email']);
+  (data||[]).forEach(r=>{
+    if(r.key==='resend_api_key'){const el=document.getElementById('resend-key');if(el&&!el.value)el.value=r.value||'';}
+    if(r.key==='invite_from_email'){const el=document.getElementById('resend-from');if(el&&!el.value)el.value=r.value||'';}
+  });
+}
+async function saveResendSettings(){
+  const key=(document.getElementById('resend-key')?.value||'').trim();
+  const from=(document.getElementById('resend-from')?.value||'').trim();
+  const st=document.getElementById('resend-status');
+  const rows=[];
+  if(key)rows.push({key:'resend_api_key',value:key,updated_at:new Date().toISOString()});
+  if(from)rows.push({key:'invite_from_email',value:from,updated_at:new Date().toISOString()});
+  if(!rows.length){if(st)st.innerHTML='<div class="err">Vul minimaal de API key in.</div>';return;}
+  const {error}=await sb.from('settings').upsert(rows);
+  if(st)st.innerHTML=error?`<div class="err">Fout: ${error.message}</div>`:'<div style="color:var(--green);font-family:var(--vt);font-size:18px">✔ Opgeslagen.</div>';
 }
 
 async function loadOddsKey(){
