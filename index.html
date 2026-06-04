@@ -293,6 +293,33 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .stat-ticker-val{font-family:var(--vt);font-size:24px;color:var(--green)}
 .stat-ticker-hint{font-family:var(--pixel);font-size:7px;color:var(--muted);margin-top:4px}
 
+/* HOME redesign — welkomsttekst, sectie-headers, horizontale stats, top-5 klassement */
+.home-welcome{font-family:var(--vt);font-size:20px;color:var(--muted);margin:-2px 0 1.5rem}
+.home-welcome b{color:var(--green);font-weight:normal}
+.block-head{font-family:var(--pixel);font-size:11px;color:var(--yellow);letter-spacing:.05em;display:flex;align-items:center;gap:8px;margin:1.8rem 0 14px;padding-bottom:8px;border-bottom:2px solid var(--border);flex-wrap:wrap}
+.block-head .right{margin-left:auto;font-family:var(--vt);font-size:18px;color:var(--muted);letter-spacing:0;text-align:right;flex-shrink:1;min-width:0}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stats-grid .stat-ticker{margin-bottom:0}
+.lb{background:var(--bg2);border:2px solid var(--border)}
+.lb-row{display:grid;grid-template-columns:34px 40px 1fr auto;gap:10px;align-items:center;padding:8px 14px;border-bottom:1px solid rgba(85,0,170,0.3);cursor:pointer}
+.lb-row:last-child{border-bottom:none}
+.lb-row:hover{background:rgba(123,0,255,0.08)}
+.lb-row .rk{font-family:var(--pixel);font-size:13px;color:var(--muted);text-align:center}
+.lb-row .rk.r1{color:var(--yellow);text-shadow:0 0 8px var(--yellow)}
+.lb-row .rk.r2{color:#cccccc}
+.lb-row .rk.r3{color:#c87941}
+.lb-row .who{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
+.lb-row .who-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lb-row .who .nm{font-family:var(--oswald);font-weight:700;font-size:18px;color:var(--white)}
+.lb-row .lb-tips{display:flex;flex-wrap:wrap;gap:3px}
+.lb-row .lb-pt{font-family:var(--pixel);font-size:12px;color:var(--green);white-space:nowrap}
+.lb-row .lb-pt .lb-live{color:var(--yellow);font-size:9px;margin-left:3px}
+.lb-more{text-align:right;margin-top:10px}
+.lb-more button{font-family:var(--pixel);font-size:9px;color:var(--green);letter-spacing:.05em;padding:8px 12px;border:2px solid var(--green);background:transparent;cursor:pointer;box-shadow:2px 2px 0 #000}
+.lb-more button:hover{background:rgba(0,255,102,0.1)}
+.lb-more button:active{transform:translate(2px,2px);box-shadow:none}
+@media(max-width:780px){.stats-grid{grid-template-columns:1fr}.lb-row{grid-template-columns:28px 36px 1fr auto;padding:8px 10px}}
+
 /* COMPLOT */
 .complot-card{background:var(--bg2);border:2px solid var(--purple);padding:1rem;margin-bottom:10px;position:relative}
 .complot-card::after{content:'';position:absolute;top:2px;left:2px;right:-2px;bottom:-2px;background:#000;z-index:-1}
@@ -518,16 +545,22 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 </style>
 <div id="sec-home" class="section active">
   <div class="sec-title" data-i18n="home_section_title">▶ HOME</div>
+  <div id="home-welcome" class="home-welcome"></div>
 
   <div id="invite-panel"></div>
   <div id="live-strip"></div>
+
+  <div class="block-head">⭐ <span data-i18n="home_label_podium">PODIUM GISTEREN</span> <span class="right" id="podium-head-right"></span></div>
   <div id="podium-marquee" class="podium-marquee" style="display:none"></div>
   <div id="podium-wrap"><div class="loading">Laden...</div></div>
 
-  <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin:1.5rem 0 8px" data-i18n="home_label_stats">STATISTIEKEN</div>
+  <div class="block-head">📊 <span data-i18n="home_label_stats">STATISTIEKEN</span> <span class="right" data-i18n="home_stats_sub">vandaag · klik voor details</span></div>
   <div id="global-stats-wrap"><div class="loading">Laden...</div></div>
 
-  <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin:1.5rem 0 8px" data-i18n="home_label_complot">COMPLOTGROEPJES</div>
+  <div class="block-head">🏆 <span data-i18n="home_label_ranking">KLASSEMENT · TOP 5</span> <span class="right" id="lb-head-right"></span></div>
+  <div id="home-leaderboard"></div>
+
+  <div class="block-head">🐓 <span data-i18n="home_label_complot">COMPLOTGROEPJES</span> <span class="right" id="complot-head-right"></span></div>
   <div id="complot-home-wrap"><div class="loading">Laden...</div></div>
 </div>
 
@@ -1151,12 +1184,81 @@ function getNextTipPhaseFilter(){
 
 // ── HOME ─────────────────────────────────────────────────────
 function renderHome(){
+  renderWelcome();
   renderInvitePanel();
   renderLiveStrip();
   renderPodium();
   renderGlobalStats();
+  renderHomeLeaderboard();
   renderComplotHome();
   updateInviteBadge();
+}
+
+// Dagen tot de WK-finale (= "Half-time show"). Leest de 'final'-wedstrijd, valt terug op 19 juli 2026.
+function daysToFinal(){
+  const fin=matches.find(m=>m.phase==='final'&&m.kickoff);
+  const target=fin?new Date(fin.kickoff):new Date('2026-07-19T17:00:00Z');
+  return Math.ceil((target-new Date())/86400000);
+}
+function renderWelcome(){
+  const el=document.getElementById('home-welcome');
+  if(!el)return;
+  const raw=currentProfile?.username||'';
+  const name=raw?`<b>${raw.charAt(0).toUpperCase()+raw.slice(1)}</b>`:'';
+  const days=daysToFinal();
+  el.innerHTML=days>0
+    ?t('home_welcome',{name,X:days,D:days===1?t('home_welcome_day'):t('home_welcome_days')})
+    :t('home_welcome_done',{name});
+}
+
+// Top-5 klassement op HOME (voorlopige stand incl. live), met knop naar de volledige STAND-tab.
+function renderHomeLeaderboard(){
+  const el=document.getElementById('home-leaderboard');
+  if(!el)return;
+  const ranked=allProfiles.map(p=>({...p,...getScore(p.id,'all')}))
+    .sort((a,b)=>((b.pts+b.livePts)-(a.pts+a.livePts))||(b.pts-a.pts));
+  const right=document.getElementById('lb-head-right');
+  if(right)right.textContent=t('home_players_total',{X:allProfiles.length});
+  // Tips van de laatst gespeelde dag — als chips onder de naam (zelfde stijl als de STAND-tab).
+  const dayMatches=lastPlayedDayMatches();
+  const dayTipChips=(uid)=>{
+    const chips=dayMatches.map(m=>{
+      const tip=allTips.find(t=>t.user_id===uid&&t.match_id===m.id);
+      if(!tip)return'';
+      const side=tip.tip;
+      const pickedTeam=side==='home'?m.home_team:side==='away'?m.away_team:null;
+      const f=pickedTeam?flag(pickedTeam):'=';
+      const lbl=pickedTeam?(teamShort[pickedTeam]||pickedTeam.slice(0,3).toUpperCase()):t('tips_abbrev_draw');
+      const ok=!!m.result&&side===m.result;
+      const cls=!m.result?'tip-pend':(ok?'tip-ok':'tip-fail');
+      const o=m.result==='home'?m.home_odds:m.result==='draw'?m.draw_odds:m.away_odds;
+      const pts=ok?calcPts(o):0;
+      return`<span class="${cls}" style="display:inline-flex;align-items:center;white-space:nowrap" title="${teamName(m.home_team)} vs ${teamName(m.away_team)}">`
+        +`<span style="font-size:14px;line-height:1">${f}</span>`
+        +`<span style="font-family:var(--pixel);font-size:6px;margin-left:1px">${lbl}${ok?'<sup style="color:var(--green)">+'+pts+'</sup>':''}</span>`
+        +`</span>`;
+    }).join('');
+    return chips?`<div class="lb-tips">${chips}</div>`:'';
+  };
+  const top=ranked.slice(0,5);
+  const rows=top.map((p,i)=>{
+    const si=getStreakInfo(p.current_streak||0);
+    const badge=si?`<span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span>`:'';
+    const live=p.livePts>0?`<span class="lb-live">+${p.livePts}</span>`:'';
+    return`<div class="lb-row" onclick="openProfile('${p.id}')">`
+      +`<div class="rk ${['r1','r2','r3'][i]||''}">${i+1}</div>`
+      +avatarHTML(p,40)
+      +`<div class="who"><div class="who-top"><span class="nm">${p.username.toUpperCase()}</span>${badge}</div>${dayTipChips(p.id)}</div>`
+      +`<div class="lb-pt">${p.pts} PT${live}</div>`
+      +`</div>`;
+  }).join('');
+  el.innerHTML=`<div class="lb">${rows||`<div style="padding:14px;font-family:var(--vt);font-size:20px;color:var(--muted)">${t('home_no_matches_yet')}</div>`}</div>`
+    +`<div class="lb-more"><button onclick="goToStand()">${t('home_view_full_ranking')}</button></div>`;
+}
+// Navigeer naar de STAND-tab (zelfde gedrag als op de nav-knop klikken).
+function goToStand(){
+  const btn=[...document.querySelectorAll('#main-nav .tab')].find(b=>b.getAttribute('onclick')?.includes("showTab('stand'"));
+  if(btn)showTab('stand',btn);
 }
 
 // Paneel met openstaande complot-uitnodigingen (accepteren/weigeren).
@@ -1321,14 +1423,27 @@ function renderPodiumCard(player,rank,dayMatches){
 function renderPodium(){
   const el=document.getElementById("podium-wrap");
   const mq=document.getElementById("podium-marquee");
+  const headRight=document.getElementById("podium-head-right");
   const dayMatches=lastPlayedDayMatches();
+  // Sectie-header rechts: "<datum> · N wedstrijden gespeeld".
+  if(headRight){
+    const isWk=dayMatches.some(m=>m.matchday!=null&&m.matchday>=1);
+    const tz=isWk?'America/Los_Angeles':'Europe/Amsterdam';
+    const locMap={nl:'nl-NL',en:'en-GB',de:'de-DE'};
+    const loc=locMap[typeof getCurrentLanguage==='function'?getCurrentLanguage():'nl']||'nl-NL';
+    const latest=dayMatches.filter(m=>m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff))[0];
+    const dateLabel=latest?new Date(latest.kickoff).toLocaleDateString(loc,{day:'numeric',month:'long',timeZone:tz}):'';
+    headRight.textContent=dayMatches.length?(dateLabel?dateLabel+' · ':'')+t('home_matches_played',{X:dayMatches.length}):'';
+  }
   const withPts=allProfiles.map(p=>{
     const {pts,day}=getYesterdayPts(p.id);
     return{...p,dayPts:pts,day};
   }).sort((a,b)=>b.dayPts-a.dayPts);
   if(!withPts.length||withPts[0].dayPts===0){
     if(mq)mq.style.display='none';
-    el.innerHTML=`<div style="font-family:var(--vt);font-size:22px;color:var(--muted);padding:1rem 0">${t('home_no_matches_yet')}</div>`;
+    // Onderscheid: écht geen wedstrijden gespeeld vs. wel gespeeld maar niemand scoorde.
+    const msg=dayMatches.length?'home_nobody_scored':'home_no_matches_yet';
+    el.innerHTML=`<div style="font-family:var(--vt);font-size:22px;color:var(--muted);padding:1rem 0">${t(msg)}</div>`;
     return;
   }
   // Marquee-header boven het podium: ★ DAGWINNAARS · <datum> · WK 2026/WARM-UP ★
@@ -1454,7 +1569,7 @@ function renderGlobalStats(){
       +`</div>`);
   }
 
-  el.innerHTML=stats.length?stats.join(""):`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">${t('stats_no_data_yet')}</div>`;
+  el.innerHTML=stats.length?`<div class="stats-grid">${stats.join("")}</div>`:`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">${t('stats_no_data_yet')}</div>`;
 }
 
 function openStatsModal(type){
@@ -1512,6 +1627,8 @@ function renderComplotHome(){
   // Favoriet complot eerst tonen.
   const fav=currentProfile?.fav_complot;
   myGroups.sort((a,b)=>(b.id===fav?1:0)-(a.id===fav?1:0));
+  const headRight=document.getElementById('complot-head-right');
+  if(headRight)headRight.textContent=myGroups.length===0?t('home_complot_sub_none'):myGroups.length===1?t('home_complot_sub_one'):t('home_complot_sub_many',{X:myGroups.length});
 
   if(!myGroups.length){
     el.innerHTML=`<div class="box">
@@ -1640,16 +1757,12 @@ function inviteLink(group){
 }
 function showErr(el,msg){ if(el){el.textContent=msg;el.style.display='block';} else showToast(msg); }
 
-// Deel de uitnodigingslink: native share-sheet (mobiel → WhatsApp etc.), anders WhatsApp Web.
-async function shareInvite(groupId){
+// Deel de uitnodigingslink rechtstreeks via WhatsApp: telefoon → WhatsApp-app, desktop → WhatsApp Web.
+function shareInvite(groupId){
   const group=complotGroups.find(g=>g.id===groupId);
   if(!group)return;
   const link=inviteLink(group);
   const text=t('invite_share_text',{X:group.name});
-  if(navigator.share){
-    try{ await navigator.share({title:'NO RISK NO FUN',text,url:link}); return; }
-    catch(e){ if(e&&e.name==='AbortError')return; } // user annuleerde → niet doorvallen naar wa.me
-  }
   window.open('https://wa.me/?text='+encodeURIComponent(text+' '+link),'_blank');
 }
 function copyInviteFor(groupId){
