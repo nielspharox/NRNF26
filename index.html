@@ -650,9 +650,9 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="box" style="margin-bottom:16px">
     <div style="font-family:var(--pixel);font-size:10px;color:var(--yellow);margin-bottom:12px" data-i18n="rules_standings_title">🏅 KLASSEMENTEN</div>
     <div style="font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.7">
-      <span style="color:var(--green)" data-i18n="rules_standings_total">Totaal</span> — <span data-i18n="rules_standings_total">alle wedstrijden van het hele toernooi.</span><br>
-      <span style="color:var(--yellow)" data-i18n="rules_standings_poule">Poule Meister</span> — <span data-i18n="rules_standings_poule">alleen de groepsfase.</span><br>
-      <span style="color:var(--purple-light)" data-i18n="rules_standings_ko">Knock-out Meister</span> — <span data-i18n="rules_standings_ko">alleen de knockoutfase.</span>
+      <span data-i18n-html="rules_standings_total"></span><br>
+      <span data-i18n-html="rules_standings_poule"></span><br>
+      <span data-i18n-html="rules_standings_ko"></span>
     </div>
   </div>
 
@@ -671,8 +671,8 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="box" style="margin-bottom:16px">
     <div style="font-family:var(--pixel);font-size:10px;color:var(--yellow);margin-bottom:12px" data-i18n="rules_stats_title">🎲 STATISTIEKEN</div>
     <div style="font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.7">
-      <span style="color:var(--green)" data-i18n="rules_stats_waaghals_desc">Waaghals van de dag</span> — <span data-i18n="rules_stats_waaghals_desc">degene met de laagste gemiddelde gekozen kans op een speeldag. Ongeacht goed of fout.</span><br><br>
-      <span style="color:var(--green)" data-i18n="rules_stats_oddsbeater_desc">Odds Beater</span> — <span data-i18n="rules_stats_oddsbeater_desc">wie wint terwijl ze niet op de favoriet gokten? Hoe verder van de favoriet, hoe hoger de score.</span>
+      <span data-i18n-html="rules_stats_waaghals_desc"></span><br><br>
+      <span data-i18n-html="rules_stats_oddsbeater_desc"></span>
     </div>
   </div>
 
@@ -681,9 +681,9 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     <div style="font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.8;margin-bottom:16px" data-i18n="rules_complot_intro"></div>
     <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:10px" data-i18n="rules_haantje_powers_label">HAANTJE POWERS</div>
     <div style="font-family:var(--vt);font-size:20px;color:var(--white);line-height:2;margin-bottom:16px">
-      <span style="font-size:22px">🐑</span> <span style="color:var(--green)" data-i18n="rules_haantje_power_wake">Slaper wakker maken</span> — <span data-i18n="rules_haantje_power_wake">Geef iemand de rode pil. Hij weet nog van niets.</span><br>
-      <span style="font-size:22px">😴</span> <span style="color:var(--green)" data-i18n="rules_haantje_power_sleep">Laten slapen</span> — <span data-i18n="rules_haantje_power_sleep">Stuur een lid terug de matrix in. Ze herinneren zich niets.</span><br>
-      <span style="font-size:22px">🐓👑</span> <span style="color:var(--green)" data-i18n="rules_haantje_power_crown">Kronen</span> — <span data-i18n="rules_haantje_power_crown">Geef iemand de macht over de waarheid.</span>
+      <span data-i18n-html="rules_haantje_power_wake"></span><br>
+      <span data-i18n-html="rules_haantje_power_sleep"></span><br>
+      <span data-i18n-html="rules_haantje_power_crown"></span>
     </div>
     <div style="font-family:var(--vt);font-size:20px;color:var(--muted);line-height:1.8" data-i18n="rules_complot_haantje_note"></div>
   </div>
@@ -1079,7 +1079,7 @@ function renderSpelregels(){
   if(sb){
     sb.innerHTML=STREAKS.map((s,i)=>`<tr${i<STREAKS.length-1?' style="border-bottom:1px solid var(--border)"':''}>`
       +`<td style="padding:6px;font-family:var(--pixel);font-size:9px;color:var(--yellow)">${t('rules_streak_threshold_label',{X:s.n})}</td>`
-      +`<td style="padding:6px">${s.emoji} ${t('streak_title_'+s.n)}</td></tr>`).join('');
+      +`<td style="padding:6px">${t('streak_title_'+s.n)}</td></tr>`).join('');
   }
   const rb=document.getElementById('rules-riskprofile-body');
   if(rb){
