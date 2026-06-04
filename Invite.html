@@ -38,8 +38,12 @@ body::before {
 .wrap { width: 100%; max-width: 440px; padding: 1.5rem; }
 .card {
   background: var(--bg2); border: 4px solid var(--green);
-  box-shadow: 8px 8px 0 #000; padding: 2rem; text-align: center;
+  box-shadow: 8px 8px 0 #000; padding: 2rem; text-align: center; position: relative;
 }
+.langs { position: absolute; top: 10px; right: 12px; display: flex; gap: 6px; }
+.langs span { font-size: 18px; cursor: pointer; opacity: 0.4; line-height: 1; filter: grayscale(0.6); transition: opacity 0.15s, filter 0.15s; }
+.langs span.on { opacity: 1; filter: none; }
+.langs span:hover { opacity: 1; }
 .logo { font-family: var(--pixel); font-size: 11px; color: var(--green); text-shadow: 3px 3px 0 #004422; line-height: 1.5; margin-bottom: 4px; }
 .sub { font-family: var(--vt); font-size: 22px; color: var(--yellow); margin-bottom: 1.5rem; }
 .invite-label { font-family: var(--pixel); font-size: 8px; color: var(--muted); margin-bottom: 8px; }
@@ -74,62 +78,67 @@ input:focus { border-color: var(--green); }
 <body>
 <div class="wrap">
   <div class="card">
+    <div class="langs" id="langs">
+      <span data-l="nl" onclick="setLang('nl')" title="Nederlands">🇳🇱</span>
+      <span data-l="en" onclick="setLang('en')" title="English">🇬🇧</span>
+      <span data-l="de" onclick="setLang('de')" title="Deutsch">🇩🇪</span>
+    </div>
     <img src="apple-touch-icon.png" alt="" style="width:88px;height:88px;image-rendering:auto;margin-bottom:8px" onerror="this.style.display='none'">
     <div class="logo">NO RISK NO FUN</div>
-    <div class="sub">⚽ WK POOL 2026 ⚽</div>
-    <div style="font-family:var(--vt);font-size:19px;color:var(--white);line-height:1.4;margin-bottom:1.25rem">
+    <div class="sub" data-i18n="sub">⚽ WK POOL 2026 ⚽</div>
+    <div style="font-family:var(--vt);font-size:19px;color:var(--white);line-height:1.4;margin-bottom:1.25rem" data-i18n="pitch" data-i18n-html>
       Iedereen tipt de favoriet. <span style="color:var(--green)">Jij niet.</span><br>
       Hoe groter de underdog, hoe <span style="color:var(--yellow)">dikker de punten</span>.
     </div>
 
-    <div id="loading-group" class="loading">Complot laden...</div>
+    <div id="loading-group" class="loading" data-i18n="loading">Complot laden...</div>
 
     <div id="group-info" style="display:none">
-      <div class="invite-label">JE BENT UITGENODIGD VOOR</div>
+      <div class="invite-label" data-i18n="invited_for">JE BENT UITGENODIGD VOOR</div>
       <div class="group-name" id="group-name-display">—</div>
       <div class="group-meta" id="group-meta-display">—</div>
     </div>
 
-    <div id="err-group" class="err" style="display:none">Ongeldige uitnodigingslink.</div>
+    <div id="err-group" class="err" style="display:none" data-i18n="err_invalid">Ongeldige uitnodigingslink.</div>
 
     <hr class="divider">
 
     <!-- Al ingelogd: toon join knop -->
     <div id="block-join" style="display:none">
       <div style="font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:12px">
-        Ingelogd als <span id="logged-username" style="color:var(--green)">—</span>
+        <span data-i18n="logged_in_as">Ingelogd als</span> <span id="logged-username" style="color:var(--green)">—</span>
       </div>
-      <button class="btn btn-green" onclick="joinGroup()">🐑 LID WORDEN ▶</button>
+      <button class="btn btn-green" onclick="joinGroup()" data-i18n="join_btn">🐑 LID WORDEN ▶</button>
       <div class="err" id="join-err"></div>
       <div class="success" id="join-success"></div>
-      <button class="btn btn-ghost" onclick="window.location.href='index.html'">TERUG NAAR DE POOL</button>
+      <button class="btn btn-ghost" onclick="window.location.href='index.html'" data-i18n="back_btn">TERUG NAAR DE POOL</button>
     </div>
 
     <!-- Niet ingelogd: login of registreer -->
     <div id="block-auth" style="display:none">
-      <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:12px">
+      <div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:12px" data-i18n="auth_prompt">
         LOG IN OF REGISTREER OM LID TE WORDEN
       </div>
 
       <div id="auth-login-block">
         <form onsubmit="doLogin();return false;">
-          <div class="form-row"><label>E-MAILADRES</label><input type="email" id="inv-email" placeholder="jouw@email.nl"></div>
-          <div class="form-row"><label>WACHTWOORD</label><input type="password" id="inv-pass" placeholder="••••••••"></div>
-          <button type="submit" class="btn btn-green">INLOGGEN & LID WORDEN ▶</button>
+          <div class="form-row"><label data-i18n="label_email">E-MAILADRES</label><input type="email" id="inv-email" data-i18n-ph="ph_email" placeholder="jouw@email.nl"></div>
+          <div class="form-row"><label data-i18n="label_pass">WACHTWOORD</label><input type="password" id="inv-pass" placeholder="••••••••"></div>
+          <button type="submit" class="btn btn-green" data-i18n="login_btn">INLOGGEN & LID WORDEN ▶</button>
         </form>
         <div class="err" id="login-err"></div>
-        <div class="toggle">Geen account? <span onclick="toggleAuth(true)">Registreren</span></div>
+        <div class="toggle"><span data-i18n="toggle_to_reg_q">Geen account?</span> <span onclick="toggleAuth(true)" data-i18n="toggle_reg_link">Registreren</span></div>
       </div>
 
       <div id="auth-reg-block" style="display:none">
         <form onsubmit="doRegister();return false;">
-          <div class="form-row"><label>GEBRUIKERSNAAM</label><input type="text" id="inv-username" placeholder="jouw naam"></div>
-          <div class="form-row"><label>E-MAILADRES</label><input type="email" id="inv-reg-email" placeholder="jouw@email.nl"></div>
-          <div class="form-row"><label>WACHTWOORD</label><input type="password" id="inv-reg-pass" placeholder="min. 6 tekens"></div>
-          <button type="submit" class="btn btn-green">REGISTREREN & LID WORDEN ▶</button>
+          <div class="form-row"><label data-i18n="label_username">GEBRUIKERSNAAM</label><input type="text" id="inv-username" data-i18n-ph="ph_username" placeholder="jouw naam"></div>
+          <div class="form-row"><label data-i18n="label_email">E-MAILADRES</label><input type="email" id="inv-reg-email" data-i18n-ph="ph_email" placeholder="jouw@email.nl"></div>
+          <div class="form-row"><label data-i18n="label_pass">WACHTWOORD</label><input type="password" id="inv-reg-pass" data-i18n-ph="ph_pass_min" placeholder="min. 6 tekens"></div>
+          <button type="submit" class="btn btn-green" data-i18n="reg_btn">REGISTREREN & LID WORDEN ▶</button>
         </form>
         <div class="err" id="reg-err"></div>
-        <div class="toggle">Al een account? <span onclick="toggleAuth(false)">Inloggen</span></div>
+        <div class="toggle"><span data-i18n="toggle_to_login_q">Al een account?</span> <span onclick="toggleAuth(false)" data-i18n="toggle_login_link">Inloggen</span></div>
       </div>
     </div>
 
@@ -140,6 +149,151 @@ input:focus { border-color: var(--green); }
 const SUPABASE_URL = 'https://soonpwnwrvxmariaqdfb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── i18n: auto-detectie op de browser-/systeemtaal van de ontvanger (NL/EN/DE, default NL) ──
+const LANG = {
+  nl: {
+    title: "NO RISK NO FUN — Je bent uitgenodigd ⚽",
+    sub: "⚽ WK POOL 2026 ⚽",
+    pitch: 'Iedereen tipt de favoriet. <span style="color:var(--green)">Jij niet.</span><br>Hoe groter de underdog, hoe <span style="color:var(--yellow)">dikker de punten</span>.',
+    loading: "Complot laden...",
+    invited_for: "JE BENT UITGENODIGD VOOR",
+    err_invalid: "Ongeldige uitnodigingslink.",
+    logged_in_as: "Ingelogd als",
+    join_btn: "🐑 LID WORDEN ▶",
+    back_btn: "TERUG NAAR DE POOL",
+    auth_prompt: "LOG IN OF REGISTREER OM LID TE WORDEN",
+    label_email: "E-MAILADRES",
+    label_pass: "WACHTWOORD",
+    label_username: "GEBRUIKERSNAAM",
+    ph_email: "jouw@email.nl",
+    ph_username: "jouw naam",
+    ph_pass_min: "min. 6 tekens",
+    login_btn: "INLOGGEN & LID WORDEN ▶",
+    reg_btn: "REGISTREREN & LID WORDEN ▶",
+    toggle_to_reg_q: "Geen account?",
+    toggle_reg_link: "Registreren",
+    toggle_to_login_q: "Al een account?",
+    toggle_login_link: "Inloggen",
+    members_one: "{X} lid",
+    members_many: "{X} leden",
+    already_member: "Je zit al in dit complot!",
+    joined: "✔ Je bent lid van {X}!",
+    err_login: "✗ Verkeerd e-mail of wachtwoord.",
+    err_no_profile: "✗ Profiel niet gevonden.",
+    err_username_short: "✗ Gebruikersnaam te kort.",
+    err_pass_short: "✗ Wachtwoord min. 6 tekens.",
+    err_username_taken: "✗ Gebruikersnaam al in gebruik.",
+  },
+  en: {
+    title: "NO RISK NO FUN — You're invited ⚽",
+    sub: "⚽ WORLD CUP POOL 2026 ⚽",
+    pitch: 'Everyone picks the favourite. <span style="color:var(--green)">You don\'t.</span><br>The bigger the underdog, the <span style="color:var(--yellow)">fatter the points</span>.',
+    loading: "Loading conspiracy...",
+    invited_for: "YOU'RE INVITED TO",
+    err_invalid: "Invalid invite link.",
+    logged_in_as: "Logged in as",
+    join_btn: "🐑 JOIN ▶",
+    back_btn: "BACK TO THE POOL",
+    auth_prompt: "LOG IN OR REGISTER TO JOIN",
+    label_email: "EMAIL",
+    label_pass: "PASSWORD",
+    label_username: "USERNAME",
+    ph_email: "you@email.com",
+    ph_username: "your name",
+    ph_pass_min: "min. 6 characters",
+    login_btn: "LOG IN & JOIN ▶",
+    reg_btn: "REGISTER & JOIN ▶",
+    toggle_to_reg_q: "No account?",
+    toggle_reg_link: "Register",
+    toggle_to_login_q: "Already have an account?",
+    toggle_login_link: "Log in",
+    members_one: "{X} member",
+    members_many: "{X} members",
+    already_member: "You're already in this conspiracy!",
+    joined: "✔ You've joined {X}!",
+    err_login: "✗ Wrong email or password.",
+    err_no_profile: "✗ Profile not found.",
+    err_username_short: "✗ Username too short.",
+    err_pass_short: "✗ Password min. 6 characters.",
+    err_username_taken: "✗ Username already taken.",
+  },
+  de: {
+    title: "NO RISK NO FUN — Du bist eingeladen ⚽",
+    sub: "⚽ WM-POOL 2026 ⚽",
+    pitch: 'Alle tippen den Favoriten. <span style="color:var(--green)">Du nicht.</span><br>Je größer der Außenseiter, desto <span style="color:var(--yellow)">fetter die Punkte</span>.',
+    loading: "Verschwörung laden...",
+    invited_for: "DU BIST EINGELADEN ZU",
+    err_invalid: "Ungültiger Einladungslink.",
+    logged_in_as: "Angemeldet als",
+    join_btn: "🐑 BEITRETEN ▶",
+    back_btn: "ZURÜCK ZUM POOL",
+    auth_prompt: "ANMELDEN ODER REGISTRIEREN ZUM BEITRETEN",
+    label_email: "E-MAIL",
+    label_pass: "PASSWORT",
+    label_username: "BENUTZERNAME",
+    ph_email: "du@email.de",
+    ph_username: "dein Name",
+    ph_pass_min: "min. 6 Zeichen",
+    login_btn: "ANMELDEN & BEITRETEN ▶",
+    reg_btn: "REGISTRIEREN & BEITRETEN ▶",
+    toggle_to_reg_q: "Kein Konto?",
+    toggle_reg_link: "Registrieren",
+    toggle_to_login_q: "Schon ein Konto?",
+    toggle_login_link: "Anmelden",
+    members_one: "{X} Mitglied",
+    members_many: "{X} Mitglieder",
+    already_member: "Du bist schon in dieser Verschwörung!",
+    joined: "✔ Du bist {X} beigetreten!",
+    err_login: "✗ Falsche E-Mail oder Passwort.",
+    err_no_profile: "✗ Profil nicht gefunden.",
+    err_username_short: "✗ Benutzername zu kurz.",
+    err_pass_short: "✗ Passwort min. 6 Zeichen.",
+    err_username_taken: "✗ Benutzername bereits vergeben.",
+  },
+};
+
+function detectLang() {
+  try { const s = localStorage.getItem('nrnf_lang'); if (['nl','en','de'].includes(s)) return s; } catch (e) {}
+  const n = (navigator.language || 'nl').slice(0, 2).toLowerCase();
+  return ['nl','en','de'].includes(n) ? n : 'nl';
+}
+let lang = detectLang();
+
+function t(key, vars) {
+  let s = (LANG[lang] || LANG.nl)[key] || (LANG.nl[key] || key);
+  if (vars) for (const k in vars) s = s.replace('{' + k + '}', vars[k]);
+  return s;
+}
+
+let memberCount = null;
+function renderGroupMeta() {
+  if (memberCount == null) return;
+  document.getElementById('group-meta-display').textContent = t(memberCount === 1 ? 'members_one' : 'members_many', { X: memberCount });
+}
+
+function applyI18n() {
+  const d = LANG[lang] || LANG.nl;
+  document.documentElement.lang = lang;
+  document.title = d.title;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (d[k] == null) return;
+    if (el.hasAttribute('data-i18n-html')) el.innerHTML = d[k]; else el.textContent = d[k];
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.getAttribute('data-i18n-ph');
+    if (d[k] != null) el.placeholder = d[k];
+  });
+  document.querySelectorAll('#langs span').forEach(s => s.classList.toggle('on', s.getAttribute('data-l') === lang));
+  renderGroupMeta();
+}
+function setLang(l) {
+  if (!LANG[l]) return;
+  lang = l;
+  try { localStorage.setItem('nrnf_lang', l); } catch (e) {}
+  applyI18n();
+}
 
 let inviteCode = null;
 let groupData = null;
@@ -158,6 +312,7 @@ function getInviteCode() {
 }
 
 async function init() {
+  applyI18n();
   inviteCode = getInviteCode();
   if (!inviteCode) {
     document.getElementById('loading-group').style.display = 'none';
@@ -184,7 +339,8 @@ async function init() {
 
   // Get member count
   const { count } = await sb.from('complot_members').select('*', { count: 'exact', head: true }).eq('group_id', group.id);
-  document.getElementById('group-meta-display').textContent = `${count || 0} lid${count === 1 ? '' : 'en'}`;
+  memberCount = count || 0;
+  renderGroupMeta();
 
   // Check auth
   const { data: { session } } = await sb.auth.getSession();
@@ -200,7 +356,7 @@ async function init() {
       const { data: existing } = await sb.from('complot_members')
         .select('id').eq('group_id', group.id).eq('user_id', currentUser.id).single();
       if (existing) {
-        document.getElementById('join-success').textContent = 'Je zit al in dit complot!';
+        document.getElementById('join-success').textContent = t('already_member');
         document.querySelector('#block-join .btn-green').disabled = true;
       }
     }
@@ -225,10 +381,10 @@ async function joinGroup() {
   });
 
   if (error) {
-    if (error.code === '23505') { sucEl.textContent = 'Je zit al in dit complot!'; return; }
+    if (error.code === '23505') { sucEl.textContent = t('already_member'); return; }
     errEl.textContent = '✗ ' + error.message; return;
   }
-  sucEl.textContent = '✔ Je bent lid van ' + groupData.name + '!';
+  sucEl.textContent = t('joined', { X: groupData.name });
   setTimeout(() => window.location.href = 'index.html', 1500);
 }
 
@@ -238,10 +394,10 @@ async function doLogin() {
   const errEl = document.getElementById('login-err');
   errEl.textContent = '';
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { errEl.textContent = '✗ Verkeerd e-mail of wachtwoord.'; return; }
+  if (error) { errEl.textContent = t('err_login'); return; }
   currentUser = data.user;
   const { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-  if (!profile) { errEl.textContent = '✗ Profiel niet gevonden.'; return; }
+  if (!profile) { errEl.textContent = t('err_no_profile'); return; }
   currentProfile = profile;
   await joinGroup();
 }
@@ -252,14 +408,14 @@ async function doRegister() {
   const pass = document.getElementById('inv-reg-pass').value;
   const errEl = document.getElementById('reg-err');
   errEl.textContent = '';
-  if (username.length < 2) { errEl.textContent = '✗ Gebruikersnaam te kort.'; return; }
-  if (pass.length < 6) { errEl.textContent = '✗ Wachtwoord min. 6 tekens.'; return; }
+  if (username.length < 2) { errEl.textContent = t('err_username_short'); return; }
+  if (pass.length < 6) { errEl.textContent = t('err_pass_short'); return; }
 
   const { data, error } = await sb.auth.signUp({ email, password: pass });
   if (error) { errEl.textContent = '✗ ' + error.message; return; }
 
   const { error: pe } = await sb.from('profiles').insert({ id: data.user.id, username });
-  if (pe) { errEl.textContent = '✗ Gebruikersnaam al in gebruik.'; return; }
+  if (pe) { errEl.textContent = t('err_username_taken'); return; }
 
   currentUser = data.user;
   currentProfile = { id: data.user.id, username };

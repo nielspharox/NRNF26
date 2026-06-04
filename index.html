@@ -855,7 +855,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="invite-box">
     <div style="font-family:var(--pixel);font-size:9px;color:var(--green);margin-bottom:1rem">MAAK EEN SLAPER WAKKER 🐑</div>
     <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px" data-i18n="invite_modal_label">Gebruikersnaam van een speler:</div>
-    <input id="invite-username-input" type="text" placeholder="gebruikersnaam…" style="width:100%;box-sizing:border-box;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:8px 10px;margin-bottom:8px" onkeypress="if(event.key==='Enter')confirmInvite()">
+    <input id="invite-username-input" type="text" placeholder="gebruikersnaam of e-mail…" style="width:100%;box-sizing:border-box;font-family:var(--vt);font-size:20px;background:var(--bg3);color:var(--white);border:2px solid var(--border);padding:8px 10px;margin-bottom:8px" onkeypress="if(event.key==='Enter')confirmInvite()">
     <div id="invite-error" style="font-family:var(--vt);font-size:20px;color:var(--red);margin-bottom:8px;display:none"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-purple" style="padding:8px 14px" onclick="confirmInvite()">💊 RODE PIL GEVEN ▶</button>
@@ -886,6 +886,8 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 const SUPABASE_URL = 'https://soonpwnwrvxmariaqdfb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Slug van de uitnodigingsmail-edge-function. Deploy met: supabase functions deploy send-invite --no-verify-jwt
+const INVITE_FN = 'send-invite';
 
 // Nederlandse tijd (CEST = UTC+2 tijdens WK)
 function nlTime(kickoff,opts){if(!kickoff)return "";var d=new Date(kickoff);var def={timeZone:"Europe/Amsterdam",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"};return d.toLocaleString("nl-NL",Object.assign({},def,opts||{}));}
@@ -1790,7 +1792,23 @@ async function sendInvite(groupId,raw,errEl,closeFn){
     await loadAll();
     return;
   }
-  // Geen bestaande speler → deel de uitnodigingslink via WhatsApp / native share.
+  // Onbekend e-mailadres → uitnodiging mailen via Resend (edge function). De WhatsApp-deellink
+  // in de modal blijft altijd zichtbaar als alternatief, dus we sluiten 'm niet bij succes.
+  const looksLikeEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
+  if(looksLikeEmail){
+    const {data,error}=await sb.functions.invoke(INVITE_FN,{body:{
+      toEmail:input,
+      groupName:group?.name||'',
+      inviteUrl:inviteLink(group),
+      inviterName:currentProfile?.username||'',
+      lang:(typeof getCurrentLanguage==='function'?getCurrentLanguage():'nl')
+    }});
+    if(!error&&data&&data.ok){showToast(t('invite_mail_sent',{X:input}));return;}
+    // Geen key/fout (bijv. domein nog niet geverifieerd) → wijs op de WhatsApp-knop/kopieer-link.
+    showErr(errEl,t('invite_mail_failed'));
+    return;
+  }
+  // Geen e-mail en geen bestaande speler → deel de uitnodigingslink via WhatsApp / native share.
   if(closeFn)closeFn();
   shareInvite(groupId);
 }
