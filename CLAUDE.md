@@ -9,7 +9,7 @@
 
 Een WK voetbalpool webapp waar risico nemen beloond wordt. Hoe meer underdog je tipt, hoe meer punten je scoort. Gebouwd voor een groep vrienden/collega's.
 
-**Live:** https://nielspharox.github.io/NRNF26/
+**Live:** https://norisknofun.net (custom domain via GitHub Pages; `CNAME` in repo root. Oud adres `nielspharox.github.io/NRNF26/` redirect hierheen). **OG/meta-tags (og:image, og:url, twitter:image) in `index.html` + `Invite.html` moeten absoluut naar `https://norisknofun.net/...` wijzen — WhatsApp/social crawlers volgen de redirect van het oude domein niet, dus een oude/verkeerde og:image-URL = geen preview.**
 **Repo:** https://github.com/nielspharox/NRNF26
 **Backend:** Supabase project `soonpwnwrvxmariaqdfb`
 

@@ -8,7 +8,7 @@ Een retro-styled WK-voetbalpool waar risico nemen beloond wordt. Hoe meer underd
 
 ## Live
 
-**[nielspharox.github.io/NRNF26](https://nielspharox.github.io/NRNF26/)**
+**[norisknofun.net](https://norisknofun.net)**
 
 ---
 
