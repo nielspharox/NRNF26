@@ -467,7 +467,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
         <button type="button" class="btn btn-green" style="width:100%;margin-top:8px" onclick="doLogin()" data-i18n="auth_btn_login">INLOGGEN ▶</button>
       </form>
       <div class="auth-err" id="login-err"></div>
-      <div class="auth-toggle"><span data-i18n="auth_toggle_to_register">Geen account? Registreren</span></div>
+      <div class="auth-toggle"><span data-i18n="auth_toggle_to_register" onclick="toggleAuth(true)">Geen account? Registreren</span></div>
     </div>
     <div id="auth-register" style="display:none">
       <form onsubmit="doRegister();return false;">
