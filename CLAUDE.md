@@ -446,6 +446,7 @@ GitHub Pages deploy ~1 minuut. Hard refresh: `Cmd+Shift+R`.
 3. **Bonus/nerf systeem** — superkrachten via streaks, nog te brainstormen
 4. **Streak badge in profielmodal** — toont soms niet correct (cached data issue)
 5. **Auto-odds fetch finetunen** — edge cases afvangen
+6. **Auth-/bevestigingsmails aanzetten** — bewust UIT in Supabase tot er meer gebruikers zijn (Resend-mail-limieten). Code is voorbereid; de Custom SMTP (Resend) staat al ingevuld onder Supabase → Authentication → SMTP/Notifications. Aanzetten = in Supabase → Authentication → Providers → Email → "Confirm email" AAN, en Site URL/redirects op `https://norisknofun.net`. Daarna evt. NRNF-gestylde templates (NL-only of drietalig-gestapeld) plakken bij Email Templates.
 
 > ✅ **Live tussenstand** — gebouwd. Zie de football-data sectie (LIVE TUSSENSTAND).
 
