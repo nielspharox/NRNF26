@@ -467,6 +467,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
         <button type="button" class="btn btn-green" style="width:100%;margin-top:8px" onclick="doLogin()" data-i18n="auth_btn_login">INLOGGEN ▶</button>
       </form>
       <div class="auth-err" id="login-err"></div>
+      <div class="auth-toggle"><span data-i18n="auth_forgot_link" onclick="showForgot()">Wachtwoord vergeten?</span></div>
       <div class="auth-toggle"><span data-i18n="auth_toggle_to_register" onclick="toggleAuth(true)">Geen account? Registreren</span></div>
     </div>
     <div id="auth-register" style="display:none">
@@ -478,6 +479,29 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
       </form>
       <div class="auth-err" id="reg-err"></div>
       <div class="auth-toggle"><span data-i18n="auth_toggle_to_login">Al een account? </span><span onclick="toggleAuth(false)">Inloggen</span></div>
+    </div>
+
+    <!-- Wachtwoord vergeten: e-mail invoeren → Supabase stuurt reset-link -->
+    <div id="auth-forgot" style="display:none">
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--green);margin-bottom:10px" data-i18n="auth_forgot_title">🔑 WACHTWOORD VERGETEN</div>
+      <div style="font-family:var(--vt);font-size:18px;color:var(--muted);margin-bottom:10px" data-i18n="auth_forgot_intro">Vul je e-mailadres in — we sturen je een herstellink.</div>
+      <form onsubmit="doForgot();return false;">
+        <div class="form-row"><label data-i18n="auth_label_email">E-MAILADRES</label><input type="email" id="forgot-email" placeholder="jouw@email.nl" data-i18n-placeholder="auth_placeholder_email"></div>
+        <button type="submit" class="btn btn-green" style="width:100%;margin-top:8px" data-i18n="auth_forgot_btn">STUUR RESET-LINK ▶</button>
+      </form>
+      <div class="auth-err" id="forgot-err"></div>
+      <div class="auth-toggle"><span data-i18n="auth_forgot_back" onclick="showForgot(false)">Terug naar inloggen</span></div>
+    </div>
+
+    <!-- Recovery-modus (na klikken op de reset-link in de mail): nieuw wachtwoord zetten -->
+    <div id="auth-reset" style="display:none">
+      <div style="font-family:var(--pixel);font-size:9px;color:var(--green);margin-bottom:10px" data-i18n="auth_reset_title">🔑 NIEUW WACHTWOORD</div>
+      <div style="font-family:var(--vt);font-size:18px;color:var(--muted);margin-bottom:10px" data-i18n="auth_reset_intro">Kies een nieuw wachtwoord voor je account.</div>
+      <form onsubmit="doResetPassword();return false;">
+        <div class="form-row"><label data-i18n="auth_reset_label">NIEUW WACHTWOORD</label><input type="password" id="reset-pass" placeholder="min. 6 tekens" data-i18n-placeholder="auth_placeholder_password_min"></div>
+        <button type="submit" class="btn btn-green" style="width:100%;margin-top:8px" data-i18n="auth_reset_btn">WACHTWOORD OPSLAAN ▶</button>
+      </form>
+      <div class="auth-err" id="reset-err"></div>
     </div>
   </div>
 
@@ -997,6 +1021,43 @@ function avatarHTML(profile,size=32,onclick=''){
 function toggleAuth(showReg){
   document.getElementById('auth-login').style.display=showReg?'none':'block';
   document.getElementById('auth-register').style.display=showReg?'block':'none';
+  ['auth-forgot','auth-reset'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+}
+// Wachtwoord-vergeten: toon/verberg het e-mail-invoerblok.
+function showForgot(show=true){
+  document.getElementById('auth-login').style.display=show?'none':'block';
+  document.getElementById('auth-register').style.display='none';
+  document.getElementById('auth-reset').style.display='none';
+  document.getElementById('auth-forgot').style.display=show?'block':'none';
+  const e=document.getElementById('forgot-err');if(e){e.textContent='';e.style.color='';}
+}
+async function doForgot(){
+  const email=document.getElementById('forgot-email').value.trim();
+  const errEl=document.getElementById('forgot-err');
+  errEl.style.color='';errEl.textContent='';
+  if(!email){errEl.textContent=t('auth_forgot_email_required');return;}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
+  if(error){errEl.textContent='✗ '+error.message;return;}
+  errEl.style.color='var(--green)';
+  errEl.textContent=t('auth_forgot_sent');
+}
+// Toon het "nieuw wachtwoord"-scherm (recovery-modus na klikken op de mail-link).
+function openResetScreen(){
+  const scr=document.getElementById('auth-screen');if(scr)scr.style.display='';
+  ['auth-login','auth-register','auth-forgot'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const r=document.getElementById('auth-reset');if(r){r.style.display='block';r.scrollIntoView({block:'center'});}
+}
+async function doResetPassword(){
+  const pass=document.getElementById('reset-pass').value;
+  const errEl=document.getElementById('reset-err');
+  errEl.style.color='';errEl.textContent='';
+  if(pass.length<6){errEl.textContent=t('auth_err_password_too_short');return;}
+  const {error}=await sb.auth.updateUser({password:pass});
+  if(error){errEl.textContent='✗ '+error.message;return;}
+  history.replaceState(null,'',window.location.pathname); // recovery-hash uit de URL
+  showToast(t('auth_reset_done'));
+  const {data:{user}}=await sb.auth.getUser();
+  if(user)await handleUser(user);else location.reload();
 }
 async function doLogin(){
   const email=document.getElementById('login-email').value.trim();
@@ -3260,15 +3321,26 @@ const Pitch = (() => {
 })();
 
 // ── BOOT ─────────────────────────────────────────────────────
-sb.auth.getSession().then(({data:{session}})=>{
-  if(session?.user){
-    handleUser(session.user);
-  }else{
-    translateStaticText();
-    Pitch.renderStreaks(); // statische streaks direct tonen; live data volgt async
-    Pitch.load();
-  }
+// Wachtwoord-herstel: na klikken op de reset-link landt de gebruiker hier met
+// type=recovery in de URL. Dan NIET automatisch inloggen, maar het reset-scherm tonen.
+const isRecovery = /\btype=recovery\b/.test(window.location.hash) || /\btype=recovery\b/.test(window.location.search);
+sb.auth.onAuthStateChange((event)=>{
+  if(event==='PASSWORD_RECOVERY'){ translateStaticText(); openResetScreen(); }
 });
+if(isRecovery){
+  translateStaticText();
+  openResetScreen();
+}else{
+  sb.auth.getSession().then(({data:{session}})=>{
+    if(session?.user){
+      handleUser(session.user);
+    }else{
+      translateStaticText();
+      Pitch.renderStreaks(); // statische streaks direct tonen; live data volgt async
+      Pitch.load();
+    }
+  });
+}
 updateLangSwitcher();
 </script>
 </body>
