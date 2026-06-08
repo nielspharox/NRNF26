@@ -126,6 +126,12 @@ punten = 1000 / kans (%)   // zie calcPts(o) → Math.round(1000/Math.max(o,1))
 Geen tip = automatisch gelijkspel. Tips vergrendeld bij aftrap.
 Knockout = uitslag na 120 min (verlenging, geen penalties).
 
+**Punten ALTIJD op de match-odds van de getipte uitslag (`m.<side>_odds`), NOOIT op `tips.chosen_odds`.** Die match-odds vriezen op exact 48u vóór aftrap (zie ODDS API → geplande fetch), dus iedereen die dezelfde uitslag tipt krijgt **exact dezelfde punten** — ongeacht wanneer ze tipten. `chosen_odds` blijft opgeslagen, maar is puur informatief ("wat de speler zag op tip-moment") en wordt nergens meer voor de score/risico gebruikt. Dit geldt overal: `getScore` (klassement), H2H, odds-beater, tip-kaart (`renderTips`), podium-risico, pitch.
+
+**Risico-statistieken** (`getAvgRisk`, `calcWaaghals`, podium-dagrisico, risicoprofiel) draaien óók op de match-odds van de getipte uitslag — consistent met de scoring, niet op `chosen_odds`.
+
+**Tip-kaart bij gespeelde wedstrijden** (`renderTips`): toont per uitslag de (bevroren) odds% blijven staan zodat spelers kunnen terugkijken; op je eigen tip een groen `+punten` (gewonnen) of rood `−punten` (misgelopen, = de waarde van je eigen tip) via `pickBadge` — nooit meer een kale `X` of `+0`. Punten via `ptsOf(side)=calcPts(m.<side>_odds)`.
+
 **Gebruik altijd `getScore(userId, filter)` voor puntentelling — nooit zelf berekenen.**
 Filter opties: `'all'`, `'group'`, `'ko'`
 
@@ -175,7 +181,7 @@ Admin heeft knoppen 🔄 HERBEREKEN STREAKS en 🔄 HERBEREKEN DAGWINSTEN om dit
 1. **HOME** — Podium dagwinnaars (voetbalkaarten + pixel-art poppetjes), stats (waaghals/streak/odds beater klikbaar → popup), complotgroepjes
 2. **TIPS** — Wedstrijden tippen per fase/ronde, tip-tellingen met tooltip wie wat tipte
 3. **STAND** — Klassement (totaal/poule/knockout + per complot), laatste 3 speeldagen tips gegroepeerd per dag
-4. **SPELREGELS** — Uitleg puntensysteem, streaks, risicoprofielen, complotgroepjes
+4. **SPELREGELS** — Uitleg puntensysteem, **odds & bevriezen** (`rules_odds_*` keys: wanneer odds updaten/bevriezen op 48u), streaks, risicoprofielen, complotgroepjes
 5. **TOERNOOI** — Groepsstanden, wedstrijden, knockout bracket (visueel op desktop)
 6. **ADMIN** — Alleen voor admin: wedstrijden toevoegen, uitslagen/scores, Odds API
 
@@ -362,7 +368,14 @@ Stats zijn klikbaar op homepagina → `openStatsModal('waaghals'/'streaks'/'odds
 
 - Key opgeslagen in `settings` tabel (`key = 'odds_api_key'`)
 - Automatisch laden bij openen Admin tab via `loadOddsKey()`
-- Na laatste wedstrijd speelronde: automatisch odds voor volgende ronde via `autoFetchOddsIfRoundComplete()`
+- Client-side handmatig ophalen via `fetchOddsApi()` (admin-knop, per groepsronde)
+
+### Geplande odds-fetch (server-cron, 48u vóór de volgende ronde)
+- **Edge function `mode:"odds"`** (in `supabase/functions/fd-proxy/index.ts`, slug `swift-function`): `doOddsAuto()` **bevriest de odds per wedstrijd op ~exact 48u vóór aftrap** (cron draait elke minuut; freeze landt op de eerste minuut ná de 48u-grens). Per wedstrijd, niet per ronde (KO-rondes overlappen: de eerste R32-wedstrijd start ~17u ná de laatste groepswedstrijd, dus de R32-teams zijn 48u vóór die wedstrijd nog onbekend). Een wedstrijd wordt bevroren zodra die binnen **48u** start, geen uitslag heeft, geen warmup is, **bekende teams** heeft (placeholders `1st Group A`/`Winner M73`/`Best 3rd …` worden overgeslagen — daar heeft de bookmaker nog geen markt voor) en nog niet bevroren is. Bevriezen = verse odds ophalen + **freeze-guard `odds_frozen_m<id>`** in `settings` zetten (waarde = `kickoff|home|away`). Vanaf dat moment slaat `fetchOdds()` die wedstrijd over → de odds **liggen vast en zijn voor alle spelers gelijk**. Wedstrijden >48u bewegen (provisioneel) nog mee tot hún 48u-moment. **Uitstel:** schuift een al-bevroren wedstrijd weer >48u weg, dan wordt de freeze-guard verwijderd (ontdooien) → de odds mogen weer bewegen en bevriezen opnieuw op het nieuwe 48u-moment. Bookmaker heeft de markt nog niet? Niet bevriezen, maar **throttled retry** (max 1 call/30 min via `odds_fetch_lock`) i.p.v. elke minuut → geen credit-verbranding. Niets te bevriezen → geen externe call → 0 credits.
+- **`fetchOdds(M, region, frozen)`** doet 1 call (h2h × eu) en schrijft kansen richtingsgevoelig naar **élke** matchende, **niet-bevroren** rij in `matches` (bevroren wedstrijden in de `frozen`-set worden overgeslagen). Eén fetch vult dus meteen alle op dat moment geliste, niet-bevroren wedstrijden; daarna worden alleen de due-wedstrijden die écht odds kregen bevroren. Kosten blijven 1 credit ongeacht het aantal wedstrijden.
+- **`body.force=true`** negeert 48u + guard en haalt nu echt op (handmatig/test); zet géén guard-flag.
+- **pg_cron** (`cron_odds.sql`): job `odds-auto` elke 3u (`0 */3 * * *`) → `{"mode":"odds"}`; test-job `odds-test-tonight` (`0 19 8 6 *` = 8 juni 21:00 CEST) → `{"mode":"odds","force":true}` — ná de test opruimen met `select cron.unschedule('odds-test-tonight');`.
+- **Token-budget:** free plan = 500 credits/maand, kost = markten×regio's = h2h×eu = **1 credit/fetch**. ~1 fetch per cluster wedstrijden dat z'n 48u-moment passeert (gelijktijdige aftrappen delen één call) → enkele tientallen over het toernooi, gesplitst over juni+juli, ruim onder 500/maand. De elke-minuut-cron verbruikt 0 credits zolang er niets te bevriezen is; nog-niet-geliste wedstrijden zijn ge-throttled op 1 call/30 min.
 
 ---
 

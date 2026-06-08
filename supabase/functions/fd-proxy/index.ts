@@ -71,6 +71,147 @@ async function rpc(name: string) {
   const r = await fetch(`${DB}/rest/v1/rpc/${name}`, { method: "POST", headers: dbHeaders, body: "{}" });
   if (!r.ok) throw new Error("rpc " + name + " " + r.status);
 }
+async function setSetting(key: string, value: string) {
+  await fetch(`${DB}/rest/v1/settings`, {
+    method: "POST",
+    headers: { ...dbHeaders, Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ key, value, updated_at: new Date().toISOString() }),
+  });
+}
+async function delSetting(key: string) {
+  await fetch(`${DB}/rest/v1/settings?key=eq.${key}`, { method: "DELETE", headers: { ...dbHeaders, Prefer: "return=minimal" } });
+}
+
+// ── ODDS (the-odds-api) ──────────────────────────────────────
+// Geplande odds-fetch, server-side (pg_cron). De-odds-api dekt GEEN friendlies,
+// dus warmup wordt overgeslagen. Kost per call = markten × regio's = h2h × eu = 1 credit.
+const ODDS_BASE = "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds/";
+
+async function getOddsKey(): Promise<string> {
+  const envKey = Deno.env.get("ODDS_API_KEY");
+  if (envKey) return envKey;
+  if (!DB || !SRV) return "";
+  const r = await fetch(`${DB}/rest/v1/settings?key=eq.odds_api_key&select=value`, {
+    headers: { apikey: SRV, Authorization: `Bearer ${SRV}` },
+  });
+  if (!r.ok) return "";
+  const rows = await r.json();
+  return rows?.[0]?.value || "";
+}
+
+// 1 API-call (1 credit): haalt ALLE door de-odds-api geliste WK-wedstrijden op en
+// schrijft kansen (%) weg naar ELKE matchende rij in matches — niet beperkt tot de
+// ronde die de fetch triggert. Dus de R1-fetch vult meteen ook R2/R3 (en latere
+// rondes) als de bookmakers die al genoteerd hebben. Kosten blijven 1 credit,
+// ongeacht het aantal teruggegeven wedstrijden. Richtingsgevoelig gemapt op home/away.
+async function fetchOdds(M: any[], region = "eu", frozen: Set<number> = new Set()): Promise<{ ok?: boolean; count?: number; ids?: number[]; error?: string }> {
+  const key = await getOddsKey();
+  if (!key) return { error: "geen odds_api_key" };
+  const res = await fetch(`${ODDS_BASE}?apiKey=${key}&regions=${region}&markets=h2h&oddsFormat=decimal`);
+  if (!res.ok) return { error: "the-odds-api " + res.status };
+  const data = await res.json();
+  if (!Array.isArray(data)) return { error: "onverwacht antwoord" };
+  let count = 0;
+  const ids: number[] = [];
+  for (const ev of data) {
+    const home = canon(ev.home_team), away = canon(ev.away_team);
+    if (!home || !away) continue;
+    const market = ev.bookmakers?.[0]?.markets?.find((x: any) => x.key === "h2h");
+    const outs = market?.outcomes || [];
+    const priceOf = (n: string) => outs.find((o: any) => o.name === n)?.price;
+    const hP = 1 / (priceOf(ev.home_team) || 3);
+    const dP = 1 / (priceOf("Draw") || 4);
+    const aP = 1 / (priceOf(ev.away_team) || 3);
+    const tot = hP + dP + aP;
+    const our = M.find((m) =>
+      (m.home_team === home && m.away_team === away) || (m.home_team === away && m.away_team === home));
+    if (!our) continue;
+    if (frozen.has(our.id)) continue; // bevroren (binnen 48u) → odds NOOIT meer overschrijven
+    const homeAligned = our.home_team === home; // onze home == de-odds-api home?
+    await dbPatch(`matches?id=eq.${our.id}`, {
+      home_odds: Math.round((homeAligned ? hP : aP) / tot * 100),
+      draw_odds: Math.round(dP / tot * 100),
+      away_odds: Math.round((homeAligned ? aP : hP) / tot * 100),
+    });
+    count++; ids.push(our.id);
+  }
+  return { ok: true, count, ids };
+}
+
+// Auto-modus: per WEDSTRIJD, bevriezen op EXACT 48u (cron draait elke minuut).
+// Een wedstrijd moet bevroren worden zodra die (a) binnen 48u start, (b) geen uitslag
+// heeft, (c) geen warmup is, (d) BEKENDE teams heeft (placeholders "1st Group A"/
+// "Winner M73"/"Best 3rd …" overslaan — daar is nog geen markt voor) en (e) nog niet
+// bevroren is. Bevriezen = verse odds ophalen (1 /odds-call vult meteen ÁLLE niet-
+// bevroren wedstrijden) en dan de FREEZE-guard 'odds_frozen_m<id>' zetten. Vanaf dat
+// moment slaat fetchOdds die wedstrijd over → de odds liggen vast en zijn voor alle
+// spelers gelijk (de scoring rekent op match-odds, dus op exact deze 48u-odds).
+//   • Precisie: bevroren op de eerste minuut ná 48u → ~exact 48u.
+//   • Uitstel: schuift een bevroren wedstrijd weer >48u weg, dan wordt de freeze
+//     ongedaan gemaakt (guard verwijderd) → odds bewegen weer mee en bevriezen
+//     opnieuw op het nieuwe 48u-moment.
+//   • Wedstrijden >48u blijven (provisioneel) meebewegen tot hún 48u-moment.
+//   • Overlappende/gespreide KO-rondes komen pas in beeld zodra hun teams bekend zijn.
+//   • Bookmaker heeft de markt nog niet? Niet bevriezen; throttled retry (max 1 call/
+//     30 min via 'odds_fetch_lock') i.p.v. elke minuut → geen credit-verbranding.
+//   • Niets te bevriezen → geen externe call → 0 credits.
+// force=true negeert alles (handmatig/test): haalt nu op (zonder bevroren te raken),
+// zet geen freeze-guards.
+async function doOddsAuto(force = false, region = "eu") {
+  const M = await dbGet("matches?select=*");
+  const now = Date.now();
+  const WINDOW = 48 * 3_600_000;
+  const THROTTLE = 30 * 60_000; // min. tijd tussen retries voor nog-niet-geliste wedstrijden
+  const PLACEHOLDER = /^(1st|2nd|3rd|Best|Winner|Loser)\b/i;
+  const teamsKnown = (m: any) => m.home_team && m.away_team && !PLACEHOLDER.test(m.home_team) && !PLACEHOLDER.test(m.away_team);
+
+  // Reeds bevroren wedstrijden (freeze-guard bestaat) — die blijven onaangeroerd.
+  const guards = await dbGet(`settings?key=like.odds_frozen_m*&select=key`);
+  const frozen = new Set<number>(guards.map((g: any) => +g.key.replace("odds_frozen_m", "")).filter((n: number) => !isNaN(n)));
+
+  // ONTDOOIEN: een bevroren wedstrijd die (door uitstel) weer >48u weg is → freeze eraf.
+  // De odds mogen dan weer bewegen en bevriezen opnieuw op het nieuwe 48u-moment.
+  let thawed = 0;
+  for (const m of M) {
+    if (!frozen.has(m.id) || m.result || !m.kickoff) continue;
+    if ((new Date(m.kickoff).getTime() - now) > WINDOW) {
+      await delSetting(`odds_frozen_m${m.id}`);
+      frozen.delete(m.id); thawed++;
+    }
+  }
+
+  if (force) {
+    const r = await fetchOdds(M, region, frozen);
+    if (r.error) return { error: r.error };
+    return { ok: true, updated: r.count, thawed, forced: true };
+  }
+
+  // Te bevriezen: binnen 48u, bekende teams, geen uitslag/warmup, nog niet bevroren.
+  const toFreeze = M.filter((m) => {
+    if (m.phase === "warmup" || m.result || !m.kickoff || !teamsKnown(m) || frozen.has(m.id)) return false;
+    const k = new Date(m.kickoff).getTime();
+    return k > now && (k - now) <= WINDOW;
+  });
+  if (!toFreeze.length) return { skipped: true, reason: "niets te bevriezen binnen 48u", thawed };
+
+  // Net (deze minuut) over de 48u-grens → meteen ophalen voor een verse 48u-odd.
+  const justCrossed = toFreeze.some((m) => (new Date(m.kickoff).getTime() - now) / 3_600_000 > 48 - 2 / 60);
+  // Anders (al langer due maar bookmaker had nog geen markt): throttled retry, niet elke minuut.
+  let throttleOk = true;
+  const lock = await dbGet(`settings?key=eq.odds_fetch_lock&select=value`);
+  if (lock.length && lock[0].value) throttleOk = (now - new Date(lock[0].value).getTime()) > THROTTLE;
+  if (!justCrossed && !throttleOk) return { skipped: true, reason: "wacht op throttle voor retry" };
+
+  const r = await fetchOdds(M, region, frozen);
+  if (r.error) return { error: r.error };
+  await setSetting("odds_fetch_lock", new Date().toISOString());
+  // Bevries elke due-wedstrijd die nu odds kreeg (bookmaker had een markt). Niet-geliste
+  // wedstrijden blijven open → throttled retry tot ze er wel zijn.
+  const filled = new Set(r.ids || []);
+  let froze = 0;
+  for (const m of toFreeze) if (filled.has(m.id)) { await setSetting(`odds_frozen_m${m.id}`, `${m.kickoff}|${m.home_team}|${m.away_team}`); froze++; }
+  return { ok: true, dueCount: toFreeze.length, updated: r.count, froze, thawed };
+}
 
 // ── Bracket-logica (port van index.html updateBracket/calcGroupStandings) ──
 function calcGroupStandings(M: any[], g: string) {
@@ -237,6 +378,14 @@ Deno.serve(async (req) => {
       const secret = Deno.env.get("CRON_SECRET");
       if (secret && body.secret !== secret) return json({ error: "unauthorized" }, 403);
       return json(await doSync());
+    }
+
+    // Modus 3: geplande odds-fetch (pg_cron) — 48u vóór de eerstvolgende ronde.
+    // body.force=true → forceer nu (handmatig/test), negeert 48u + guard.
+    if (body.mode === "odds") {
+      const secret = Deno.env.get("CRON_SECRET");
+      if (secret && body.secret !== secret) return json({ error: "unauthorized" }, 403);
+      return json(await doOddsAuto(body.force === true, body.region || "eu"));
     }
 
     // Modus 1: proxy
