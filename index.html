@@ -2685,9 +2685,10 @@ async function fetchOddsApi(auto=false){
       if(auto&&errEl)errEl.innerHTML=`<div class="err">⚠ AUTO-ODDS: ${msg}</div>`;
       return false;
     }
-    let count=0,missed=[];
-    // Which matches in this round need odds?
-    const roundMatches=matches.filter(m=>m.phase==='group'&&m.round===round);
+    let count=0,frozenSkipped=0;
+    // Bevroren wedstrijden (48u-freeze via cron) NIET overschrijven — "bevroren = vast".
+    const {data:fzRows}=await sb.from('settings').select('key').like('key','odds_frozen_m%');
+    const frozenIds=new Set((fzRows||[]).map(r=>parseInt(r.key.replace('odds_frozen_m',''))).filter(n=>!isNaN(n)));
     for(const ev of data){
       const bk=ev.bookmakers[0];
       const market=bk?.markets?.find(m=>m.key==='h2h');
@@ -2698,12 +2699,14 @@ async function fetchOddsApi(auto=false){
       const tot=hP+dP+aP;
       const existing=matches.find(m=>m.home_team===ev.home_team&&m.away_team===ev.away_team);
       if(existing){
+        if(frozenIds.has(existing.id)){frozenSkipped++;continue;} // bevroren → overslaan
         await sb.from('matches').update({
           home_odds:Math.round(hP/tot*100),draw_odds:Math.round(dP/tot*100),away_odds:Math.round(aP/tot*100)
         }).eq('id',existing.id);
         count++;
       }
     }
+    const fzNote=frozenSkipped?` · ${frozenSkipped} bevroren overgeslagen`:'';
     // Check if all matches in round have non-default odds (33/34/33)
     await loadAll();
     const stillDefault=matches.filter(m=>m.phase==='group'&&m.round===round&&m.home_odds===33&&m.draw_odds===34&&m.away_odds===33);
@@ -2711,10 +2714,10 @@ async function fetchOddsApi(auto=false){
       const names=stillDefault.map(m=>teamName(m.home_team)+' vs '+teamName(m.away_team)).join(', ');
       const warn=`⚠ Niet alle odds gevuld voor ronde ${round}: ${names}`;
       if(errEl)errEl.innerHTML=`<div class="err">${warn}</div>`;
-      if(status)status.innerHTML=`<div style="color:var(--yellow);font-family:var(--vt);font-size:18px">${count} bijgewerkt maar ${stillDefault.length} wedstrijden missen nog odds!</div>`;
+      if(status)status.innerHTML=`<div style="color:var(--yellow);font-family:var(--vt);font-size:18px">${count} bijgewerkt${fzNote} maar ${stillDefault.length} wedstrijden missen nog odds!</div>`;
       return false;
     }
-    if(status)status.innerHTML=`<div style="color:var(--green);font-family:var(--vt);font-size:20px">✔ ${count} wedstrijden bijgewerkt — ronde ${round} compleet!</div>`;
+    if(status)status.innerHTML=`<div style="color:var(--green);font-family:var(--vt);font-size:20px">✔ ${count} wedstrijden bijgewerkt${fzNote} — ronde ${round} compleet!</div>`;
     return true;
   }catch(e){
     const msg='Fout: '+e.message;
