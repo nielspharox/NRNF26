@@ -253,8 +253,6 @@ const TRANSLATIONS = {
     rules_haantje_power_sleep: '<span style="font-size:22px">😴</span> <span style="color:var(--green)">Laten slapen</span> — Stuur een lid terug de matrix in. Ze herinneren zich niets.',
     rules_haantje_power_crown: '<span style="font-size:22px">🐓👑</span> <span style="color:var(--green)">Kronen</span> — Geef iemand de macht over de waarheid.',
     rules_complot_haantje_note: "Een Haantje kan het complot pas verlaten als er een ander Haantje de fakkel overneemt. De waarheid moet voortbestaan.",
-    rules_odds_title: "📅 ODDS & SPEELRONDES",
-    rules_odds_body: "De kansen worden opgehaald via The Odds API. De admin haalt na elke speelronde de odds op voor de volgende ronde. Hoe actueler de odds, hoe eerlijker de puntenverdeling.",
 
     // STREAK TITLES
     streak_title_2: "🌵🤠 EL JEFE",
@@ -693,8 +691,6 @@ const TRANSLATIONS = {
     rules_haantje_power_sleep: '<span style="font-size:22px">😴</span> <span style="color:var(--green)">Put to sleep</span> — Send a member back into the matrix. They\'ll remember nothing.',
     rules_haantje_power_crown: '<span style="font-size:22px">🐓👑</span> <span style="color:var(--green)">Crown</span> — Hand someone the power over the truth.',
     rules_complot_haantje_note: "A Top Rooster can only leave the conspiracy once another Top Rooster takes over. The truth must live on.",
-    rules_odds_title: "📅 ODDS & MATCH ROUNDS",
-    rules_odds_body: "Odds are fetched via The Odds API. The admin fetches the odds after each round for the next one. The more up to date the odds, the fairer the points distribution.",
 
     // STREAK TITLES (same in all languages)
     streak_title_2: "🌵🤠 EL JEFE",
@@ -1133,8 +1129,6 @@ const TRANSLATIONS = {
     rules_haantje_power_sleep: '<span style="font-size:22px">😴</span> <span style="color:var(--green)">Schlafen lassen</span> — Schick ein Mitglied zurück in die Matrix. Sie erinnern sich an nichts.',
     rules_haantje_power_crown: '<span style="font-size:22px">🐓👑</span> <span style="color:var(--green)">Krönen</span> — Gib jemandem die Macht über die Wahrheit.',
     rules_complot_haantje_note: "Ein Hahn kann das Komplott erst verlassen, wenn ein anderer Hahn die Fackel übernimmt. Die Wahrheit muss weiterleben.",
-    rules_odds_title: "📅 QUOTEN & SPIELRUNDEN",
-    rules_odds_body: "Die Quoten werden über The Odds API abgerufen. Der Admin holt nach jeder Runde die Quoten für die nächste. Je aktueller die Quoten, desto fairer die Punkteverteilung.",
 
     // STREAK TITLES (same in all languages)
     streak_title_2: "🌵🤠 EL JEFE",

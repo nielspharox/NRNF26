@@ -26,7 +26,9 @@
 --
 -- Draait server-side → werkt ook als niemand de app open heeft.
 -- Anon key hieronder is publiek (staat ook in index.html) en wordt door de gateway
--- als apikey-header geëist. Optioneel: beveilig met CRON_SECRET (zie onder).
+-- als apikey-header geëist. LET OP: er staat project-breed een CRON_SECRET ingesteld,
+-- dus swift-function eist die af voor mode:odds/sync → vervang <JOUW_CRON_SECRET>
+-- hieronder door de echte waarde (Edge Functions → Secrets), anders krijg je 403.
 -- ============================================================
 
 create extension if not exists pg_cron;
@@ -49,8 +51,9 @@ select cron.schedule(
         'apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8',
         'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8'
       ),
-      -- Met CRON_SECRET op de functie: {"mode":"odds","secret":"<jouw_secret>"}
-      body := '{"mode":"odds"}'::jsonb
+      -- CRON_SECRET is project-breed gezet → swift-function dwingt 'm af. Vervang
+      -- <JOUW_CRON_SECRET> hieronder door de waarde uit Edge Functions → Secrets.
+      body := '{"mode":"odds","secret":"<JOUW_CRON_SECRET>"}'::jsonb
     );
   $$
 );
@@ -73,7 +76,7 @@ select cron.schedule(
         'apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8',
         'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8'
       ),
-      body := '{"mode":"odds","force":true}'::jsonb
+      body := '{"mode":"odds","force":true,"secret":"<JOUW_CRON_SECRET>"}'::jsonb
     );
   $$
 );
