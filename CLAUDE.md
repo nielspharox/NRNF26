@@ -159,7 +159,7 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 
 **Fases:** `warmup`, `group`, `r32`, `r16`, `qf`, `sf`, `third`, `final`
 
-**`warmup`** — aparte oefenronde (friendlies) als **generale repetitie**. Telt tijdens de testperiode gewoon mee voor totaal, streaks, dagwinsten, waaghals, oddsbeater en podium (zodat alle gamification getest wordt). Heeft een eigen WARM-UP filter in de TIPS-tab + "WARM-UP" fase-badge. Valt vanzelf buiten POULE MEISTER/KNOCK-OUT MEISTER want phase ≠ `group` en niet in `koPhases`. **"Telt niet mee voor het WK" = warm-up wissen vóór het WK.** Twee scenario's:
+**`warmup`** — aparte oefenronde (friendlies) als **generale repetitie**. Telt tijdens de testperiode gewoon mee voor totaal, streaks, dagwinsten, waaghals, oddsbeater en podium (zodat alle gamification getest wordt). Had een eigen WARM-UP filter in de TIPS- én Admin-tab — **na de oefenronde verwijderd** (juni 2026); de `warmup`-fase + `getPhaseLabel('warmup')`-badge + `tips_filter_warmup`-key bestaan nog, dus terugzetten = alleen de filterknoppen weer toevoegen. Valt vanzelf buiten POULE MEISTER/KNOCK-OUT MEISTER want phase ≠ `group` en niet in `koPhases`. **"Telt niet mee voor het WK" = warm-up wissen vóór het WK.** Twee scenario's:
 - **Nog géén WK-tips ingevuld** → `reset_voor_warmup.sql` (wist ÁLLE matches+tips, zet streaks/dagwinsten op 0) en importeer daarna het WK schoon.
 - **Spelers hebben al WK-tips ingevuld** → NIET de volledige reset! Gebruik **`wis_warmup.sql`**: verwijdert alleen `phase='warmup'`-wedstrijden + hun tips en draait `recalc_streaks()`/`recalc_day_wins()`. WK-wedstrijden, poule-/KO-tips en odds blijven intact; streaks/dagwinsten worden 0 (WK nog zonder uitslag). Geen RPC-aanpassing nodig. `getScore(uid,'warmup')` geeft de warm-up-only score (handig om vóór de reset een testronde-winnaar te bepalen).
 **Speelrondes groep:** round 1, 2, 3
@@ -181,11 +181,11 @@ Admin heeft knoppen 🔄 HERBEREKEN STREAKS en 🔄 HERBEREKEN DAGWINSTEN om dit
 ## APP STRUCTUUR (tabs)
 
 1. **HOME** — Podium dagwinnaars (voetbalkaarten + pixel-art poppetjes), stats (waaghals/streak/odds beater klikbaar → popup), complotgroepjes
-2. **TIPS** — Wedstrijden tippen per fase/ronde, tip-tellingen met tooltip wie wat tipte
+2. **TIPS** — Wedstrijden tippen per fase/ronde, tip-tellingen met tooltip wie wat tipte. Opent automatisch op de fase van de eerstvolgende wedstrijd (`getNextTipPhaseFilter`) en scrollt ernaartoe (`scrollToNextTip`). Filters: ALLES · GROEPSFASE · RONDE 1/2/3 · 1/32…FINALE (géén WARM-UP meer)
 3. **STAND** — Klassement (totaal/poule/knockout + per complot), laatste 3 speeldagen tips gegroepeerd per dag
 4. **SPELREGELS** — Uitleg puntensysteem, **odds & bevriezen** (`rules_odds_*` keys: wanneer odds updaten/bevriezen op 48u), streaks, risicoprofielen, complotgroepjes
 5. **TOERNOOI** — Groepsstanden, wedstrijden, knockout bracket (visueel op desktop)
-6. **ADMIN** — Alleen voor admin: wedstrijden toevoegen, uitslagen/scores, Odds API
+6. **ADMIN** — Alleen voor admin: wedstrijden toevoegen, uitslagen/scores (met fase-filters RONDE 1/2/3 · 1/32…FINALE via `filterAdmin`, opent op fase van eerstvolgende wedstrijd), Odds API (`fetchOddsApi` respecteert de freeze)
 
 ---
 
@@ -372,11 +372,11 @@ Stats zijn klikbaar op homepagina → `openStatsModal('waaghals'/'streaks'/'odds
 - Automatisch laden bij openen Admin tab via `loadOddsKey()`
 - Client-side handmatig ophalen via `fetchOddsApi()` (admin-knop, per groepsronde) — **slaat bevroren wedstrijden over** (leest `odds_frozen_m*` uit `settings`), zodat "bevroren = vast" óók geldt bij een handmatige fetch; toont hoeveel er zijn overgeslagen
 
-### Geplande odds-fetch (server-cron, 48u vóór de volgende ronde)
+### Geplande odds-fetch (server-cron, bevriest per wedstrijd op exact 48u)
 - **Edge function `mode:"odds"`** (in `supabase/functions/fd-proxy/index.ts`, slug `swift-function`): `doOddsAuto()` **bevriest de odds per wedstrijd op ~exact 48u vóór aftrap** (cron draait elke minuut; freeze landt op de eerste minuut ná de 48u-grens). Per wedstrijd, niet per ronde (KO-rondes overlappen: de eerste R32-wedstrijd start ~17u ná de laatste groepswedstrijd, dus de R32-teams zijn 48u vóór die wedstrijd nog onbekend). Een wedstrijd wordt bevroren zodra die binnen **48u** start, geen uitslag heeft, geen warmup is, **bekende teams** heeft (placeholders `1st Group A`/`Winner M73`/`Best 3rd …` worden overgeslagen — daar heeft de bookmaker nog geen markt voor) en nog niet bevroren is. Bevriezen = verse odds ophalen + **freeze-guard `odds_frozen_m<id>`** in `settings` zetten (waarde = `kickoff|home|away`). Vanaf dat moment slaat `fetchOdds()` die wedstrijd over → de odds **liggen vast en zijn voor alle spelers gelijk**. Wedstrijden >48u bewegen (provisioneel) nog mee tot hún 48u-moment. **Uitstel:** schuift een al-bevroren wedstrijd weer >48u weg, dan wordt de freeze-guard verwijderd (ontdooien) → de odds mogen weer bewegen en bevriezen opnieuw op het nieuwe 48u-moment. Bookmaker heeft de markt nog niet? Niet bevriezen, maar **throttled retry** (max 1 call/30 min via `odds_fetch_lock`) i.p.v. elke minuut → geen credit-verbranding. Niets te bevriezen → geen externe call → 0 credits.
 - **`fetchOdds(M, region, frozen)`** doet 1 call (h2h × eu) en schrijft kansen richtingsgevoelig naar **élke** matchende, **niet-bevroren** rij in `matches` (bevroren wedstrijden in de `frozen`-set worden overgeslagen). Eén fetch vult dus meteen alle op dat moment geliste, niet-bevroren wedstrijden; daarna worden alleen de due-wedstrijden die écht odds kregen bevroren. Kosten blijven 1 credit ongeacht het aantal wedstrijden.
 - **`body.force=true`** negeert 48u + guard en haalt nu echt op (handmatig/test); zet géén guard-flag.
-- **pg_cron** (`cron_odds.sql`): job `odds-auto` elke 3u (`0 */3 * * *`) → `{"mode":"odds"}`; test-job `odds-test-tonight` (`0 19 8 6 *` = 8 juni 21:00 CEST) → `{"mode":"odds","force":true}` — ná de test opruimen met `select cron.unschedule('odds-test-tonight');`.
+- **pg_cron** (`cron_odds.sql`): job `odds-auto` **elke minuut** (`* * * * *`) → `{"mode":"odds","secret":"<CRON_SECRET>"}` (freeze op exact 48u); test-job `odds-test-tonight` (`0 19 8 6 *` = 8 juni 21:00 CEST) → `{"mode":"odds","force":true,"secret":"<CRON_SECRET>"}` — ná de test opruimen met `select cron.unschedule('odds-test-tonight');`. **`CRON_SECRET`** staat project-breed onder Edge Functions → Secrets; `swift-function` dwingt 'm af voor `mode:sync`/`mode:odds`, dus de cron-bodies MOETEN 'm meesturen (anders 403). Dit dicht meteen het risico van de open (JWT-uit) functie.
 - **Token-budget:** free plan = 500 credits/maand, kost = markten×regio's = h2h×eu = **1 credit/fetch**. ~1 fetch per cluster wedstrijden dat z'n 48u-moment passeert (gelijktijdige aftrappen delen één call) → enkele tientallen over het toernooi, gesplitst over juni+juli, ruim onder 500/maand. De elke-minuut-cron verbruikt 0 credits zolang er niets te bevriezen is; nog-niet-geliste wedstrijden zijn ge-throttled op 1 call/30 min.
 
 ---

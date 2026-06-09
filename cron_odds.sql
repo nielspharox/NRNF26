@@ -84,7 +84,8 @@ select cron.schedule(
 -- ── Handig ──
 -- Bekijken:   select jobid, jobname, schedule, active from cron.job;
 -- Logs:       select * from cron.job_run_details order by start_time desc limit 20;
--- Guard-flags: select * from settings where key like 'odds_fetched_%';
--- Reset ronde: delete from settings where key = 'odds_fetched_group-1';  -- forceer opnieuw
+-- Freeze-guards: select * from settings where key like 'odds_frozen_m%';
+-- Ontdooi 1 wedstrijd: delete from settings where key = 'odds_frozen_m<id>';  -- odds mogen weer bewegen
+-- Responses:   select status_code, content, created from net._http_response order by created desc limit 20;
 -- Stoppen:    select cron.unschedule('odds-auto');
 --             select cron.unschedule('odds-test-tonight');

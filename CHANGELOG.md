@@ -4,6 +4,39 @@ Dagelijkse voortgang van het project.
 
 ---
 
+## Maandag 8 – dinsdag 9 juni 2026
+
+### Geplande odds-fetch + bevriezen op exact 48u (server-cron)
+- **Edge function `swift-function` (`fd-proxy/index.ts`) uitgebreid met `mode:"odds"`** (`doOddsAuto`): bevriest odds **per wedstrijd op ~exact 48u vóór aftrap** — niet per ronde, want KO-rondes overlappen (1e R32-wedstrijd start ~17u ná de laatste groepswedstrijd)
+- Bevriezen = verse odds ophalen + freeze-guard `odds_frozen_m<id>` in `settings`; daarna slaat `fetchOdds()` die wedstrijd over → odds liggen vast, voor iedereen gelijk
+- Placeholders (`1st Group A`/`Winner M73`/`Best 3rd …`) worden overgeslagen → KO-duels komen pas in beeld zodra de teams bekend zijn
+- **Ontdooien bij uitstel**: schuift een bevroren wedstrijd weer >48u weg → guard eraf → odds bewegen weer mee en bevriezen opnieuw op het nieuwe 48u-moment
+- Eén `/odds`-call (h2h×eu = 1 credit) vult meteen álle niet-bevroren geliste wedstrijden; throttle (max 1 call/30 min via `odds_fetch_lock`) voor nog-niet-geliste wedstrijden → geen credit-verbranding
+- **pg_cron `cron_odds.sql`**: `odds-auto` elke minuut (`* * * * *`), test-job `odds-test-tonight`. Beide sturen `CRON_SECRET` mee (project-breed secret; `swift-function` dwingt 'm af → dicht de open JWT-uit-functie af)
+- `force:true` = handmatig/test, negeert 48u + guard, respecteert wel de freeze
+- Token-budget: enkele tientallen credits over het hele toernooi, ruim onder 500/maand
+
+### Scoring & risico altijd op de bevroren 48u match-odds
+- Punten worden overal berekend op `m.<side>_odds` (de bevroren 48u-odds), **nooit meer op `tips.chosen_odds`** → iedereen die dezelfde uitslag tipt krijgt exact dezelfde punten, ongeacht tip-moment
+- Rechtgetrokken in tip-kaart (`renderTips`) en pitch (`daringOpenTips`); `getScore`/H2H/odds-beater deden dit al
+- Risico-statistieken (`getAvgRisk`, podium-dagrisico) nu óók op match-odds i.p.v. `chosen_odds` (`calcWaaghals` deed dit al)
+
+### Tip-kaart bij gespeelde wedstrijden verbeterd
+- Toont nu per uitslag de (bevroren) odds% — ook ná afloop, zodat spelers kunnen terugkijken
+- Op je eigen tip: groen `+punten` (gewonnen) of rood `−punten` (misgelopen, = waarde van je tip) via `pickBadge` — geen kale `X` of `+0` meer
+
+### Speluitleg, filters & UX
+- **SPELREGELS**: nieuwe box "🔒 ODDS & BEVRIEZEN" (NL/EN/DE) — legt uit wanneer odds bewegen en wanneer ze op 48u bevriezen. Oude dubbele `rules_odds_*`-key (verouderde "per ronde"-tekst) verwijderd
+- **TIPS-tab**: opent automatisch op de fase van de eerstvolgende wedstrijd + scrollt ernaartoe (`scrollToNextTip`)
+- **Admin uitslagen**: fase-filters toegevoegd (RONDE 1/2/3 · 1/32…FINALE via `filterAdmin`), opent op de juiste fase
+- **Admin "ODDS OPHALEN"** respecteert nu de freeze (slaat bevroren wedstrijden over) → "bevroren = vast" geldt overal
+
+### Warm-up afgerond vóór WK-start
+- **`wis_warmup.sql`**: chirurgische reset die ALLEEN de warm-up wist (matches + tips `phase='warmup'`) en streaks/dagwinsten herberekent — WK-wedstrijden, al ingevoerde poule-/KO-tips en opgehaalde odds blijven intact (i.p.v. `reset_voor_warmup.sql`, die álles zou wissen)
+- Warm-up filterknop verwijderd uit de TIPS- én Admin-tab (oefenronde voorbij); admin-default → RONDE 1
+
+---
+
 ## Vrijdag 29 mei 2026
 
 ### Stand: komende speeldag bovenaan in de tip-kolom
