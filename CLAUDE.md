@@ -159,7 +159,9 @@ Filter opties: `'all'`, `'group'`, `'ko'`
 
 **Fases:** `warmup`, `group`, `r32`, `r16`, `qf`, `sf`, `third`, `final`
 
-**`warmup`** — aparte oefenronde (friendlies) als **generale repetitie**. Telt tijdens de testperiode gewoon mee voor totaal, streaks, dagwinsten, waaghals, oddsbeater en podium (zodat alle gamification getest wordt). Heeft een eigen WARM-UP filter in de TIPS-tab + "WARM-UP" fase-badge. Valt vanzelf buiten POULE MEISTER/KNOCK-OUT MEISTER want phase ≠ `group` en niet in `koPhases`. **"Telt niet mee voor het WK" = de reset vóór het WK**: draai `reset_voor_warmup.sql` opnieuw (wist matches+tips, zet streaks/dagwinsten op 0) en importeer daarna het WK schoon. Geen RPC-aanpassing nodig. `getScore(uid,'warmup')` geeft de warm-up-only score (handig om vóór de reset een testronde-winnaar te bepalen).
+**`warmup`** — aparte oefenronde (friendlies) als **generale repetitie**. Telt tijdens de testperiode gewoon mee voor totaal, streaks, dagwinsten, waaghals, oddsbeater en podium (zodat alle gamification getest wordt). Heeft een eigen WARM-UP filter in de TIPS-tab + "WARM-UP" fase-badge. Valt vanzelf buiten POULE MEISTER/KNOCK-OUT MEISTER want phase ≠ `group` en niet in `koPhases`. **"Telt niet mee voor het WK" = warm-up wissen vóór het WK.** Twee scenario's:
+- **Nog géén WK-tips ingevuld** → `reset_voor_warmup.sql` (wist ÁLLE matches+tips, zet streaks/dagwinsten op 0) en importeer daarna het WK schoon.
+- **Spelers hebben al WK-tips ingevuld** → NIET de volledige reset! Gebruik **`wis_warmup.sql`**: verwijdert alleen `phase='warmup'`-wedstrijden + hun tips en draait `recalc_streaks()`/`recalc_day_wins()`. WK-wedstrijden, poule-/KO-tips en odds blijven intact; streaks/dagwinsten worden 0 (WK nog zonder uitslag). Geen RPC-aanpassing nodig. `getScore(uid,'warmup')` geeft de warm-up-only score (handig om vóór de reset een testronde-winnaar te bepalen).
 **Speelrondes groep:** round 1, 2, 3
 
 ### RLS (Row Level Security) op `tips`
@@ -471,6 +473,7 @@ GitHub Pages deploy ~1 minuut. Hard refresh: `Cmd+Shift+R`.
 
 - `testdata.sql` — 5 dummy spelers + alle 72 groepsuitslagen
 - `cleanup.sql` — reset alles voor het echte toernooi
+- `wis_warmup.sql` — wist ALLEEN de warm-up (matches+tips phase='warmup') + recalc streaks/dagwinsten; WK-tips/odds blijven (gebruik dit als er al WK-tips zijn)
 - `beste_nummers_3.sql` — welke 8 nummers 3 gaan door
 - `nummers3_invullen.sql` — vul beste nummers 3 in R32 bracket
 - `setup_final.sql` — complete database setup (eenmalig)

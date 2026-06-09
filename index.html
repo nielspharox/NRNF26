@@ -596,7 +596,6 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
   <div class="sec-sub" data-i18n="tips_section_sub">Vergrendeld bij aftrap · Knockout na 120 min</div>
   <div class="phase-tabs">
     <button class="phase-tab active" onclick="filterPhase('all',this)" data-i18n="tips_filter_all">ALLES</button>
-    <button class="phase-tab" onclick="filterPhase('warmup',this)" data-i18n="tips_filter_warmup">🔥 WARM-UP</button>
     <button class="phase-tab" onclick="filterPhase('group',this)" data-i18n="tips_filter_group">GROEPSFASE</button>
     <button class="phase-tab" onclick="filterPhase('group1',this)" data-i18n="tips_filter_round1">RONDE 1</button>
     <button class="phase-tab" onclick="filterPhase('group2',this)" data-i18n="tips_filter_round2">RONDE 2</button>
@@ -785,8 +784,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
     <button class="btn btn-purple btn-sm" style="margin-bottom:12px" onclick="recalcAllStreaks()">🔄 HERBEREKEN STREAKS</button>
     <button class="btn btn-purple btn-sm" style="margin-bottom:12px;margin-left:8px" onclick="recalcAllDayWins()">🔄 HERBEREKEN DAGWINSTEN</button>
     <div class="phase-tabs" id="admin-tabs">
-      <button class="phase-tab active" onclick="filterAdmin('warmup',this)">🔥 WARM-UP</button>
-      <button class="phase-tab" onclick="filterAdmin('group1',this)">RONDE 1</button>
+      <button class="phase-tab active" onclick="filterAdmin('group1',this)">RONDE 1</button>
       <button class="phase-tab" onclick="filterAdmin('group2',this)">RONDE 2</button>
       <button class="phase-tab" onclick="filterAdmin('group3',this)">RONDE 3</button>
       <button class="phase-tab" onclick="filterAdmin('r32',this)">1/32</button>
@@ -989,7 +987,7 @@ let currentUser=null, currentProfile=null;
 let matches=[], allTips=[], allProfiles=[];
 let myTips={}, pendingTips={};
 let complotGroups=[], complotMembers=[], myInvites=[];
-let currentPhaseFilter='all', currentStandFilter='total', currentTournamentFilter='group_standings', currentAdminFilter='warmup';
+let currentPhaseFilter='all', currentStandFilter='total', currentTournamentFilter='group_standings', currentAdminFilter='group1';
 let viewingProfile=null;
 
 // ── HELPERS ──────────────────────────────────────────────────
@@ -1232,7 +1230,7 @@ function showTab(id,btn){
   if(id==='admin'){
     loadOddsKey();FD.loadKey();loadResendSettings();
     let aphase=getNextTipPhaseFilter();
-    if(aphase==='all'||aphase==='group') aphase='warmup';
+    if(aphase==='all'||aphase==='group'||aphase==='warmup') aphase='group1';
     currentAdminFilter=aphase;
     document.querySelectorAll('#admin-tabs .phase-tab').forEach(t=>t.classList.remove('active'));
     const aBtn=[...document.querySelectorAll('#admin-tabs .phase-tab')].find(b=>b.getAttribute('onclick')?.includes(`filterAdmin('${aphase}'`));
