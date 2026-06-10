@@ -291,8 +291,11 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .group-table td{font-family:var(--vt);font-size:18px;padding:5px 6px;border-bottom:1px solid rgba(85,0,170,0.2);text-align:center}
 .group-table td:first-child{text-align:left;font-family:var(--oswald);font-weight:700;font-size:16px}
 .group-match{font-family:var(--vt);font-size:18px;padding:8px 0;border-bottom:1px solid rgba(85,0,170,0.3);display:flex;flex-direction:column;gap:3px}
-.rp{font-family:var(--pixel);font-size:6px;padding:2px 5px}
+.rp{font-family:var(--pixel);font-size:6px;padding:2px 5px;white-space:nowrap;flex-shrink:0}
 .rp-home{background:var(--green);color:#000}.rp-draw{background:var(--yellow);color:#000}.rp-away{background:var(--red);color:#fff}
+/* Toernooi: volledige teamnaam op desktop, 3-lettercode op mobiel */
+.tn-abbr{display:none}
+@media(max-width:600px){.tn-full{display:none}.tn-abbr{display:inline}}
 .ko-round{margin-bottom:1.5rem}
 .ko-title{font-family:var(--pixel);font-size:9px;color:var(--purple-light);margin-bottom:10px;border-bottom:2px solid var(--border);padding-bottom:6px}
 .ko-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
@@ -2473,7 +2476,7 @@ function renderTournament(){
         <table class="group-table">
           <thead><tr><th style="text-align:left">${t('toernooi_table_col_team')}</th><th>${t('toernooi_table_col_g')}</th><th>${t('toernooi_table_col_w')}</th><th>${t('toernooi_table_col_d')}</th><th>${t('toernooi_table_col_v')}</th><th>${t('toernooi_table_col_gv')}</th><th>${t('toernooi_table_col_gt')}</th><th>${t('toernooi_table_col_diff')}</th><th>${t('toernooi_table_col_pts')}</th></tr></thead>
           <tbody>${standings.length?standings.map((s,i)=>`<tr style="${i<2?'color:var(--green)':i===2?'color:var(--yellow)':''}">
-            <td>${crestImg(s.name,16)} ${teamShort[s.name]||teamName(s.name)}</td>
+            <td style="white-space:nowrap">${crestImg(s.name,16)} <span class="tn-full">${teamShort[s.name]||teamName(s.name)}</span><span class="tn-abbr">${teamShort[s.name]||s.name.slice(0,3).toUpperCase()}</span></td>
             <td>${s.p}</td><td>${s.w}</td><td>${s.d}</td><td>${s.l}</td>
             <td>${s.gf}</td><td>${s.ga}</td><td>${s.gf-s.ga>=0?'+':''}${s.gf-s.ga}</td>
             <td style="font-weight:700">${s.pts}</td>
@@ -2496,7 +2499,7 @@ function renderTournament(){
           return`<div class="group-match" style="flex-direction:column;align-items:flex-start;gap:3px">
             ${timeStr}
             <div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:8px">
-              <span style="font-family:var(--oswald);font-weight:700;font-size:17px">${crestImg(m.home_team,18)} ${teamName(m.home_team)} - ${teamName(m.away_team)} ${crestImg(m.away_team,18)}</span>${pill}
+              <span style="font-family:var(--oswald);font-weight:700;font-size:17px">${crestImg(m.home_team,18)} <span class="tn-full">${teamName(m.home_team)}</span><span class="tn-abbr">${teamShort[m.home_team]||m.home_team.slice(0,3).toUpperCase()}</span> - <span class="tn-full">${teamName(m.away_team)}</span><span class="tn-abbr">${teamShort[m.away_team]||m.away_team.slice(0,3).toUpperCase()}</span> ${crestImg(m.away_team,18)}</span>${pill}
             </div>
           </div>`;
         }).join('')}
