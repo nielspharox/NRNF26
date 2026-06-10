@@ -196,9 +196,9 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .pick-btn{background:var(--bg3);border:2px solid var(--border);color:var(--white);font-family:var(--oswald);font-size:16px;font-weight:700;padding:14px 8px;cursor:pointer;text-align:center;transition:all 0.1s;text-transform:uppercase;line-height:1.3}
 .pick-btn:hover:not(:disabled){border-color:var(--green);color:var(--green)}
 .pick-btn:disabled{opacity:0.5;cursor:not-allowed}
-.pick-btn .team-odds{display:block;font-family:var(--pixel);font-size:9px;color:var(--white);margin-top:4px;font-weight:400}
-.pick-btn .team-pts{display:block;font-family:var(--pixel);font-size:9px;margin-top:3px}
-.pick-draw{background:var(--bg3);border:2px solid var(--border);color:var(--white);font-family:var(--pixel);font-size:9px;padding:14px 6px;cursor:pointer;text-align:center;transition:all 0.1s;width:80px;line-height:1.6}
+.pick-btn .team-odds,.pick-draw .team-odds{display:block;font-family:var(--pixel);font-size:9px;color:var(--white);margin-top:4px;font-weight:400}
+.pick-btn .team-pts,.pick-draw .team-pts{display:block;font-family:var(--pixel);font-size:9px;margin-top:3px}
+.pick-draw{background:var(--bg3);border:2px solid var(--border);color:var(--white);font-family:var(--oswald);font-size:16px;font-weight:700;text-transform:uppercase;padding:14px 6px;cursor:pointer;text-align:center;transition:all 0.1s;width:80px;line-height:1.3}
 .pick-draw:hover:not(:disabled){border-color:var(--yellow);color:var(--yellow)}
 .pick-draw:disabled{opacity:0.5;cursor:not-allowed}
 .sel-home{background:rgba(0,255,102,0.15)!important;border-color:var(--green)!important;color:var(--green)!important}
@@ -2158,7 +2158,7 @@ function renderTips(){
     const pickRow=res?`
       <div class="pick-row">
         <button class="${hBtnClass}" disabled>
-          <span style="display:block;margin-bottom:4px">${crestImg(m.home_team,28)}</span>${teamName(m.home_team)}
+          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px">${crestImg(m.home_team,28)}</span>${teamName(m.home_team)}
           <span class="team-odds">${m.home_odds}%</span>
           ${tip==='home'?pickBadge('home'):`<span class="team-pts">${ptsOf('home')} PTS</span>`}
         </button>
@@ -2168,21 +2168,20 @@ function renderTips(){
           ${tip==='draw'?pickBadge('draw'):''}
         </div>
         <button class="${aBtnClass}" disabled>
-          <span style="display:block;margin-bottom:4px">${crestImg(m.away_team,28)}</span>${teamName(m.away_team)}
+          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px">${crestImg(m.away_team,28)}</span>${teamName(m.away_team)}
           <span class="team-odds">${m.away_odds}%</span>
           ${tip==='away'?pickBadge('away'):`<span class="team-pts">${ptsOf('away')} PTS</span>`}
         </button>
       </div>`:`
       <div class="pick-row">
         <button class="pick-btn ${tip==='home'?'sel-home':''}" onclick="pickTip(${m.id},'home',this)" ${locked?'disabled':''}>
-          <span style="display:block;margin-bottom:4px">${crestImg(m.home_team,28)}</span>${teamName(m.home_team)}<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>
+          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px">${crestImg(m.home_team,28)}</span>${teamName(m.home_team)}<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>
         </button>
         <button class="pick-draw ${tip==='draw'?'sel-draw':''}" onclick="pickTip(${m.id},'draw',this)" ${locked?'disabled':''}>
-          ${t('tips_match_draw')}<br><span style="font-size:6px">${m.draw_odds}%</span><br>
-          <span style="font-family:var(--pixel);font-size:6px;color:var(--yellow)">${calcPts(m.draw_odds)}</span>
+          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px;font-size:20px">🤝</span>${t('tips_match_draw')}<span class="team-odds">${m.draw_odds}%</span><span class="team-pts" style="color:var(--yellow)">${calcPts(m.draw_odds)} PTS</span>
         </button>
         <button class="pick-btn ${tip==='away'?'sel-away':''}" onclick="pickTip(${m.id},'away',this)" ${locked?'disabled':''}>
-          <span style="display:block;margin-bottom:4px">${crestImg(m.away_team,28)}</span>${teamName(m.away_team)}<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>
+          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px">${crestImg(m.away_team,28)}</span>${teamName(m.away_team)}<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>
         </button>
       </div>`;
 
