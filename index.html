@@ -343,6 +343,13 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .podium-stars-lbl{font-family:var(--pixel);font-size:6px;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.15em}
 .podium-stars-num{font-size:14px;color:var(--yellow);text-shadow:0 0 4px var(--yellow);cursor:default}
 
+/* PODIUM mobiel — gestapeld: kampioen groot bovenaan (volle rij), zilver+brons in de rij eronder.
+   Werkt ook bij gedeelde winnaars: elke kaart-1 krijgt z'n eigen gecentreerde rij (order:-1). */
+@media(max-width:600px){
+  .podium{grid-template-columns:1fr 1fr;gap:10px;align-items:start;padding:0.5rem 0}
+  .podium .podium-card-1{order:-1;grid-column:1/-1;justify-self:center;width:min(220px,80%);transform:none}
+}
+
 .stat-ticker{background:var(--bg2);border:2px solid var(--border);padding:12px 16px;margin-bottom:12px;cursor:pointer;transition:border-color 0.15s}
 .stat-ticker:hover{border-color:var(--green)}
 .stat-ticker-label{font-family:var(--pixel);font-size:9px;color:var(--yellow);margin-bottom:6px}
