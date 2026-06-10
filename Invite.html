@@ -146,6 +146,8 @@ input:focus { border-color: var(--green); }
 </div>
 
 <script>
+// Clickjacking-bescherming: breek uit een iframe (GitHub Pages kan geen X-Frame-Options/CSP sturen).
+try{if(window.self!==window.top)window.top.location=window.self.location;}catch(e){document.documentElement.style.display='none';}
 const SUPABASE_URL = 'https://soonpwnwrvxmariaqdfb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -409,6 +411,7 @@ async function doRegister() {
   const errEl = document.getElementById('reg-err');
   errEl.textContent = '';
   if (username.length < 2) { errEl.textContent = t('err_username_short'); return; }
+  if (!/^[\p{L}\p{N} ._-]{2,24}$/u.test(username)) { errEl.textContent = t('err_username_short'); return; }
   if (pass.length < 6) { errEl.textContent = t('err_pass_short'); return; }
 
   const { data, error } = await sb.auth.signUp({ email, password: pass });

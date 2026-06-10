@@ -374,9 +374,11 @@ Deno.serve(async (req) => {
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
 
     // Modus 2: onbewaakte sync (pg_cron)
+    // Fail-closed: zonder geconfigureerd CRON_SECRET wordt elke aanroep geweigerd
+    // (anders zou een ontbrekend secret het endpoint publiek openzetten).
     if (body.mode === "sync") {
       const secret = Deno.env.get("CRON_SECRET");
-      if (secret && body.secret !== secret) return json({ error: "unauthorized" }, 403);
+      if (!secret || body.secret !== secret) return json({ error: "unauthorized" }, 403);
       return json(await doSync());
     }
 
@@ -384,7 +386,7 @@ Deno.serve(async (req) => {
     // body.force=true → forceer nu (handmatig/test), negeert 48u + guard.
     if (body.mode === "odds") {
       const secret = Deno.env.get("CRON_SECRET");
-      if (secret && body.secret !== secret) return json({ error: "unauthorized" }, 403);
+      if (!secret || body.secret !== secret) return json({ error: "unauthorized" }, 403);
       return json(await doOddsAuto(body.force === true, body.region || "eu"));
     }
 

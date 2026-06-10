@@ -131,6 +131,66 @@ create policy "cg_update" on public.complot_groups for update
 drop policy if exists "admins can update matches" on public.matches;
 
 
+-- ── FIX 9 (audit-ronde 2): geen zelf-promotie tot Haantje ───
+-- Was: cm_insert staat self-insert toe (auth.uid()=user_id) maar beperkt
+-- de kolom is_haantje NIET → een speler kon zichzelf (eventueel na een
+-- delete+re-insert) als is_haantje=true aan elke groep toevoegen en zo het
+-- groepsbeheer kapen (leden kicken, groep hernoemen, uitnodigen).
+-- Oplossing: trigger die is_haantje bevriest/forceert voor wie geen haantje
+-- van de groep is. Carve-out: de maker van de groep (created_by) mag zichzelf
+-- als eerste haantje inserten (nodig voor het aanmaken van een groep).
+-- Server-side (service_role/SQL, auth.uid() NULL) mag alles.
+
+create or replace function public.protect_haantje()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  caller_is_haantje boolean;
+  is_group_creator  boolean;
+begin
+  if auth.uid() is null then
+    return new;  -- service_role / cron / SQL-editor
+  end if;
+
+  if tg_op = 'INSERT' then
+    if coalesce(new.is_haantje, false) then
+      select exists(
+        select 1 from public.complot_members cm
+        where cm.group_id = new.group_id and cm.user_id = auth.uid() and cm.is_haantje = true
+      ) into caller_is_haantje;
+      select exists(
+        select 1 from public.complot_groups g
+        where g.id = new.group_id and g.created_by = auth.uid()
+      ) into is_group_creator;
+      if not (caller_is_haantje or is_group_creator) then
+        new.is_haantje := false;
+      end if;
+    end if;
+  elsif tg_op = 'UPDATE' then
+    if new.is_haantje is distinct from old.is_haantje then
+      select exists(
+        select 1 from public.complot_members cm
+        where cm.group_id = old.group_id and cm.user_id = auth.uid() and cm.is_haantje = true
+      ) into caller_is_haantje;
+      if not caller_is_haantje then
+        new.is_haantje := old.is_haantje;
+      end if;
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_protect_haantje on public.complot_members;
+create trigger trg_protect_haantje
+  before insert or update on public.complot_members
+  for each row execute function public.protect_haantje();
+
+
 -- ============================================================
 -- VERIFICATIE (draai na bovenstaande, controleer de output)
 -- ============================================================
@@ -145,4 +205,8 @@ drop policy if exists "admins can update matches" on public.matches;
 -- 3) tips heeft nog maar 1 insert- en 1 update-policy, beide met kickoff:
 --    select policyname, cmd, with_check from pg_policies
 --    where tablename='tips';
+--
+-- 4) Haantje-trigger bestaat:
+--    select tgname from pg_trigger
+--    where tgrelid = 'public.complot_members'::regclass and not tgisinternal;
 -- ============================================================

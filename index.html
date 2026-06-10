@@ -917,12 +917,16 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 <script src="pixel-player.js"></script>
 <script src="bracket.js"></script>
 <script>
+// Clickjacking-bescherming: breek uit een iframe (GitHub Pages kan geen X-Frame-Options/CSP sturen).
+try{if(window.self!==window.top)window.top.location=window.self.location;}catch(e){document.documentElement.style.display='none';}
 // ── CONFIG ──────────────────────────────────────────────────
 const SUPABASE_URL = 'https://soonpwnwrvxmariaqdfb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvb25wd253cnZ4bWFyaWFxZGZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMjE1NzcsImV4cCI6MjA5NDY5NzU3N30.dFNOMuYNdtCk9Z6GrZRE-wHYua3wIIo5vDmXX4YS-k8';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Slug van de uitnodigingsmail-edge-function. Deploy met: supabase functions deploy send-invite --no-verify-jwt
 const INVITE_FN = 'send-invite';
+// XSS-bescherming: escape user-controlled tekst (usernames, groepsnamen) vóór innerHTML.
+function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 // Nederlandse tijd (CEST = UTC+2 tijdens WK)
 function nlTime(kickoff,opts){if(!kickoff)return "";var d=new Date(kickoff);var def={timeZone:"Europe/Amsterdam",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"};return d.toLocaleString("nl-NL",Object.assign({},def,opts||{}));}
@@ -961,7 +965,7 @@ function liveMinuteLabel(m){return m.minute!=null?(m.minute+"'"):t('live_badge')
 let teamCrest={};
 function crestImg(team,size=22){
   const url=teamCrest[team];
-  if(url)return`<img src="${url}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;vertical-align:middle;display:inline-block">`;
+  if(url)return`<img src="${escapeHtml(url)}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;vertical-align:middle;display:inline-block">`;
   return`<span style="font-size:${Math.min(size,18)}px;line-height:1;vertical-align:middle">${flag(team)}</span>`;
 }
 
@@ -1024,8 +1028,8 @@ function avatarUrl(profile){
 function avatarHTML(profile,size=32,onclick=''){
   const url=avatarUrl(profile);
   const initials=profile?.username?profile.username.slice(0,2).toUpperCase():'??';
-  if(url)return `<div style="width:${size}px;height:${size}px;border:2px solid var(--border);overflow:hidden;background:var(--bg3);cursor:pointer;flex-shrink:0" ${onclick}><img src="${url}" style="width:100%;height:100%;object-fit:cover"></div>`;
-  return `<div style="width:${size}px;height:${size}px;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:var(--pixel);font-size:${Math.floor(size/5)}px;color:var(--purple-light);cursor:pointer;flex-shrink:0" ${onclick}>${initials}</div>`;
+  if(url)return `<div style="width:${size}px;height:${size}px;border:2px solid var(--border);overflow:hidden;background:var(--bg3);cursor:pointer;flex-shrink:0" ${onclick}><img src="${escapeHtml(url)}" style="width:100%;height:100%;object-fit:cover"></div>`;
+  return `<div style="width:${size}px;height:${size}px;border:2px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:var(--pixel);font-size:${Math.floor(size/5)}px;color:var(--purple-light);cursor:pointer;flex-shrink:0" ${onclick}>${escapeHtml(initials)}</div>`;
 }
 
 // ── AUTH ─────────────────────────────────────────────────────
@@ -1086,6 +1090,7 @@ async function doRegister(){
   const errEl=document.getElementById('reg-err');
   errEl.textContent='';
   if(username.length<2){errEl.textContent='✗ Gebruikersnaam te kort.';return;}
+  if(!/^[\p{L}\p{N} ._-]{2,24}$/u.test(username)){errEl.textContent='✗ Gebruikersnaam: alleen letters, cijfers, spatie, punt, _ en - (max 24).';return;}
   if(pass.length<6){errEl.textContent='✗ Wachtwoord min. 6 tekens.';return;}
   const {data,error}=await sb.auth.signUp({email,password:pass});
   if(error){errEl.textContent='✗ '+error.message;return;}
@@ -1307,7 +1312,7 @@ function renderWelcome(){
   const el=document.getElementById('home-welcome');
   if(!el)return;
   const raw=currentProfile?.username||'';
-  const name=raw?`<b>${raw.charAt(0).toUpperCase()+raw.slice(1)}</b>`:'';
+  const name=raw?`<b>${escapeHtml(raw.charAt(0).toUpperCase()+raw.slice(1))}</b>`:'';
   const days=daysToFinal();
   el.innerHTML=days>0
     ?t('home_welcome',{name,X:days,D:days===1?t('home_welcome_day'):t('home_welcome_days')})
@@ -1351,7 +1356,7 @@ function renderHomeLeaderboard(){
     return`<div class="lb-row" onclick="openProfile('${p.id}')">`
       +`<div class="rk ${['r1','r2','r3'][i]||''}">${i+1}</div>`
       +avatarHTML(p,40)
-      +`<div class="who"><div class="who-top"><span class="nm">${p.username.toUpperCase()}</span>${badge}</div>${dayTipChips(p.id)}</div>`
+      +`<div class="who"><div class="who-top"><span class="nm">${escapeHtml(p.username.toUpperCase())}</span>${badge}</div>${dayTipChips(p.id)}</div>`
       +`<div class="lb-pt">${p.pts} PT${live}</div>`
       +`</div>`;
   }).join('');
@@ -1376,7 +1381,7 @@ function renderInvitePanel(){
       const inviter=allProfiles.find(p=>p.id===inv.inviter_id);
       const gname=g?g.name:'?';
       return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--border)">
-        <div style="flex:1;min-width:160px;font-family:var(--vt);font-size:20px;color:var(--white)">🐓 <b style="font-family:var(--oswald)">${gname}</b><br><span style="font-size:17px;color:var(--muted)">${t('invite_panel_from',{X:inviter?inviter.username:'?'})}</span></div>
+        <div style="flex:1;min-width:160px;font-family:var(--vt);font-size:20px;color:var(--white)">🐓 <b style="font-family:var(--oswald)">${escapeHtml(gname)}</b><br><span style="font-size:17px;color:var(--muted)">${t('invite_panel_from',{X:inviter?escapeHtml(inviter.username):'?'})}</span></div>
         <button class="btn btn-green btn-sm" onclick="acceptInvite('${inv.id}','${inv.group_id}')">${t('invite_accept')}</button>
         <button class="btn btn-ghost btn-sm" onclick="declineInvite('${inv.id}')">${t('invite_decline')}</button>
       </div>`;
@@ -1517,10 +1522,10 @@ function renderPodiumCard(player,rank,dayMatches){
     +`<div class="podium-portrait">`
     +`<span class="podium-pos-tag${posCls}">${pp.position}</span>`
     +`<span class="podium-jersey-num">#${String(pp.number).padStart(2,'0')}</span>`
-    +`<pixel-player name="${player.username}"></pixel-player>`
+    +`<pixel-player name="${escapeHtml(player.username)}"></pixel-player>`
     +`<span class="podium-kit-tag">${pp.kit.name}${pp.kit.throwback?' · RETRO':''}</span>`
     +`</div>`
-    +`<div class="podium-nameplate"><div class="nm">${player.username.toUpperCase()}</div></div>`
+    +`<div class="podium-nameplate"><div class="nm">${escapeHtml(player.username.toUpperCase())}</div></div>`
     +`<div class="podium-day-pts">${player.dayPts} PT <small>· ${t('podium_day_total')}</small></div>`
     +`<div class="podium-stats">`
     +`<div class="podium-stat"><div class="k">${t('podium_stat_streak')}</div><div class="v streak">🔥 ${streak}</div></div>`
@@ -1652,7 +1657,7 @@ function renderGlobalStats(){
     const waagSi=getStreakInfo(waag[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('waaghals')">`
       +`<div class="stat-ticker-label">${t('stat_ticker_waaghals_label')}</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${waag[0].id}')">${waag[0].username.toUpperCase()}</span>${waagSi?`<span class="streak-badge" style="${getStreakBadgeStyle(waag[0].current_streak||0)}">${t('streak_badge_label',{emoji:waagSi.emoji,title:waagSi.title,X:waag[0].current_streak})}</span>`:''}<span>— ${t('stat_ticker_avg_chance',{X:Math.round(waag[0].risk)})}</span></div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${waag[0].id}')">${escapeHtml(waag[0].username.toUpperCase())}</span>${waagSi?`<span class="streak-badge" style="${getStreakBadgeStyle(waag[0].current_streak||0)}">${t('streak_badge_label',{emoji:waagSi.emoji,title:waagSi.title,X:waag[0].current_streak})}</span>`:''}<span>— ${t('stat_ticker_avg_chance',{X:Math.round(waag[0].risk)})}</span></div>`
       +`<div class="stat-ticker-hint">${t('stat_ticker_hint')}</div>`
       +`</div>`);
   }
@@ -1664,7 +1669,7 @@ function renderGlobalStats(){
     const si=getStreakInfo(s.current_streak);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('streaks')">`
       +`<div class="stat-ticker-label">${t('stat_ticker_streak_label')}</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${s.id}')">${s.username.toUpperCase()}</span>${si?`<span class="streak-badge" style="${getStreakBadgeStyle(s.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:s.current_streak})}</span>`:''}</div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${s.id}')">${escapeHtml(s.username.toUpperCase())}</span>${si?`<span class="streak-badge" style="${getStreakBadgeStyle(s.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:s.current_streak})}</span>`:''}</div>`
       +`<div class="stat-ticker-hint">${t('stat_ticker_hint')}</div>`
       +`</div>`);
   }
@@ -1675,7 +1680,7 @@ function renderGlobalStats(){
     const beatSi=getStreakInfo(beaters[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('oddsbeater')">`
       +`<div class="stat-ticker-label">${t('stat_ticker_oddsbeater_label')}</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${beaters[0].id}')">${beaters[0].username.toUpperCase()}</span>${beatSi?`<span class="streak-badge" style="${getStreakBadgeStyle(beaters[0].current_streak||0)}">${t('streak_badge_label',{emoji:beatSi.emoji,title:beatSi.title,X:beaters[0].current_streak})}</span>`:''}<span>— ${t('stat_ticker_under_fav',{X:beaters[0].oddsGap.toFixed(1)})}</span></div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${beaters[0].id}')">${escapeHtml(beaters[0].username.toUpperCase())}</span>${beatSi?`<span class="streak-badge" style="${getStreakBadgeStyle(beaters[0].current_streak||0)}">${t('streak_badge_label',{emoji:beatSi.emoji,title:beatSi.title,X:beaters[0].current_streak})}</span>`:''}<span>— ${t('stat_ticker_under_fav',{X:beaters[0].oddsGap.toFixed(1)})}</span></div>`
       +`<div class="stat-ticker-hint">${t('stat_ticker_hint')}</div>`
       +`</div>`);
   }
@@ -1693,7 +1698,7 @@ function openStatsModal(type){
       +data.map((p,i)=>{
         const si=getStreakInfo(p.current_streak||0);
         return `<div class="stats-row-item">`
-          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${p.username.toUpperCase()}</span>`
+          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${escapeHtml(p.username.toUpperCase())}</span>`
           +`${si?`<span class="streak-badge" style="margin-left:8px;${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span>`:''}`
           +`</div>`
           +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">gem. ${Math.round(p.risk)}%</div>`
@@ -1706,7 +1711,7 @@ function openStatsModal(type){
         const si=getStreakInfo(p.current_streak);
         return `<div class="stats-row-item">`
           +`<div>`
-          +`<div style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${p.username.toUpperCase()}</div>`
+          +`<div style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${escapeHtml(p.username.toUpperCase())}</div>`
           +`${si?`<div style="margin-top:4px"><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span></div>`:''}`
           +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${t('stats_modal_streaks_longest',{X:p.longest_streak})}</div>`
           +`</div>`
@@ -1720,7 +1725,7 @@ function openStatsModal(type){
       +data.map((p,i)=>{
         const si=getStreakInfo(p.current_streak||0);
         return `<div class="stats-row-item">`
-          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${p.username.toUpperCase()}</span>`
+          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${escapeHtml(p.username.toUpperCase())}</span>`
           +`${si?`<span class="streak-badge" style="margin-left:8px;${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span>`:''}`
           +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${t('stats_modal_oddsbeater_hits',{X:p.oddsCount,Y:p.oddsPts})}</div></div>`
           +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.oddsGap.toFixed(1)}%</div>`
@@ -1753,7 +1758,7 @@ function renderComplotHome(){
   // Tabs als meerdere groepjes
   let html='';
   if(myGroups.length>1){
-    html+=`<div class="phase-tabs" style="margin-bottom:12px">${myGroups.map((g,i)=>`<button class="phase-tab ${i===0?'active':''}" onclick="switchComplotTab('${g.id}',this)">${g.name.toUpperCase()}</button>`).join('')}</div>`;
+    html+=`<div class="phase-tabs" style="margin-bottom:12px">${myGroups.map((g,i)=>`<button class="phase-tab ${i===0?'active':''}" onclick="switchComplotTab('${g.id}',this)">${escapeHtml(g.name.toUpperCase())}</button>`).join('')}</div>`;
   }
   html+=myGroups.map((g,i)=>`<div class="complot-tab-content" id="ctab-${g.id}" style="display:${i===0?'block':'none'}">${renderComplotGroup(g)}</div>`).join('');
   html+=`<button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="showCreateComplot()">${t('complot_btn_new')}</button>`;
@@ -1804,7 +1809,7 @@ function renderComplotGroup(group){
     return`<div class="member-row">`
       +avatarHTML(p,42,`onclick="openProfile('${p.id}')"`)
       +`<div style="flex:1">`
-      +`<div style="font-family:var(--oswald);font-weight:700;font-size:16px">${['🥇','🥈','🥉'][i]||i+1} ${p.username}${p.is_haantje?`<span class="haantje-badge">${t('complot_haantje_badge')}</span>`:''}</div>`
+      +`<div style="font-family:var(--oswald);font-weight:700;font-size:16px">${['🥇','🥈','🥉'][i]||i+1} ${escapeHtml(p.username)}${p.is_haantje?`<span class="haantje-badge">${t('complot_haantje_badge')}</span>`:''}</div>`
       +`${streakInfo?`<div><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:streakInfo.emoji,title:streakInfo.title,X:p.current_streak})}</span></div>`:''}`
       +dayRow
       +`<div class="complot-badges-placeholder"></div>`
@@ -1815,7 +1820,7 @@ function renderComplotGroup(group){
   const isFav=currentProfile?.fav_complot===group.id;
   let html=`<div class="complot-card" style="position:relative">`
     +`<button onclick="setFavComplot('${group.id}')" title="${t('complot_fav_title')}" style="position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:24px;line-height:1;padding:2px;color:${isFav?'var(--yellow)':'var(--muted)'};text-shadow:${isFav?'0 0 8px var(--yellow)':'none'}">${isFav?'★':'☆'}</button>`
-    +`<div class="complot-name" style="padding-right:34px">🐓 ${group.name.toUpperCase()}</div>`
+    +`<div class="complot-name" style="padding-right:34px">🐓 ${escapeHtml(group.name.toUpperCase())}</div>`
     +`<div style="font-family:var(--vt);font-size:16px;color:var(--muted);margin-bottom:10px">${t('complot_member_count',{X:members.length})}</div>`
     +`<div style="font-family:var(--pixel);font-size:7px;color:var(--muted);margin-bottom:8px">${t('complot_label_ranking')}</div>`
     +rankedHtml;
@@ -1964,10 +1969,10 @@ function renderComplotModal(){
     const isMe=p.user_id===currentUser.id;
     return`<div class="member-row" style="padding:8px 0;border-bottom:1px solid rgba(85,0,170,.3)">`
       +avatarHTML(p,42,`onclick="openProfile('${p.id}')"`)
-      +`<div style="flex:1;font-family:var(--oswald);font-weight:700;font-size:16px">${p.username}${p.is_haantje?`<span class="haantje-badge">${t('complot_haantje_badge')}</span>`:''}</div>`
+      +`<div style="flex:1;font-family:var(--oswald);font-weight:700;font-size:16px">${escapeHtml(p.username)}${p.is_haantje?`<span class="haantje-badge">${t('complot_haantje_badge')}</span>`:''}</div>`
       +(!isMe?`<div style="display:flex;gap:6px;flex-wrap:wrap">`
-        +(!p.is_haantje?`<div class="tt-wrap"><button class="btn btn-purple" style="padding:8px 14px;font-size:9px" onclick="makeHaantje('${_complotManageId}','${p.user_id}','${p.username}')">${t('complot_action_btn_crown')}</button><div class="tt-text">${t('complot_action_tooltip_crown')}</div></div>`:'')
-        +`<div class="tt-wrap"><button class="btn btn-red" style="padding:8px 14px;font-size:9px" onclick="kickMember('${_complotManageId}','${p.user_id}','${p.username}')">${t('complot_action_btn_sleep')}</button><div class="tt-text">${t('complot_action_tooltip_sleep')}</div></div>`
+        +(!p.is_haantje?`<div class="tt-wrap"><button class="btn btn-purple" style="padding:8px 14px;font-size:9px" onclick="makeHaantje('${_complotManageId}','${p.user_id}')">${t('complot_action_btn_crown')}</button><div class="tt-text">${t('complot_action_tooltip_crown')}</div></div>`:'')
+        +`<div class="tt-wrap"><button class="btn btn-red" style="padding:8px 14px;font-size:9px" onclick="kickMember('${_complotManageId}','${p.user_id}')">${t('complot_action_btn_sleep')}</button><div class="tt-text">${t('complot_action_tooltip_sleep')}</div></div>`
         +`</div>`:'')
       +`</div>`;
   }).join('');
@@ -1991,13 +1996,15 @@ function renderComplotModal(){
     </div>
   `;
 }
-async function kickMember(groupId,userId,username){
+async function kickMember(groupId,userId){
+  const username=(allProfiles.find(p=>p.id===userId)||{}).username||'';
   await sb.from('complot_members').delete().eq('group_id',groupId).eq('user_id',userId);
   showToast(username+' slaapt weer. De matrix heeft hem terug.');
   await loadAll();
   renderComplotModal();
 }
-async function makeHaantje(groupId,userId,username){
+async function makeHaantje(groupId,userId){
+  const username=(allProfiles.find(p=>p.id===userId)||{}).username||'';
   await sb.from('complot_members').update({is_haantje:true}).eq('group_id',groupId).eq('user_id',userId);
   showToast('👑 '+(username||'').toUpperCase()+' IS NU DE WAARHEID.');
   await loadAll();
@@ -2116,7 +2123,7 @@ function showTipTooltip(e,el,side){
   const team=el.dataset.team||'';
   const lbl=side==='draw'?t('tips_tooltip_draw'):(flag(team)+' '+teamName(team));
   const col=side==='home'?'var(--green)':side==='draw'?'var(--yellow)':'var(--red)';
-  tt.innerHTML=`<div class="tt-lbl" style="color:${col}">${lbl}</div>`+users.map(u=>`<div class="tt-usr">${u}</div>`).join('');
+  tt.innerHTML=`<div class="tt-lbl" style="color:${col}">${lbl}</div>`+users.map(u=>`<div class="tt-usr">${escapeHtml(u)}</div>`).join('');
   const r=el.getBoundingClientRect();
   let lx=r.left,ty=r.bottom+4;
   if(lx+164>window.innerWidth)lx=window.innerWidth-168;
@@ -2304,7 +2311,7 @@ function renderScoreboard(){
       <td style="width:50px">${avatarHTML(p,45,`onclick="openProfile('${p.id}')"`)} </td>
       <td style="width:160px;min-width:120px">
         <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-          <span style="font-family:var(--oswald);font-weight:700;font-size:18px;cursor:pointer" onclick="openProfile('${p.id}')">${p.username}</span>
+          <span style="font-family:var(--oswald);font-weight:700;font-size:18px;cursor:pointer" onclick="openProfile('${p.id}')">${escapeHtml(p.username)}</span>
           ${streakEmoji?`<span style="font-size:15px">${streakEmoji}</span>`:''}
         </div>
         ${streakInfo?`<div style="margin:2px 0"><span class="streak-badge" style="${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:streakInfo.emoji,title:streakInfo.title,X:p.current_streak})}</span></div>`:''}
@@ -3036,10 +3043,10 @@ function renderH2H(){
   let verdict='';
   if(p2&&played.length>0){
     if(p1pts===p2pts){
-      verdict=t('h2h_verdict_draw',{p1:`<span style="color:var(--white);font-family:var(--oswald);font-weight:700">${p1.username}</span>`,p2:`<span style="color:var(--white);font-family:var(--oswald);font-weight:700">${p2.username}</span>`});
+      verdict=t('h2h_verdict_draw',{p1:`<span style="color:var(--white);font-family:var(--oswald);font-weight:700">${escapeHtml(p1.username)}</span>`,p2:`<span style="color:var(--white);font-family:var(--oswald);font-weight:700">${escapeHtml(p2.username)}</span>`});
     }else{
       const winner=p1pts>p2pts?p1:p2,loser=p1pts>p2pts?p2:p1;
-      verdict=t('h2h_verdict_winner',{winner:`<span style="color:var(--green);font-family:var(--pixel);font-size:9px;font-weight:700">${winner.username}</span>`,loser:`<span style="color:var(--red);font-family:var(--pixel);font-size:9px;font-weight:700">${loser.username}</span>`,diff:`<span style="color:var(--yellow);font-family:var(--pixel);font-size:9px">${Math.abs(p1pts-p2pts)}</span>`});
+      verdict=t('h2h_verdict_winner',{winner:`<span style="color:var(--green);font-family:var(--pixel);font-size:9px;font-weight:700">${escapeHtml(winner.username)}</span>`,loser:`<span style="color:var(--red);font-family:var(--pixel);font-size:9px;font-weight:700">${escapeHtml(loser.username)}</span>`,diff:`<span style="color:var(--yellow);font-family:var(--pixel);font-size:9px">${Math.abs(p1pts-p2pts)}</span>`});
     }
   }
   const others=allProfiles.filter(p=>p.id!==p1.id);
@@ -3051,7 +3058,7 @@ function renderH2H(){
     return`<span class="streak-badge" style="display:inline-block;margin-top:4px;${getStreakBadgeStyle(s)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:s})}</span>`;
   };
   const dropItems=others.map(p=>`<div class="h2h-dropdown-item${p.id===h2hP2Id?' selected':''}" onclick="event.stopPropagation();setH2HP2('${p.id}')">`
-    +`<div style="font-family:var(--oswald);font-weight:700;font-size:26px;color:${p.id===h2hP2Id?'var(--green)':'var(--white)'}">${p.username}</div>`
+    +`<div style="font-family:var(--oswald);font-weight:700;font-size:26px;color:${p.id===h2hP2Id?'var(--green)':'var(--white)'}">${escapeHtml(p.username)}</div>`
     +streakBadge(p)
     +`</div>`).join('');
   document.getElementById('h2h-content').innerHTML=`
@@ -3059,7 +3066,7 @@ function renderH2H(){
       <div style="flex:1;min-width:120px">
         <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:6px">${t('h2h_label_you')}</div>
         <div style="background:var(--bg2);border:2px solid var(--purple);box-shadow:3px 3px 0 rgba(123,0,255,.5);padding:10px 14px">
-          <div style="font-family:var(--oswald);font-weight:700;font-size:26px;color:var(--white)">${p1.username}</div>
+          <div style="font-family:var(--oswald);font-weight:700;font-size:26px;color:var(--white)">${escapeHtml(p1.username)}</div>
           ${streakBadge(p1)}
         </div>
       </div>
@@ -3069,7 +3076,7 @@ function renderH2H(){
         <div style="position:relative">
           <div class="h2h-custom-select" onclick="toggleH2HDropdown(event)">
             <div style="flex:1">
-              <div style="font-family:var(--oswald);font-weight:700;font-size:26px;color:var(--white)">${p2?p2.username:'...'}</div>
+              <div style="font-family:var(--oswald);font-weight:700;font-size:26px;color:var(--white)">${p2?escapeHtml(p2.username):'...'}</div>
               ${p2?streakBadge(p2):''}
             </div>
             <span style="color:var(--muted);font-size:18px;line-height:1;flex-shrink:0">▼</span>
@@ -3082,12 +3089,12 @@ function renderH2H(){
       <div style="font-family:var(--pixel);font-size:9px;color:var(--muted);margin-bottom:8px">${t('h2h_summary_label',{X:played.length})}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <div>
-          <div style="font-family:var(--oswald);font-weight:700;font-size:22px;color:var(--green);margin-bottom:4px">${p1.username}</div>
+          <div style="font-family:var(--oswald);font-weight:700;font-size:22px;color:var(--green);margin-bottom:4px">${escapeHtml(p1.username)}</div>
           <div style="font-family:var(--vt);font-size:24px;color:var(--white)">${t('h2h_result_correct_wrong',{X:p1c,Y:p1w})}</div>
           <div style="font-family:var(--vt);font-size:24px;color:var(--green)">${p1pts} PTS</div>
         </div>
         <div>
-          <div style="font-family:var(--oswald);font-weight:700;font-size:22px;color:var(--green);margin-bottom:4px">${p2.username}</div>
+          <div style="font-family:var(--oswald);font-weight:700;font-size:22px;color:var(--green);margin-bottom:4px">${escapeHtml(p2.username)}</div>
           <div style="font-family:var(--vt);font-size:24px;color:var(--white)">${t('h2h_result_correct_wrong',{X:p2c,Y:p2w})}</div>
           <div style="font-family:var(--vt);font-size:24px;color:var(--green)">${p2pts} PTS</div>
         </div>
@@ -3123,7 +3130,7 @@ async function openProfile(userId){
 
   document.getElementById('profile-content').innerHTML=`
     <div style="text-align:center;margin-bottom:1rem">
-      <div style="font-family:var(--pixel);font-size:12px;color:var(--green)">${profile.username.toUpperCase()}</div>
+      <div style="font-family:var(--pixel);font-size:12px;color:var(--green)">${escapeHtml(profile.username.toUpperCase())}</div>
       ${streakInfo?`<div style="margin-top:4px"><span class="streak-badge" style="${getStreakBadgeStyle(profile.current_streak||0)}">${t('streak_badge_label',{emoji:streakInfo.emoji,title:streakInfo.title,X:profile.current_streak||0})}</span></div>`:''}
     </div>
     <div class="box" style="margin-bottom:8px">
@@ -3173,9 +3180,14 @@ function triggerAvatarUpload(){
 async function uploadAvatar(event){
   const file=event.target.files[0];
   if(!file)return;
-  const ext=file.name.split('.').pop();
+  // Alleen echte afbeeldingen — geen SVG/HTML (zou actieve inhoud kunnen bevatten),
+  // en de extensie wordt afgeleid van het MIME-type, niet van de (user-controlled) bestandsnaam.
+  const EXT_BY_TYPE={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'};
+  const ext=EXT_BY_TYPE[file.type];
+  if(!ext){showToast('Alleen JPEG, PNG, WebP of GIF toegestaan.');return;}
+  if(file.size>5*1024*1024){showToast('Afbeelding te groot (max 5MB).');return;}
   const path=`${currentUser.id}/avatar.${ext}`;
-  const {error:upErr}=await sb.storage.from('avatars').upload(path,file,{upsert:true});
+  const {error:upErr}=await sb.storage.from('avatars').upload(path,file,{upsert:true,contentType:file.type});
   if(upErr){showToast('Upload fout: '+upErr.message);return;}
   const {data:urlData}=sb.storage.from('avatars').getPublicUrl(path);
   const url=urlData.publicUrl+'?t='+Date.now();
@@ -3318,7 +3330,7 @@ const Pitch = (() => {
   function renderFomo() {
     const host = $('pitch-fomo');
     if (!host) return;
-    const nm = s => `<span class="nm">${s}</span>`;  // spelersnaam (groen)
+    const nm = s => `<span class="nm">${escapeHtml(s)}</span>`;  // spelersnaam (groen)
     const v = s => `<span class="v">${s}</span>`;     // getal (geel)
     const lines = [];
     if (data) {
@@ -3364,13 +3376,13 @@ const Pitch = (() => {
       if (totalPts > 0) items.push(`⚡ <span class="v">${totalPts}</span> PTS`);
 
       const today = topScorerToday();
-      if (today) items.push(`🏆 ${today.name} <span class="v">${today.pts} PTS</span>`);
+      if (today) items.push(`🏆 ${escapeHtml(today.name)} <span class="v">${today.pts} PTS</span>`);
 
       activeStreaks().slice(0, 3)
-        .forEach(p => items.push(`🍌 ${p.username} <span class="v">×${p.current_streak}</span>`));
+        .forEach(p => items.push(`🍌 ${escapeHtml(p.username)} <span class="v">×${p.current_streak}</span>`));
 
       daringOpenTips().slice(0, 2)
-        .forEach(d => items.push(`🎯 ${profileName(d.tip.user_id)} · ${flag(teamForSide(d.match, d.side))} <span class="v">+${d.pts}</span>`));
+        .forEach(d => items.push(`🎯 ${escapeHtml(profileName(d.tip.user_id))} · ${flag(teamForSide(d.match, d.side))} <span class="v">+${d.pts}</span>`));
 
       items.push(`👤 <span class="v">${data.profiles.length}</span> ${t('pitch_stat_spelers')}`);
       items.push(`📋 <span class="v">${data.tips.length}</span> ${t('pitch_stat_tips')}`);

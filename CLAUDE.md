@@ -26,7 +26,7 @@ Een WK voetbalpool webapp waar risico nemen beloond wordt. Hoe meer underdog je 
 
 ## Design thema
 
-Retro 1999/2000 internet stijl. Denk Hyves, vroege FIFA games, GeoCities.
+Retro 1999/2000 internet stijl. Denk Hyves, vroege FIFA games, Startpagina.nl.
 
 **Kleuren:**
 ```
