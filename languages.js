@@ -44,6 +44,7 @@ const TRANSLATIONS = {
     header_logo_sub: "⚽ WK POOL 2026 ⚽",
     header_logged_in_as: "ingelogd als",
     header_btn_logout: "UITLOGGEN",
+    header_menu_profile: "PROFIEL",
 
     // NAVIGATION
     nav_home: "🏠 HOME",
@@ -482,6 +483,7 @@ const TRANSLATIONS = {
     header_logo_sub: "⚽ WORLD CUP POOL 2026 ⚽",
     header_logged_in_as: "logged in as",
     header_btn_logout: "LOG OUT",
+    header_menu_profile: "PROFILE",
 
     // NAVIGATION
     nav_home: "🏠 HOME",
@@ -920,6 +922,7 @@ const TRANSLATIONS = {
     header_logo_sub: "⚽ WM POOL 2026 ⚽",
     header_logged_in_as: "angemeldet als",
     header_btn_logout: "ABMELDEN",
+    header_menu_profile: "PROFIL",
 
     // NAVIGATION
     nav_home: "🏠 HOME",
