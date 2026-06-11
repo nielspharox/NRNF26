@@ -167,6 +167,14 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .pitch-streak-bananas img{width:18px;height:18px;image-rendering:pixelated;vertical-align:middle}
 .pitch-streak-title{font-family:var(--pixel);font-size:8px;flex:1;min-width:130px;line-height:1.5}
 .pitch-streak-n{font-family:var(--pixel);font-size:8px;color:var(--muted);white-space:nowrap}
+/* Mobiel: vast tweeregelig patroon (bananen + teller boven, titel eronder) i.p.v. rommelig wrappen */
+@media(max-width:600px){
+  .pitch-streak-row{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;align-items:center;padding:8px 0}
+  .pitch-streak-bananas{min-width:0}
+  .pitch-streak-bananas img{width:14px;height:14px}
+  .pitch-streak-n{grid-row:1;grid-column:2;justify-self:end}
+  .pitch-streak-title{grid-row:2;grid-column:1/-1;min-width:0}
+}
 .pitch-tease{font-family:var(--vt);font-size:18px;color:var(--muted);margin-top:12px;line-height:1.4}
 .pitch-complot-title{font-family:var(--pixel);font-size:11px;color:var(--purple-light);margin:6px 0 12px;line-height:1.5}
 .pitch-complot-body{font-family:var(--vt);font-size:20px;color:var(--white);line-height:1.5;margin-bottom:14px}
@@ -453,6 +461,19 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .h2h-dropdown-item.selected{background:rgba(0,255,102,.08)}
 .h2h-match-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(85,0,170,.3)}
 .h2h-match-row:last-child{border-bottom:none}
+.h2h-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.h2h-row:last-child{border-bottom:none}
+.h2h-tip-l{flex:0 0 120px;text-align:left}
+.h2h-mid{flex:1;text-align:center;font-family:var(--vt);font-size:22px;line-height:1.4;padding:0 6px}
+.h2h-tip-r{flex:0 0 120px;text-align:right}
+/* Mobiel: wedstrijd + uitslag op eigen regel, tips eronder links/rechts */
+@media(max-width:600px){
+  .h2h-row{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px}
+  .h2h-mid{grid-row:1;grid-column:1/-1;padding:0}
+  .h2h-tip-l,.h2h-tip-r{flex:none}
+  .h2h-tip-l{grid-row:2;grid-column:1}
+  .h2h-tip-r{grid-row:2;grid-column:2}
+}
 .h2h-match-info{text-align:center}
 #sec-stand .box::-webkit-scrollbar{display:none}
 </style>
@@ -3151,10 +3172,10 @@ function renderH2H(){
         ?` <span style="font-family:var(--pixel);font-size:10px;color:var(--yellow);vertical-align:middle">${score}</span> `
         :`<span style="color:var(--muted);font-family:var(--vt);font-size:22px"> — </span>`)
       +`${teamName(m.away_team)} ${crestImg(m.away_team,18)}`;
-    return`<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">`
-      +`<div style="flex:0 0 120px;text-align:left">${tipBadge(s1,m,'left')}</div>`
-      +`<div style="flex:1;text-align:center;font-family:var(--vt);font-size:22px;line-height:1.4;padding:0 6px">${mid}</div>`
-      +`<div style="flex:0 0 120px;text-align:right">${p2?tipBadge(s2,m,'right'):'<span style="color:var(--muted);font-family:var(--vt);font-size:22px">—</span>'}</div>`
+    return`<div class="h2h-row">`
+      +`<div class="h2h-tip-l">${tipBadge(s1,m,'left')}</div>`
+      +`<div class="h2h-mid">${mid}</div>`
+      +`<div class="h2h-tip-r">${p2?tipBadge(s2,m,'right'):'<span style="color:var(--muted);font-family:var(--vt);font-size:22px">—</span>'}</div>`
       +`</div>`;
   }).join('');
   let verdict='';
