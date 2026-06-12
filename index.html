@@ -367,9 +367,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .stat-ticker-val{font-family:var(--vt);font-size:24px;color:var(--green)}
 .stat-ticker-hint{font-family:var(--pixel);font-size:7px;color:var(--muted);margin-top:4px}
 
-/* HOME redesign — welkomsttekst, sectie-headers, horizontale stats, top-5 klassement */
-.home-welcome{font-family:var(--vt);font-size:20px;color:var(--muted);margin:-2px 0 1.5rem}
-.home-welcome b{color:var(--green);font-weight:normal}
+/* HOME redesign — sectie-headers, horizontale stats, top-5 klassement */
 .block-head{font-family:var(--pixel);font-size:11px;color:var(--yellow);letter-spacing:.05em;display:flex;align-items:center;gap:8px;margin:1.8rem 0 14px;padding-bottom:8px;border-bottom:2px solid var(--border);flex-wrap:wrap}
 .block-head .right{margin-left:auto;font-family:var(--vt);font-size:18px;color:var(--muted);letter-spacing:0;text-align:right;flex-shrink:1;min-width:0}
 .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -670,7 +668,6 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 </style>
 <div id="sec-home" class="section active">
   <div class="sec-title" data-i18n="home_section_title">▶ HOME</div>
-  <div id="home-welcome" class="home-welcome"></div>
 
   <div id="invite-panel"></div>
   <div id="live-strip"></div>
@@ -1413,7 +1410,6 @@ function getNextTipPhaseFilter(){
 
 // ── HOME ─────────────────────────────────────────────────────
 function renderHome(){
-  renderWelcome();
   renderInvitePanel();
   renderLiveStrip();
   renderPodium();
@@ -1421,23 +1417,6 @@ function renderHome(){
   renderHomeLeaderboard();
   renderComplotHome();
   updateInviteBadge();
-}
-
-// Dagen tot de WK-finale (= "Half-time show"). Leest de 'final'-wedstrijd, valt terug op 19 juli 2026.
-function daysToFinal(){
-  const fin=matches.find(m=>m.phase==='final'&&m.kickoff);
-  const target=fin?new Date(fin.kickoff):new Date('2026-07-19T17:00:00Z');
-  return Math.ceil((target-new Date())/86400000);
-}
-function renderWelcome(){
-  const el=document.getElementById('home-welcome');
-  if(!el)return;
-  const raw=currentProfile?.username||'';
-  const name=raw?`<b>${escapeHtml(raw.charAt(0).toUpperCase()+raw.slice(1))}</b>`:'';
-  const days=daysToFinal();
-  el.innerHTML=days>0
-    ?t('home_welcome',{name,X:days,D:days===1?t('home_welcome_day'):t('home_welcome_days')})
-    :t('home_welcome_done',{name});
 }
 
 // Top-5 klassement op HOME (voorlopige stand incl. live), met knop naar de volledige STAND-tab.
