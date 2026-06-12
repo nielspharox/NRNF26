@@ -1741,39 +1741,69 @@ function calcAllStreaks(){
     streakEmoji:getStreakEmoji(p.current_streak||0)
   })).filter(p=>p.current_streak>=1).sort((a,b)=>b.current_streak-a.current_streak);
 }
+// Waaghals = laagste gemiddelde gekozen kans op de laatste speeldag, ongeacht goed of fout.
+// Alleen wie ÁLLE wedstrijden van die dag tipte doet mee (anders wint een enkele losse gok het gemiddelde).
+// Wel getipt maar niet alles → skipped (voetnoot in de modal).
 function calcWaaghals(){
-  const src=lastPlayedDayMatches();
-  return allProfiles.map(p=>{
-    let risk=0,cnt=0;
+  const src=lastPlayedDayMatches().filter(m=>m.home_odds&&m.draw_odds&&m.away_odds);
+  const ranked=[],skipped=[];
+  allProfiles.forEach(p=>{
+    let risk=0,cnt=0,best=null;
     src.forEach(m=>{
       const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
       if(!tip)return;
-      risk+=(tip.tip==="home"?m.home_odds:tip.tip==="draw"?m.draw_odds:m.away_odds);
-      cnt++;
+      const o=tip.tip==="home"?m.home_odds:tip.tip==="draw"?m.draw_odds:m.away_odds;
+      risk+=o;cnt++;
+      if(!best||o<best.o)best={o,m,side:tip.tip};
     });
-    return{...p,risk:cnt?risk/cnt:null,tipCount:cnt};
-  }).filter(p=>p.tipCount>0).sort((a,b)=>a.risk-b.risk);
+    if(cnt>0&&cnt===src.length)ranked.push({...p,risk:risk/cnt,tipCount:cnt,boldest:best});
+    else if(cnt>0)skipped.push(p);
+  });
+  ranked.sort((a,b)=>a.risk-b.risk);
+  return{ranked,skipped,dayMatches:src};
 }
+// Vlag/crest + 3-lettercode van de getipte kant; gelijkspel = GLK/DRW/UNE-afkorting.
+function tipSideLabel(m,side){
+  if(side==='draw')return t('tips_abbrev_draw');
+  const tm=side==='home'?m.home_team:m.away_team;
+  return `${crestImg(tm,16)} ${teamShort[tm]||tm.slice(0,3).toUpperCase()}`;
+}
+// Odds Beater = duel tegen de bookie. Alleen tips tegen de favoriet in tellen als duel:
+// jouw tip wint → saldo + (fav% − jouw%), favoriet wint alsnog → saldo − datzelfde verschil,
+// derde uitslag → niemand wist het (telt als duel, saldo 0). Meetippen met de favoriet = gap 0 = geen duel.
+// Punten-valuta vermijden we bewust: punten-t.o.v.-de-bookie stort wiskundig in tot de algemene stand.
 function calcOddsBeaters(){
-  return allProfiles.map(p=>{
-    let totalGap=0,count=0,totalPts=0;
-    matches.filter(m=>m.result).forEach(m=>{
+  const ranked=[],sheep=[];
+  allProfiles.forEach(p=>{
+    let saldo=0,wins=0,losses=0,duels=0,tipped=0,best=null;
+    matches.filter(m=>m.result&&m.home_odds&&m.draw_odds&&m.away_odds).forEach(m=>{
       const tip=allTips.find(t=>t.user_id===p.id&&t.match_id===m.id);
       if(!tip)return;
-      const minOdds=Math.min(m.home_odds,m.draw_odds,m.away_odds);
-      const chosenOdds=tip.tip==="home"?m.home_odds:tip.tip==="draw"?m.draw_odds:m.away_odds;
-      if(chosenOdds!==minOdds&&tip.tip===m.result){totalGap+=(minOdds-chosenOdds);count++;totalPts+=calcPts(chosenOdds);}
+      tipped++;
+      const odds={home:m.home_odds,draw:m.draw_odds,away:m.away_odds};
+      const favSide=Object.keys(odds).reduce((a,b)=>odds[b]>odds[a]?b:a);
+      const gap=odds[favSide]-odds[tip.tip];
+      if(gap<=0)return;
+      duels++;
+      if(tip.tip===m.result){
+        saldo+=gap;wins++;
+        if(!best||gap>best.gap)best={gap,m,side:tip.tip,favSide};
+      }else if(m.result===favSide){saldo-=gap;losses++;}
     });
-    return{...p,oddsGap:count?totalGap/count:0,oddsCount:count,oddsPts:totalPts};
-  }).filter(p=>p.oddsCount>0).sort((a,b)=>b.oddsGap-a.oddsGap);
+    if(duels>0)ranked.push({...p,oddsSaldo:saldo,oddsWins:wins,oddsLosses:losses,oddsDuels:duels,oddsBest:best});
+    else if(tipped>0)sheep.push(p);
+  });
+  ranked.sort((a,b)=>b.oddsSaldo-a.oddsSaldo||a.oddsDuels-b.oddsDuels);
+  return{ranked,sheep};
 }
+function oddsSaldoLabel(s){const r=Math.round(s);return(r>0?"+":r<0?"−":"±")+Math.abs(r);}
 
 function renderGlobalStats(){
   const el=document.getElementById("global-stats-wrap");
   const stats=[];
 
   // Waaghals
-  const waag=calcWaaghals();
+  const waag=calcWaaghals().ranked;
   if(waag.length&&waag[0]){
     const waagSi=getStreakInfo(waag[0].current_streak||0);
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('waaghals')">`
@@ -1796,12 +1826,13 @@ function renderGlobalStats(){
   }
 
   // Odds beater
-  const beaters=calcOddsBeaters();
+  const beaters=calcOddsBeaters().ranked;
   if(beaters.length){
     const beatSi=getStreakInfo(beaters[0].current_streak||0);
+    const beatKey=beaters[0].oddsSaldo>0?'stat_ticker_bookie_beats':'stat_ticker_bookie_saldo';
     stats.push(`<div class="stat-ticker" onclick="openStatsModal('oddsbeater')">`
       +`<div class="stat-ticker-label">${t('stat_ticker_oddsbeater_label')}</div>`
-      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${beaters[0].id}')">${escapeHtml(beaters[0].username.toUpperCase())}</span>${beatSi?`<span class="streak-badge" style="${getStreakBadgeStyle(beaters[0].current_streak||0)}">${t('streak_badge_label',{emoji:beatSi.emoji,title:beatSi.title,X:beaters[0].current_streak})}</span>`:''}<span>— ${t('stat_ticker_under_fav',{X:beaters[0].oddsGap.toFixed(1)})}</span></div>`
+      +`<div class="stat-ticker-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();openProfile('${beaters[0].id}')">${escapeHtml(beaters[0].username.toUpperCase())}</span>${beatSi?`<span class="streak-badge" style="${getStreakBadgeStyle(beaters[0].current_streak||0)}">${t('streak_badge_label',{emoji:beatSi.emoji,title:beatSi.title,X:beaters[0].current_streak})}</span>`:''}<span>— ${t(beatKey,{X:oddsSaldoLabel(beaters[0].oddsSaldo)})}</span></div>`
       +`<div class="stat-ticker-hint">${t('stat_ticker_hint')}</div>`
       +`</div>`);
   }
@@ -1814,17 +1845,36 @@ function openStatsModal(type){
   let html="";
   if(type==="waaghals"){
     const data=calcWaaghals();
-    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">${t('stats_modal_waaghals_title')}</div>`
-      +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">${t('stats_modal_waaghals_sub')}</div>`
-      +data.map((p,i)=>{
-        const si=getStreakInfo(p.current_streak||0);
+    const src=data.dayMatches;
+    const isWk=src.some(m=>m.matchday!=null&&m.matchday>=1);
+    const tz=isWk?'America/Los_Angeles':'Europe/Amsterdam';
+    const locMap={nl:'nl-NL',en:'en-GB',de:'de-DE'};
+    const loc=locMap[typeof getCurrentLanguage==='function'?getCurrentLanguage():'nl']||'nl-NL';
+    const latest=src.filter(m=>m.kickoff).sort((a,b)=>new Date(b.kickoff)-new Date(a.kickoff))[0];
+    const dateLabel=latest?new Date(latest.kickoff).toLocaleDateString(loc,{day:'numeric',month:'long',timeZone:tz}).toUpperCase():'';
+    const md=src.find(m=>m.matchday!=null&&m.matchday>=1);
+    const dayLine=md?t('stats_modal_waaghals_day',{X:md.matchday,D:dateLabel}):dateLabel;
+    html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:10px">${t('stats_modal_waaghals_title')}</div>`
+      +(dayLine?`<div style="font-family:var(--pixel);font-size:8px;color:var(--purple-light);margin-bottom:10px">${dayLine}</div>`:'')
+      +`<div style="font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:1rem">${t('stats_modal_waaghals_sub')}</div>`
+      +data.ranked.map((p,i)=>{
+        const b=p.boldest;
+        let bold='';
+        if(b){
+          const pct=`(${Math.round(b.o)}%)`;
+          bold=b.side==='draw'
+            ?`<div style="font-family:var(--vt);font-size:18px;color:var(--muted);margin-top:4px">${t('stats_modal_waaghals_boldest_draw',{A:`<span style="color:var(--white)">${t('tips_abbrev_draw')} ${pct}</span>`,B:`<span style="color:var(--white)">${tipSideLabel(b.m,'home')} – ${tipSideLabel(b.m,'away')}</span>`})}</div>`
+            :`<div style="font-family:var(--vt);font-size:18px;color:var(--muted);margin-top:4px">${t('stats_modal_waaghals_boldest_team',{A:`<span style="color:var(--white)">${tipSideLabel(b.m,b.side)} ${pct}</span>`,B:`<span style="color:var(--white)">${tipSideLabel(b.m,b.side==='home'?'away':'home')}</span>`})}</div>`;
+        }
         return `<div class="stats-row-item">`
-          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${escapeHtml(p.username.toUpperCase())}</span>`
-          +`${si?`<span class="streak-badge" style="margin-left:8px;${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span>`:''}`
-          +`</div>`
-          +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">gem. ${Math.round(p.risk)}%</div>`
+          +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${escapeHtml(p.username.toUpperCase())}</span>${bold}</div>`
+          +`<div style="font-family:var(--pixel);font-size:14px;color:${i===0?"var(--green)":"var(--white)"}">${Math.round(p.risk)}%</div>`
           +`</div>`;
-      }).join("");
+      }).join("")
+      +(data.skipped.length?`<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:6px">`
+        +`<div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:6px">${t('stats_modal_waaghals_skipped_title')}</div>`
+        +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted);opacity:.75">${data.skipped.map(s=>escapeHtml(s.username.toUpperCase())).join(' · ')} — ${t('stats_modal_waaghals_skipped_desc')}</div>`
+        +`</div>`:'');
   } else if(type==="streaks"){
     const data=calcAllStreaks();
     html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">${t('stats_modal_streaks_title')}</div>`
@@ -1842,16 +1892,21 @@ function openStatsModal(type){
   } else if(type==="oddsbeater"){
     const data=calcOddsBeaters();
     html=`<div style="font-family:var(--pixel);font-size:11px;color:var(--yellow);margin-bottom:1rem">${t('stats_modal_oddsbeater_title')}</div>`
-      +`<div style="font-family:var(--vt);font-size:17px;color:var(--muted);margin-bottom:1rem">${t('stats_modal_oddsbeater_sub')}</div>`
-      +data.map((p,i)=>{
-        const si=getStreakInfo(p.current_streak||0);
+      +`<div style="font-family:var(--vt);font-size:20px;color:var(--muted);margin-bottom:6px">${t('stats_modal_oddsbeater_sub')}</div>`
+      +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted);margin-bottom:1rem"><span style="color:var(--green)">${t('stats_modal_oddsbeater_legend_pos')}</span> · <span style="color:var(--red)">${t('stats_modal_oddsbeater_legend_neg')}</span></div>`
+      +data.ranked.map((p,i)=>{
+        const b=p.oddsBest;
+        const stunt=b?`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${t('stats_modal_oddsbeater_stunt',{A:`<span style="color:var(--white)">${tipSideLabel(b.m,b.side)} (${Math.round(b.m[b.side+'_odds'])}%)</span>`,B:`<span style="color:var(--white)">${tipSideLabel(b.m,b.favSide)} (${Math.round(b.m[b.favSide+'_odds'])}%)</span>`})}</div>`:'';
         return `<div class="stats-row-item">`
           +`<div><span style="font-family:var(--pixel);font-size:9px;color:${i===0?"var(--green)":"var(--white)"};cursor:pointer" onclick="openProfile('${p.id}')">${i+1}. ${escapeHtml(p.username.toUpperCase())}</span>`
-          +`${si?`<span class="streak-badge" style="margin-left:8px;${getStreakBadgeStyle(p.current_streak||0)}">${t('streak_badge_label',{emoji:si.emoji,title:si.title,X:p.current_streak})}</span>`:''}`
-          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted)">${t('stats_modal_oddsbeater_hits',{X:p.oddsCount,Y:p.oddsPts})}</div></div>`
-          +`<div style="font-family:var(--pixel);font-size:10px;color:var(--green)">${p.oddsGap.toFixed(1)}%</div>`
+          +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted);margin-top:4px">${t('stats_modal_oddsbeater_record',{X:p.oddsWins,Y:p.oddsLosses})}</div>${stunt}</div>`
+          +`<div style="font-family:var(--pixel);font-size:14px;color:${p.oddsSaldo>0?'var(--green)':p.oddsSaldo<0?'var(--red)':'var(--muted)'}">${oddsSaldoLabel(p.oddsSaldo)}</div>`
           +`</div>`;
-      }).join("");
+      }).join("")
+      +(data.sheep.length?`<div style="border-top:1px solid var(--border);padding-top:10px;margin-top:6px">`
+        +`<div style="font-family:var(--pixel);font-size:8px;color:var(--muted);margin-bottom:6px">${t('stats_modal_oddsbeater_sheep_title')}</div>`
+        +`<div style="font-family:var(--vt);font-size:18px;color:var(--muted);opacity:.75">${data.sheep.map(s=>escapeHtml(s.username.toUpperCase())).join(' · ')} — ${t('stats_modal_oddsbeater_sheep_desc')}</div>`
+        +`</div>`:'');
   }
   el.innerHTML=html||`<div style="font-family:var(--vt);font-size:22px;color:var(--muted)">${t('stats_modal_no_data')}</div>`;
   document.getElementById("stats-modal").classList.add("open");
