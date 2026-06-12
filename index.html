@@ -1744,23 +1744,28 @@ function renderSharedGoldCard(winners){
 }
 
 // ── RETRO VUURWERK — dagwinnaar krijgt bij elke page-load een saluut ─────────
-// Geluid = firework.mp3 (fiieeww + knal + geknetter), afgespeeld per pijl bij lancering.
-const FW={done:false,ctx:null,unlocked:false,want:false,buf:null,loading:false};
+// Drie geluiden: 'spark' (fiieeww+knal, bij lancering), 'shatter' en 'explode' (bij de ontploffing).
+const FW={done:false,ctx:null,unlocked:false,want:false,bufs:{},loading:{}};
+const FW_SOUNDS={spark:'firework.mp3',shatter:'firework-shatter.mp3',explode:'firework-explode.mp3'};
 // Browsers blokkeren audio tot de eerste interactie; vanaf de eerste tap/klik fluiten de pijlen ook hoorbaar.
 ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{
   if(FW.unlocked)return;FW.unlocked=true;
   try{FW.ctx=new(window.AudioContext||window.webkitAudioContext)();FW.ctx.resume();if(FW.want)fwLoadBuf();}catch(e){}
 },{passive:true}));
 function fwLoadBuf(){
-  if(FW.buf||FW.loading||!FW.ctx)return;
-  FW.loading=true;
-  fetch('firework.mp3').then(r=>r.arrayBuffer()).then(b=>FW.ctx.decodeAudioData(b)).then(buf=>{FW.buf=buf;}).catch(()=>{});
+  if(!FW.ctx)return;
+  Object.entries(FW_SOUNDS).forEach(([k,file])=>{
+    if(FW.bufs[k]||FW.loading[k])return;
+    FW.loading[k]=true;
+    fetch(file).then(r=>r.arrayBuffer()).then(b=>FW.ctx.decodeAudioData(b)).then(buf=>{FW.bufs[k]=buf;}).catch(()=>{});
+  });
 }
-function fwSound(){
+function fwSound(key){
   const c=FW.ctx;if(!c||c.state!=='running')return;
-  if(!FW.buf){fwLoadBuf();return;}
+  const buf=FW.bufs[key];
+  if(!buf){fwLoadBuf();return;}
   const s=c.createBufferSource(),g=c.createGain();
-  s.buffer=FW.buf;
+  s.buffer=buf;
   s.playbackRate.value=0.92+Math.random()*0.18;
   g.gain.value=0.9;
   s.connect(g);g.connect(c.destination);
@@ -1777,17 +1782,29 @@ function launchFireworks(dur=6000){
   const PX=Math.max(3,Math.round(innerWidth/240));
   const PAL=['#00ff66','#ffe600','#aa44ff','#ff2244','#f0e6ff','#7b00ff'];
   const rockets=[],parts=[];
-  const t0=performance.now();let lastLaunch=-9999;
-  const launch=()=>{fwSound();rockets.push({x:cv.width*(0.1+Math.random()*0.8),y:cv.height+PX*2,vy:-(cv.height/420)*(2.6+Math.random()*1.4),c:PAL[Math.floor(Math.random()*PAL.length)],fuse:cv.height*(0.15+Math.random()*0.35)});};
+  const t0=performance.now();let nextAt=0;
+  // 50% fluit+knal bij lancering, anders een shatter/explode op het moment van de ontploffing.
+  const launch=()=>{
+    const r=Math.random();let snd=null;
+    if(r<0.5)fwSound('spark');
+    else snd=r<0.8?'shatter':'explode';
+    rockets.push({x:cv.width*(0.1+Math.random()*0.8),y:cv.height+PX*2,vy:-(cv.height/420)*(2.6+Math.random()*1.4),c:PAL[Math.floor(Math.random()*PAL.length)],fuse:cv.height*(0.15+Math.random()*0.35),snd});
+  };
   const dot=(x,y,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(x/PX)*PX,Math.round(y/PX)*PX,PX,PX);};
   function frame(now){
     const el=now-t0;
     ctx.clearRect(0,0,cv.width,cv.height);
-    if(el<dur-1600&&now-lastLaunch>430){launch();lastLaunch=now;}
+    // Onregelmatige show: willekeurige pauzes tussen pijlen, soms een dubbele salvo.
+    if(el<dur-1600&&now>=nextAt){
+      launch();
+      if(Math.random()<0.25)launch();
+      nextAt=now+140+Math.random()*950;
+    }
     for(let i=rockets.length-1;i>=0;i--){
       const r=rockets[i];r.y+=r.vy;
       dot(r.x,r.y,'#f0e6ff');dot(r.x,r.y+PX*2,r.c);dot(r.x,r.y+PX*4,'#aa44ff');
       if(r.y<=r.fuse){
+        if(r.snd)fwSound(r.snd);
         const n=36+Math.floor(Math.random()*24);
         for(let k=0;k<n;k++){
           const a=Math.PI*2*k/n+Math.random()*0.3,s=(1.1+Math.random()*2.3)*PX/3;
