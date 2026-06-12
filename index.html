@@ -353,6 +353,16 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .podium-stars .off{color:#3a1f5e}
 .podium-stars-lbl{font-family:var(--pixel);font-size:6px;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:.15em}
 .podium-stars-num{font-size:14px;color:var(--yellow);text-shadow:0 0 4px var(--yellow);cursor:default}
+/* Gedeeld goud (3+ dagwinnaars): desktop = rij gouden kaarten (wrapt), mobiel = één ex-aequo kaart */
+.podium-gold-row{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;align-items:stretch}
+.podium-gold-row .podium-card{flex:0 1 190px;min-width:160px}
+.podium-gold-row .podium-card-1{transform:none}
+.podium-shared-card{display:none;margin-bottom:1.5rem}
+.podium-shared-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:8px;padding:12px 10px;background:var(--bg3);border-bottom:2px solid var(--border)}
+.podium-shared-p{text-align:center;cursor:pointer;min-width:0}
+.podium-shared-p pixel-player svg{width:64px;height:auto}
+.podium-shared-nm{font-family:var(--oswald);font-weight:700;font-size:16px;color:var(--yellow);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:600px){.podium-gold-row{display:none}.podium-shared-card{display:block}}
 
 /* PODIUM mobiel — gestapeld: kampioen groot bovenaan (volle rij), zilver+brons in de rij eronder.
    Werkt ook bij gedeelde winnaars: elke kaart-1 krijgt z'n eigen gecentreerde rij (order:-1). */
@@ -1687,6 +1697,14 @@ function renderPodium(){
   const r1=withPts.filter(p=>p.rank===1);
   const r2=withPts.filter(p=>p.rank===2);
   const r3=withPts.filter(p=>p.rank===3);
+  maybeDayWinnerFireworks(r1);
+  // 3+ gedeelde dagwinnaars: zilver/brons vervalt — desktop een rij gouden kaarten (wrapt),
+  // mobiel één ex-aequo kaart (CSS togglet op 600px welke van de twee zichtbaar is).
+  if(r1.length>=3){
+    el.innerHTML=`<div class="podium podium-gold-row">${r1.map(p=>renderPodiumCard(p,1,dayMatches)).join('')}</div>`
+      +renderSharedGoldCard(r1);
+    return;
+  }
   // 3 fixed slots: [left, middle, right]
   // middle = always rank-1[0]
   // left   = shared-1st[1] | rank-2[0] | null
@@ -1710,6 +1728,88 @@ function renderPodium(){
     right?{p:right,rank:rightRank}:null,
   ];
   el.innerHTML=`<div class="podium">${slots.map(s=>s?renderPodiumCard(s.p,s.rank,dayMatches):'').join('')}</div>`;
+}
+
+// Eén brede gouden ex-aequo kaart (mobiel, bij 3+ gedeelde dagwinnaars).
+function renderSharedGoldCard(winners){
+  return `<div class="podium-shared-card podium-card podium-card-1">`
+    +`<div class="podium-rank-bar">${t('podium_shared_gold',{X:winners.length})}</div>`
+    +`<div class="podium-shared-row">${winners.map(p=>
+      `<div class="podium-shared-p" onclick="openProfile('${p.id}')">`
+      +`<pixel-player name="${escapeHtml(p.username)}"></pixel-player>`
+      +`<div class="podium-shared-nm">${escapeHtml(p.username.toUpperCase())}</div>`
+      +`</div>`).join('')}</div>`
+    +`<div class="podium-day-pts">${winners[0].dayPts} PT <small>· ${t('podium_day_total')}</small></div>`
+    +`</div>`;
+}
+
+// ── RETRO VUURWERK — dagwinnaar krijgt bij elke page-load een saluut ─────────
+const FW={done:false,ctx:null,unlocked:false};
+// Browsers blokkeren audio tot de eerste interactie; vanaf de eerste tap/klik knallen de pijlen ook hoorbaar.
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{
+  if(FW.unlocked)return;FW.unlocked=true;
+  try{FW.ctx=new(window.AudioContext||window.webkitAudioContext)();FW.ctx.resume();}catch(e){}
+},{passive:true}));
+function fwPop(){
+  const c=FW.ctx;if(!c||c.state!=='running')return;
+  const t=c.currentTime;
+  const o=c.createOscillator(),g=c.createGain();
+  o.type='square';
+  o.frequency.setValueAtTime(260+Math.random()*420,t);
+  o.frequency.exponentialRampToValueAtTime(45,t+0.28);
+  g.gain.setValueAtTime(0.06,t);
+  g.gain.exponentialRampToValueAtTime(0.0008,t+0.34);
+  o.connect(g);g.connect(c.destination);
+  o.start(t);o.stop(t+0.36);
+}
+function launchFireworks(dur=6000){
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cv=document.createElement('canvas');
+  cv.style.cssText='position:fixed;inset:0;z-index:9999;pointer-events:none';
+  cv.width=innerWidth;cv.height=innerHeight;
+  document.body.appendChild(cv);
+  const ctx=cv.getContext('2d');
+  const PX=Math.max(3,Math.round(innerWidth/240));
+  const PAL=['#00ff66','#ffe600','#aa44ff','#ff2244','#f0e6ff','#7b00ff'];
+  const rockets=[],parts=[];
+  const t0=performance.now();let lastLaunch=-9999;
+  const launch=()=>rockets.push({x:cv.width*(0.1+Math.random()*0.8),y:cv.height+PX*2,vy:-(cv.height/420)*(2.6+Math.random()*1.4),c:PAL[Math.floor(Math.random()*PAL.length)],fuse:cv.height*(0.15+Math.random()*0.35)});
+  const dot=(x,y,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(x/PX)*PX,Math.round(y/PX)*PX,PX,PX);};
+  function frame(now){
+    const el=now-t0;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    if(el<dur-1600&&now-lastLaunch>430){launch();lastLaunch=now;}
+    for(let i=rockets.length-1;i>=0;i--){
+      const r=rockets[i];r.y+=r.vy;
+      dot(r.x,r.y,'#f0e6ff');dot(r.x,r.y+PX*2,r.c);dot(r.x,r.y+PX*4,'#aa44ff');
+      if(r.y<=r.fuse){
+        fwPop();
+        const n=36+Math.floor(Math.random()*24);
+        for(let k=0;k<n;k++){
+          const a=Math.PI*2*k/n+Math.random()*0.3,s=(1.1+Math.random()*2.3)*PX/3;
+          parts.push({x:r.x,y:r.y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,c:Math.random()<0.75?r.c:'#f0e6ff',life:48+Math.random()*30});
+        }
+        rockets.splice(i,1);
+      }
+    }
+    for(let j=parts.length-1;j>=0;j--){
+      const p=parts[j];
+      p.x+=p.vx;p.y+=p.vy;p.vy+=PX*0.012;p.vx*=0.985;p.life--;
+      if(p.life>0&&(p.life>16||Math.random()<0.55))dot(p.x,p.y,p.c);
+      if(p.life<=0||p.y>cv.height)parts.splice(j,1);
+    }
+    if((el>dur&&!rockets.length&&!parts.length)||el>dur+4000){cv.remove();return;}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+// Bij elke page-load: sta jij (mede) bovenaan het laatste dagklassement, dan vuurwerk. 1× per load (FW.done).
+function maybeDayWinnerFireworks(winners){
+  if(FW.done)return;
+  const me=currentProfile?.id;
+  if(!me||!winners.some(p=>p.id===me))return;
+  FW.done=true;
+  launchFireworks();
 }
 
 // ── STATS HELPERS ───────────────────────────────────────────
