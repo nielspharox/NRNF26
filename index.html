@@ -1332,17 +1332,33 @@ async function changeLanguage(lang){
 }
 
 // ── LOAD ─────────────────────────────────────────────────────
+// PostgREST stuurt max ~1000 rijen per request. Tips kunnen daar ruim
+// overheen gaan (spelers × wedstrijden), dus paginerend ophalen — anders
+// missen de nieuwste tips in de UI en lijken ze "niet opgeslagen".
+async function fetchAllTips(){
+  const pageSize=1000; let from=0; const out=[];
+  for(;;){
+    const {data,error}=await sb.from('tips').select('*')
+      .order('id',{ascending:true}).range(from,from+pageSize-1);
+    if(error){console.warn('tips laden mislukt:',error.message);break;}
+    if(!data||!data.length)break;
+    out.push(...data);
+    if(data.length<pageSize)break;
+    from+=pageSize;
+  }
+  return out;
+}
 async function loadAll(){
   const [mr,tr,pr,cgr,cmr,tmr,civ]=await Promise.all([
     sb.from('matches').select('*').order('kickoff',{ascending:true}),
-    sb.from('tips').select('*'),
+    fetchAllTips(),
     sb.from('profiles').select('*'),
     sb.from('complot_groups').select('*'),
     sb.from('complot_members').select('*'),
     sb.from('teams').select('name,crest_url'),
     sb.from('complot_invites').select('*'),
   ]);
-  matches=mr.data||[];allTips=tr.data||[];allProfiles=pr.data||[];
+  matches=mr.data||[];allTips=tr||[];allProfiles=pr.data||[];
   complotGroups=cgr.data||[];complotMembers=cmr.data||[];
   // Openstaande uitnodigingen voor mij (tabel kan nog ontbreken → veilig leeg).
   myInvites=(civ.data||[]).filter(i=>i.invitee_id===currentUser.id&&i.status==='pending');
@@ -2468,8 +2484,7 @@ async function saveTips(){
   const {error}=await sb.from('tips').upsert(toSave,{onConflict:'user_id,match_id'});
   if(error){showToast(error.message.includes('security')||error.message.includes('policy')?'⏰ CHEATERT! — wedstrijd is al begonnen!':'Fout: '+error.message);return;}
   myTips={...pendingTips};
-  const {data}=await sb.from('tips').select('*');
-  allTips=data||[];
+  allTips=await fetchAllTips();
   renderScoreboard();renderTips();
   showToast('✔ Tips opgeslagen!');
 }
@@ -3524,9 +3539,9 @@ const Pitch = (() => {
       const [mr, pr, tr] = await Promise.all([
         sb.from('matches').select('*'),
         sb.from('profiles').select('*'),
-        sb.from('tips').select('*'),
+        fetchAllTips(),
       ]);
-      data = index(mr.data || [], pr.data || [], tr.data || []);
+      data = index(mr.data || [], pr.data || [], tr || []);
     } catch (e) {
       console.warn('Pitch: data laden mislukt', e);
       data = index([], [], []);
