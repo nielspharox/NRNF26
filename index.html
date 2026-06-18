@@ -1332,15 +1332,16 @@ async function changeLanguage(lang){
 }
 
 // ── LOAD ─────────────────────────────────────────────────────
-// PostgREST stuurt max ~1000 rijen per request. Tips kunnen daar ruim
-// overheen gaan (spelers × wedstrijden), dus paginerend ophalen — anders
-// missen de nieuwste tips in de UI en lijken ze "niet opgeslagen".
-async function fetchAllTips(){
+// PostgREST stuurt max ~1000 rijen per request. Tabellen die daar ooit
+// overheen kunnen (tips zeker, profiles/matches op termijn) paginerend
+// ophalen — anders missen de nieuwste rijen in de UI en lijken tips/scores
+// "verdwenen". Stabiele sortering nodig voor consistente paginagrenzen.
+async function fetchAllRows(table,{columns='*',order='id',ascending=true}={}){
   const pageSize=1000; let from=0; const out=[];
   for(;;){
-    const {data,error}=await sb.from('tips').select('*')
-      .order('id',{ascending:true}).range(from,from+pageSize-1);
-    if(error){console.warn('tips laden mislukt:',error.message);break;}
+    const {data,error}=await sb.from(table).select(columns)
+      .order(order,{ascending}).range(from,from+pageSize-1);
+    if(error){console.warn(table+' laden mislukt:',error.message);break;}
     if(!data||!data.length)break;
     out.push(...data);
     if(data.length<pageSize)break;
@@ -1348,17 +1349,18 @@ async function fetchAllTips(){
   }
   return out;
 }
+const fetchAllTips=()=>fetchAllRows('tips');
 async function loadAll(){
   const [mr,tr,pr,cgr,cmr,tmr,civ]=await Promise.all([
-    sb.from('matches').select('*').order('kickoff',{ascending:true}),
+    fetchAllRows('matches',{order:'kickoff'}),
     fetchAllTips(),
-    sb.from('profiles').select('*'),
+    fetchAllRows('profiles'),
     sb.from('complot_groups').select('*'),
     sb.from('complot_members').select('*'),
     sb.from('teams').select('name,crest_url'),
     sb.from('complot_invites').select('*'),
   ]);
-  matches=mr.data||[];allTips=tr||[];allProfiles=pr.data||[];
+  matches=mr||[];allTips=tr||[];allProfiles=pr||[];
   complotGroups=cgr.data||[];complotMembers=cmr.data||[];
   // Openstaande uitnodigingen voor mij (tabel kan nog ontbreken → veilig leeg).
   myInvites=(civ.data||[]).filter(i=>i.invitee_id===currentUser.id&&i.status==='pending');
@@ -3537,11 +3539,11 @@ const Pitch = (() => {
   async function load() {
     try {
       const [mr, pr, tr] = await Promise.all([
-        sb.from('matches').select('*'),
-        sb.from('profiles').select('*'),
+        fetchAllRows('matches', {order:'kickoff'}),
+        fetchAllRows('profiles'),
         fetchAllTips(),
       ]);
-      data = index(mr.data || [], pr.data || [], tr || []);
+      data = index(mr || [], pr || [], tr || []);
     } catch (e) {
       console.warn('Pitch: data laden mislukt', e);
       data = index([], [], []);
