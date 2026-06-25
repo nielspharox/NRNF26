@@ -259,7 +259,10 @@ async function updateBracket(M: any[]) {
   const groupNames = [...new Set(M.filter((m) => m.phase === "group" && m.group_name).map((m) => m.group_name))].sort();
   const gr: Record<string, { first?: string; second?: string }> = {};
   for (const g of groupNames) {
-    if (M.filter((m) => m.phase === "group" && m.group_name === g && m.result).length > 0) {
+    // Pas vullen als de groep VOLLEDIG gespeeld is — anders schuift een tussenstand
+    // (incl. nog-niet-gespeelde ronde 3) verkeerde teams de R32 in.
+    const gm = M.filter((m) => m.phase === "group" && m.group_name === g);
+    if (gm.length > 0 && gm.every((m) => m.result)) {
       const s = calcGroupStandings(M, g) as any[];
       gr[g] = { first: s[0]?.name, second: s[1]?.name };
     }
@@ -330,10 +333,13 @@ async function doSync() {
     const k = new Date(m.kickoff).getTime();
     return k <= now && (now - k) < 3 * 3600 * 1000; // afgetrapt, binnen 3u, geen uitslag
   });
-  // Ook ophalen als de groepsfase klaar is en er nog R32-slots (beste nrs 3) open staan.
-  const groupDone = M.some((m) => m.phase === "group") && M.filter((m) => m.phase === "group").every((m) => m.result);
-  const thirdsPending = groupDone && M.some((m) => m.phase === "r32" && (isPlaceholderName(m.home_team) || isPlaceholderName(m.away_team)));
-  if (!live && !thirdsPending) return { skipped: true, reason: "niets te doen" };
+  // Ook syncen als er KO-slots zijn waarvan de teams nog niet bekend zijn — football-data
+  // kan ze inmiddels gevuld hebben. FD-calls zijn gratis binnen de rate-limit (10/min), dus
+  // elke minuut mag.
+  const KO = ["r32", "r16", "qf", "sf", "third", "final"];
+  const PH = /^(1st|2nd|3rd|Best|Winner|Loser)\b/i;
+  const koTeamsPending = M.some((m) => KO.includes(m.phase) && !m.result && (PH.test(m.home_team || "") || PH.test(m.away_team || "")));
+  if (!live && !koTeamsPending) return { skipped: true, reason: "niets te doen" };
 
   const key = await getKey();
   if (!key) return { error: "geen fd_api_key" };
@@ -341,15 +347,23 @@ async function doSync() {
   if (!res.ok) return { error: "football-data " + res.status };
   const fmatches = (await res.json()).matches || [];
 
-  let newResults = 0, liveUpdates = 0;
+  // Koppelen op fd_match_id (de bron van waarheid). Vervangt het matchen op teampaar.
+  const byFd = new Map<number, any>(M.filter((m: any) => m.fd_match_id != null).map((m: any) => [m.fd_match_id, m]));
+  let newResults = 0, liveUpdates = 0, teamFills = 0;
   for (const fm of fmatches) {
-    const phase = STAGE_PHASE[fm.stage]; if (!phase) continue;
-    const home = canon(fm.homeTeam?.name), away = canon(fm.awayTeam?.name);
-    if (!home || !away) continue;
-    // Match op (fase + ongeordend teampaar).
-    const our = M.find((m) => m.phase === phase && ((m.home_team === home && m.away_team === away) || (m.home_team === away && m.away_team === home)));
+    const our = byFd.get(fm.id);
     if (!our) continue;
     const ft = fm.score?.fullTime;
+    const home = canon(fm.homeTeam?.name), away = canon(fm.awayTeam?.name);
+
+    // KO-teams overnemen zodra FD ze invult (in FD-oriëntatie; nooit terug naar leeg).
+    // Dit vervangt updateBracket/fillThirds volledig.
+    if (KO.includes(our.phase)) {
+      const tu: any = {};
+      if (home && home !== our.home_team) tu.home_team = home;
+      if (away && away !== our.away_team) tu.away_team = away;
+      if (Object.keys(tu).length) { await dbPatch(`matches?id=eq.${our.id}`, tu); Object.assign(our, tu); teamFills++; }
+    }
 
     // Live tussenstand (geen result zetten) bij IN_PLAY/PAUSED.
     if (fm.status === "IN_PLAY" || fm.status === "PAUSED") {
@@ -379,12 +393,10 @@ async function doSync() {
     }
   }
   if (newResults) {
-    await updateBracket(M);
     await rpc("recalc_streaks");
     await rpc("recalc_day_wins");
   }
-  const thirds = await fillThirds(fmatches, M); // beste nummers 3 invullen vanuit FD R32-opstelling
-  return { ok: true, newResults, liveUpdates, thirds };
+  return { ok: true, newResults, liveUpdates, teamFills };
 }
 
 Deno.serve(async (req) => {

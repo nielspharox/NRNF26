@@ -2744,8 +2744,10 @@ async function updateBracket(){
   const groupNames=[...new Set(matches.filter(m=>m.phase==='group'&&m.group_name).map(m=>m.group_name))].sort();
   const groupResults={};
   for(const g of groupNames){
-    const played=matches.filter(m=>m.phase==='group'&&m.group_name===g&&m.result).length;
-    if(played>0){
+    // Pas vullen als de groep VOLLEDIG gespeeld is — anders schuift een tussenstand
+    // (incl. nog-niet-gespeelde ronde 3) verkeerde teams de R32 in.
+    const gm=matches.filter(m=>m.phase==='group'&&m.group_name===g);
+    if(gm.length>0&&gm.every(m=>m.result)){
       const standings=calcGroupStandings(g);
       groupResults[g]={first:standings[0]?.name,second:standings[1]?.name};
     }
@@ -3140,17 +3142,24 @@ const FD = (() => {
     return teams.length;
   }
 
-  // Werk onze wedstrijdrijen bij vanuit football-data data. Matcht op (fase + teampaar).
-  // Raakt odds NIET aan. Retourneert {newResults, updated}.
+  // Werk onze wedstrijdrijen bij vanuit football-data, gekoppeld op fd_match_id (de bron
+  // van waarheid). KO-teams worden direct overgenomen zodra FD ze invult — dat vervangt
+  // updateBracket/fillThirds volledig. Groep-teams blijven ongemoeid (al getipt, oriëntatie
+  // gelijk aan FD). Odds worden NIET aangeraakt. Retourneert {newResults, updated}.
+  const KO_PHASES=['r32','r16','qf','sf','third','final'];
   async function syncMatches(fmatches){
     let newResults=0,updated=0;
+    const byFd=new Map(matches.filter(m=>m.fd_match_id!=null).map(m=>[m.fd_match_id,m]));
     for(const fm of fmatches){
-      const phase=STAGE_PHASE[fm.stage];if(!phase)continue;
-      const home=canon(fm.homeTeam&&fm.homeTeam.name), away=canon(fm.awayTeam&&fm.awayTeam.name);
-      if(!home||!away)continue; // KO-slot nog niet bekend → wacht op bracket-doorschuiving
-      const ours=matches.find(m=>m.phase===phase&&m.home_team===home&&m.away_team===away);
+      const ours=byFd.get(fm.id);
       if(!ours)continue;
+      const home=canon(fm.homeTeam&&fm.homeTeam.name), away=canon(fm.awayTeam&&fm.awayTeam.name);
       const upd={};
+      // KO-slots: teams uit FD overnemen zodra bekend (in FD-oriëntatie; nooit terug naar leeg).
+      if(KO_PHASES.includes(ours.phase)){
+        if(home&&home!==ours.home_team)upd.home_team=home;
+        if(away&&away!==ours.away_team)upd.away_team=away;
+      }
       if(fm.utcDate&&(!ours.kickoff||Math.abs(new Date(fm.utcDate)-new Date(ours.kickoff))>60000))upd.kickoff=fm.utcDate;
       if(fm.venue&&fm.venue!==ours.venue)upd.venue=fm.venue;
       const r=resultOf(fm);
@@ -3163,37 +3172,15 @@ const FD = (() => {
       }
       if(Object.keys(upd).length){
         const {error}=await sb.from('matches').update(upd).eq('id',ours.id);
-        if(!error){updated++;Object.assign(ours,upd);} // lokale cache bijwerken zodat de cascade-loop het ziet
+        if(!error){updated++;Object.assign(ours,upd);} // lokale cache bijwerken
       }
     }
     return {newResults,updated};
   }
 
-  // Vult de "Best 3rd ..."-slots in R32 automatisch vanuit football-data's R32-opstelling.
-  // Anker = het al bekende team (groepswinnaar/nr2); de tegenstander in diezelfde FD-wedstrijd
-  // is de nummer 3. Zo hoeft nummers3_invullen.sql niet meer handmatig. Retourneert # ingevuld.
-  function isPlaceholderName(s){return !s||/^(1st|2nd|3rd|Best)\s/i.test(s);}
-  async function fillThirds(fmatches){
-    const fdR32=fmatches.filter(f=>STAGE_PHASE[f.stage]==='r32'&&f.homeTeam&&f.homeTeam.name&&f.awayTeam&&f.awayTeam.name);
-    if(!fdR32.length)return 0;
-    let n=0;
-    for(const m of matches.filter(x=>x.phase==='r32')){
-      const hP=isPlaceholderName(m.home_team), aP=isPlaceholderName(m.away_team);
-      if(hP===aP)continue; // beide bekend of beide placeholder → geen anker
-      const anchor=hP?m.away_team:m.home_team;
-      const f=fdR32.find(x=>canon(x.homeTeam.name)===anchor||canon(x.awayTeam.name)===anchor);
-      if(!f)continue;
-      const opp=canon(f.homeTeam.name)===anchor?canon(f.awayTeam.name):canon(f.homeTeam.name);
-      if(!opp||opp===anchor)continue;
-      const upd=hP?{home_team:opp}:{away_team:opp};
-      const {error}=await sb.from('matches').update(upd).eq('id',m.id);
-      if(!error){Object.assign(m,upd);n++;}
-    }
-    return n;
-  }
-
-  // Volledige import: teams+crests, daarna alle wedstrijden. Loopt door fases zodat KO-uitslagen
-  // doorschuiven via updateBracket() en de volgende ronde gematcht kan worden.
+  // Volledige import: teams+crests, daarna alle wedstrijden. football-data is de bron:
+  // syncMatches schrijft KO-teams/scores/uitslagen direct in onze slots (op fd_match_id),
+  // dus geen updateBracket/fillThirds-passes meer nodig.
   async function fullImport(){
     if(_busy)return; _busy=true;
     try{
@@ -3201,19 +3188,10 @@ const FD = (() => {
       status('Wedstrijden ophalen…','');
       const data=await api(`/competitions/${COMP}/matches`);
       const fmatches=data.matches||[];
-      let totalNew=0,totalUpd=0,totalThirds=0;
-      for(let pass=0;pass<10;pass++){
-        const {newResults,updated}=await syncMatches(fmatches);
-        totalNew+=newResults;totalUpd+=updated;
-        if(typeof updateBracket==='function')await updateBracket();
-        await loadAll();
-        const filled=await fillThirds(fmatches); // beste nummers 3 invullen
-        totalThirds+=filled;
-        if(filled)await loadAll();
-        if(newResults===0&&filled===0&&pass>0)break; // niets meer te doen
-      }
-      if(totalNew&&typeof updateStreaks==='function'){await updateStreaks();await updateDayWins();await loadAll();}
-      status(`✔ Import klaar — ${nT} teams, ${totalUpd} wedstrijden bijgewerkt, ${totalNew} uitslagen, ${totalThirds} nrs 3 ingevuld.`,'');
+      const {newResults,updated}=await syncMatches(fmatches);
+      await loadAll();
+      if(newResults&&typeof updateStreaks==='function'){await updateStreaks();await updateDayWins();await loadAll();}
+      status(`✔ Import klaar — ${nT} teams, ${updated} wedstrijden bijgewerkt, ${newResults} uitslagen.`,'');
     }catch(e){status('Fout: '+e.message,'err');}
     finally{_busy=false;}
   }
@@ -3225,10 +3203,7 @@ const FD = (() => {
       const data=await api(`/competitions/${COMP}/matches`);
       const fmatches=data.matches||[];
       const r=await syncMatches(fmatches);
-      if(r.newResults&&typeof updateBracket==='function')await updateBracket();
       await loadAll();
-      const filled=await fillThirds(fmatches); // beste nummers 3 invullen vanuit FD R32-opstelling
-      if(filled)await loadAll();
       if(recalc&&r.newResults&&typeof updateStreaks==='function'){await updateStreaks();await updateDayWins();await loadAll();}
       return r;
     }finally{_busy=false;}
