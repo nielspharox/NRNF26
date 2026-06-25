@@ -3150,15 +3150,27 @@ const FD = (() => {
   async function syncMatches(fmatches){
     let newResults=0,updated=0;
     const byFd=new Map(matches.filter(m=>m.fd_match_id!=null).map(m=>[m.fd_match_id,m]));
+    // Canonieke placeholder-labels per (fase, bracket_pos) — om KO-slots terug te zetten
+    // als FD een (eerder geprojecteerd) team weer op null zet.
+    const bs=await sb.from('bracket_slots').select('phase,slot,home_label,away_label');
+    const slotLabels=new Map((bs.data||[]).map(r=>[`${r.phase}:${r.slot}`,r]));
     for(const fm of fmatches){
       const ours=byFd.get(fm.id);
       if(!ours)continue;
       const home=canon(fm.homeTeam&&fm.homeTeam.name), away=canon(fm.awayTeam&&fm.awayTeam.name);
       const upd={};
-      // KO-slots: teams uit FD overnemen zodra bekend (in FD-oriëntatie; nooit terug naar leeg).
+      // KO-slots: volledig FD spiegelen. Team bekend → overnemen (FD-oriëntatie). Team null
+      // én wedstrijd nog niet begonnen/geen uitslag → terug naar canonieke placeholder
+      // (lost geprojecteerde teams op die FD later weer wist). Live/afgelopen nooit wissen.
       if(KO_PHASES.includes(ours.phase)){
-        if(home&&home!==ours.home_team)upd.home_team=home;
-        if(away&&away!==ours.away_team)upd.away_team=away;
+        const k=ours.kickoff?new Date(ours.kickoff).getTime():0;
+        const started=k&&k<=Date.now()&&(Date.now()-k)<3*3600*1000;
+        const safe=!ours.result&&!started;
+        const lbl=slotLabels.get(`${ours.phase}:${ours.bracket_pos}`)||{};
+        if(home){if(home!==ours.home_team)upd.home_team=home;}
+        else if(safe&&lbl.home_label&&ours.home_team!==lbl.home_label)upd.home_team=lbl.home_label;
+        if(away){if(away!==ours.away_team)upd.away_team=away;}
+        else if(safe&&lbl.away_label&&ours.away_team!==lbl.away_label)upd.away_team=lbl.away_label;
       }
       if(fm.utcDate&&(!ours.kickoff||Math.abs(new Date(fm.utcDate)-new Date(ours.kickoff))>60000))upd.kickoff=fm.utcDate;
       if(fm.venue&&fm.venue!==ours.venue)upd.venue=fm.venue;

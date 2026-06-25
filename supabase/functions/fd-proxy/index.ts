@@ -349,6 +349,10 @@ async function doSync() {
 
   // Koppelen op fd_match_id (de bron van waarheid). Vervangt het matchen op teampaar.
   const byFd = new Map<number, any>(M.filter((m: any) => m.fd_match_id != null).map((m: any) => [m.fd_match_id, m]));
+  // Canonieke placeholder-labels per (fase, bracket_pos) — om KO-slots terug te zetten als
+  // FD een (eerder geprojecteerd) team weer op null zet.
+  const bs = await dbGet("bracket_slots?select=phase,slot,home_label,away_label");
+  const slotLabels = new Map<string, any>(bs.map((r: any) => [`${r.phase}:${r.slot}`, r]));
   let newResults = 0, liveUpdates = 0, teamFills = 0;
   for (const fm of fmatches) {
     const our = byFd.get(fm.id);
@@ -356,12 +360,20 @@ async function doSync() {
     const ft = fm.score?.fullTime;
     const home = canon(fm.homeTeam?.name), away = canon(fm.awayTeam?.name);
 
-    // KO-teams overnemen zodra FD ze invult (in FD-oriëntatie; nooit terug naar leeg).
-    // Dit vervangt updateBracket/fillThirds volledig.
+    // KO-slots: volledig FD spiegelen. Team bekend → overnemen (FD-oriëntatie). Team null én
+    // wedstrijd nog niet begonnen/geen uitslag → terug naar canonieke placeholder (lost
+    // geprojecteerde teams op die FD later weer wist). Live/afgelopen nooit wissen.
+    // Vervangt updateBracket/fillThirds volledig.
     if (KO.includes(our.phase)) {
+      const k = our.kickoff ? new Date(our.kickoff).getTime() : 0;
+      const started = !!k && k <= now && (now - k) < 3 * 3600 * 1000;
+      const safe = !our.result && !started;
+      const lbl = slotLabels.get(`${our.phase}:${our.bracket_pos}`) || {};
       const tu: any = {};
-      if (home && home !== our.home_team) tu.home_team = home;
-      if (away && away !== our.away_team) tu.away_team = away;
+      if (home) { if (home !== our.home_team) tu.home_team = home; }
+      else if (safe && lbl.home_label && our.home_team !== lbl.home_label) tu.home_team = lbl.home_label;
+      if (away) { if (away !== our.away_team) tu.away_team = away; }
+      else if (safe && lbl.away_label && our.away_team !== lbl.away_label) tu.away_team = lbl.away_label;
       if (Object.keys(tu).length) { await dbPatch(`matches?id=eq.${our.id}`, tu); Object.assign(our, tu); teamFills++; }
     }
 
