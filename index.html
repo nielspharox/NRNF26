@@ -208,6 +208,7 @@ input:focus,select:focus{border-color:var(--green);box-shadow:0 0 8px rgba(0,255
 .pick-btn:disabled{opacity:0.5;cursor:not-allowed}
 .pick-btn .team-odds,.pick-draw .team-odds{display:block;font-family:var(--pixel);font-size:9px;color:var(--white);margin-top:4px;font-weight:400}
 .pick-btn .team-pts,.pick-draw .team-pts{display:block;font-family:var(--pixel);font-size:9px;margin-top:3px}
+.odds-soon{font-family:var(--vt);font-size:18px;color:var(--muted);text-align:center;margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)}
 .pick-draw{background:var(--bg3);border:2px solid var(--border);color:var(--white);font-family:var(--oswald);font-size:16px;font-weight:700;text-transform:uppercase;padding:14px 6px;cursor:pointer;text-align:center;transition:all 0.1s;width:80px;line-height:1.3}
 .pick-draw:hover:not(:disabled){border-color:var(--yellow);color:var(--yellow)}
 .pick-draw:disabled{opacity:0.5;cursor:not-allowed}
@@ -1104,6 +1105,10 @@ let viewingProfile=null;
 
 // ── HELPERS ──────────────────────────────────────────────────
 function calcPts(o){return Math.round(1000/Math.max(o,1))}
+// Teams nog onbekend (placeholder-slot) of echte odds nog niet opgehaald (odds_set=false).
+const KO_PLACEHOLDER=/^(1st|2nd|3rd|Best|Winner|Loser)\b/i;
+function teamsUnknown(m){return !m.home_team||!m.away_team||KO_PLACEHOLDER.test(m.home_team)||KO_PLACEHOLDER.test(m.away_team);}
+function oddsProvisional(m){return teamsUnknown(m)||!m.odds_set;}
 function isLocked(m){return m.kickoff?new Date(m.kickoff)<=new Date():false}
 function getPhaseLabel(p){return{warmup:t('tips_phase_label_warmup'),group:t('tips_phase_label_group'),r32:t('tips_phase_label_r32'),r16:t('tips_phase_label_r16'),qf:t('tips_phase_label_qf'),sf:t('tips_phase_label_sf'),third:t('tips_phase_label_third'),final:t('tips_phase_label_final')}[p]||p;}
 const koPhases=['r32','r16','qf','sf','third','final'];
@@ -2354,6 +2359,9 @@ function renderTips(){
     // hetzelfde tipte. NIET op chosen_odds (= wat de speler zag op tip-moment).
     const oddsOf=s=>s==='home'?m.home_odds:s==='draw'?m.draw_odds:m.away_odds;
     const ptsOf=s=>calcPts(oddsOf(s));
+    // Odds nog voorlopig (teams onbekend of nog niet opgehaald) → geen % / punten tonen,
+    // anders lijkt elke uitkomst even veel waard (de verwarrende 33/34/33).
+    const prov=oddsProvisional(m);
     // Badge op je eigen tip bij een gespeelde wedstrijd: groen +punten (gewonnen) of
     // rood −punten (misgelopen) — nooit een kale 'X' meer.
     const pickBadge=s=>tip===s?`<span class="team-pts" style="font-size:9px;color:${res===s?'var(--green)':'var(--red)'}">${res===s?'+':'−'}${ptsOf(s)}</span>`:'';
@@ -2381,15 +2389,15 @@ function renderTips(){
       </div>`:`
       <div class="pick-row">
         <button class="pick-btn ${tip==='home'?'sel-home':''}" onclick="pickTip(${m.id},'home',this)" ${locked?'disabled':''}>
-          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px">${crestImg(m.home_team,28)}</span>${teamName(m.home_team)}<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>
+          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px">${crestImg(m.home_team,28)}</span>${teamName(m.home_team)}${prov?'':`<span class="team-odds">${m.home_odds}%</span><span class="team-pts">${calcPts(m.home_odds)} PTS</span>`}
         </button>
         <button class="pick-draw ${tip==='draw'?'sel-draw':''}" onclick="pickTip(${m.id},'draw',this)" ${locked?'disabled':''}>
-          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px;font-size:20px">🤝</span>${t('tips_match_draw')}<span class="team-odds">${m.draw_odds}%</span><span class="team-pts" style="color:var(--yellow)">${calcPts(m.draw_odds)} PTS</span>
+          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px;font-size:20px">🤝</span>${t('tips_match_draw')}${prov?'':`<span class="team-odds">${m.draw_odds}%</span><span class="team-pts" style="color:var(--yellow)">${calcPts(m.draw_odds)} PTS</span>`}
         </button>
         <button class="pick-btn ${tip==='away'?'sel-away':''}" onclick="pickTip(${m.id},'away',this)" ${locked?'disabled':''}>
-          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px">${crestImg(m.away_team,28)}</span>${teamName(m.away_team)}<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>
+          <span style="display:block;margin-bottom:4px;height:28px;line-height:28px">${crestImg(m.away_team,28)}</span>${teamName(m.away_team)}${prov?'':`<span class="team-odds">${m.away_odds}%</span><span class="team-pts">${calcPts(m.away_odds)} PTS</span>`}
         </button>
-      </div>`;
+      </div>${prov?`<div class="odds-soon">⏳ ${t(teamsUnknown(m)?'tips_odds_soon_teams':'tips_odds_soon')}</div>`:''}`;
 
     return`<div class="match-card ${accentClass}" data-match-id="${m.id}">
       <div class="match-meta">
@@ -2817,6 +2825,7 @@ async function adminAddMatch(){
     home_odds:parseFloat(document.getElementById('a-ho').value)||35,
     draw_odds:parseFloat(document.getElementById('a-dr').value)||30,
     away_odds:parseFloat(document.getElementById('a-aw').value)||35,
+    odds_set:true, // admin voert odds bewust in
     kickoff:document.getElementById('a-kickoff').value||null,
     phase:document.getElementById('a-phase').value,
     group_name:document.getElementById('a-group').value.trim().toUpperCase()||null,
@@ -2875,7 +2884,7 @@ async function saveOdds(matchId){
   const dr=parseFloat(document.getElementById('do-'+matchId).value);
   const aw=parseFloat(document.getElementById('ao-'+matchId).value);
   if([ho,dr,aw].some(v=>isNaN(v)||v<=0)){showToast('Vul geldige odds (%) in — alle drie > 0.');return;}
-  const {error}=await sb.from('matches').update({home_odds:ho,draw_odds:dr,away_odds:aw}).eq('id',matchId);
+  const {error}=await sb.from('matches').update({home_odds:ho,draw_odds:dr,away_odds:aw,odds_set:true}).eq('id',matchId);
   if(error){showToast('Fout: '+error.message);return;}
   showToast('Odds opgeslagen!');
   await loadAll();
@@ -3018,15 +3027,15 @@ async function fetchOddsApi(auto=false){
       if(existing){
         if(frozenIds.has(existing.id)){frozenSkipped++;continue;} // bevroren → overslaan
         await sb.from('matches').update({
-          home_odds:Math.round(hP/tot*100),draw_odds:Math.round(dP/tot*100),away_odds:Math.round(aP/tot*100)
+          home_odds:Math.round(hP/tot*100),draw_odds:Math.round(dP/tot*100),away_odds:Math.round(aP/tot*100),odds_set:true
         }).eq('id',existing.id);
         count++;
       }
     }
     const fzNote=frozenSkipped?` · ${frozenSkipped} bevroren overgeslagen`:'';
-    // Check if all matches in round have non-default odds (33/34/33)
+    // Check of alle wedstrijden in de ronde echte odds hebben (odds_set=true)
     await loadAll();
-    const stillDefault=matches.filter(m=>m.phase==='group'&&m.round===round&&m.home_odds===33&&m.draw_odds===34&&m.away_odds===33);
+    const stillDefault=matches.filter(m=>m.phase==='group'&&m.round===round&&!m.odds_set);
     if(stillDefault.length){
       const names=stillDefault.map(m=>teamName(m.home_team)+' vs '+teamName(m.away_team)).join(', ');
       const warn=`⚠ Niet alle odds gevuld voor ronde ${round}: ${names}`;

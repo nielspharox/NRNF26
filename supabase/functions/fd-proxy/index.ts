@@ -132,6 +132,7 @@ async function fetchOdds(M: any[], region = "eu", frozen: Set<number> = new Set(
       home_odds: Math.round((homeAligned ? hP : aP) / tot * 100),
       draw_odds: Math.round(dP / tot * 100),
       away_odds: Math.round((homeAligned ? aP : hP) / tot * 100),
+      odds_set: true, // echte odds opgehaald → frontend mag % + punten tonen
     });
     count++; ids.push(our.id);
   }
@@ -150,11 +151,14 @@ async function fetchOdds(M: any[], region = "eu", frozen: Set<number> = new Set(
 //   • Uitstel: schuift een bevroren wedstrijd weer >48u weg, dan wordt de freeze
 //     ongedaan gemaakt (guard verwijderd) → odds bewegen weer mee en bevriezen
 //     opnieuw op het nieuwe 48u-moment.
-//   • Wedstrijden >48u blijven (provisioneel) meebewegen tot hún 48u-moment.
+//   • VOORLOPIG OPHALEN (>48u): zodra een wedstrijd bekende teams heeft maar nog de
+//     default-odds (33/34/33) draagt, halen we METEEN echte odds op — niet wachten tot
+//     48u. Zo verdwijnt de verwarrende 33/34/33 zodra de teams bekend zijn. Daarna
+//     bewegen die voorlopige odds nog mee op een rustige cadans (6u) tot hún 48u-freeze.
 //   • Overlappende/gespreide KO-rondes komen pas in beeld zodra hun teams bekend zijn.
 //   • Bookmaker heeft de markt nog niet? Niet bevriezen; throttled retry (max 1 call/
 //     30 min via 'odds_fetch_lock') i.p.v. elke minuut → geen credit-verbranding.
-//   • Niets te bevriezen → geen externe call → 0 credits.
+//   • Niets te bevriezen én niets voorlopig op te halen → geen externe call → 0 credits.
 // force=true negeert alles (handmatig/test): haalt nu op (zonder bevroren te raken),
 // zet geen freeze-guards.
 async function doOddsAuto(force = false, region = "eu") {
@@ -162,6 +166,7 @@ async function doOddsAuto(force = false, region = "eu") {
   const now = Date.now();
   const WINDOW = 48 * 3_600_000;
   const THROTTLE = 30 * 60_000; // min. tijd tussen retries voor nog-niet-geliste wedstrijden
+  const PROV_THROTTLE = 6 * 3_600_000; // rustige cadans voor voorlopig verversen (>48u, al echte odds)
   const PLACEHOLDER = /^(1st|2nd|3rd|Best|Winner|Loser)\b/i;
   const teamsKnown = (m: any) => m.home_team && m.away_team && !PLACEHOLDER.test(m.home_team) && !PLACEHOLDER.test(m.away_team);
 
@@ -192,15 +197,31 @@ async function doOddsAuto(force = false, region = "eu") {
     const k = new Date(m.kickoff).getTime();
     return k > now && (k - now) <= WINDOW;
   });
-  if (!toFreeze.length) return { skipped: true, reason: "niets te bevriezen binnen 48u", thawed };
 
-  // Net (deze minuut) over de 48u-grens → meteen ophalen voor een verse 48u-odd.
+  // Voorlopig (>48u vóór aftrap): bekende teams, geen uitslag/warmup, niet bevroren.
+  // Deze krijgen ECHTE odds zodra hun teams bekend zijn (i.p.v. 33/34/33 te blijven tonen
+  // tot 48u). 'seedNeeded' = er staat nog een voorlopige wedstrijd zónder odds_set open →
+  // die is net bekend geworden en moet nu meteen verse odds krijgen.
+  const provisional = M.filter((m) => {
+    if (m.phase === "warmup" || m.result || !m.kickoff || !teamsKnown(m) || frozen.has(m.id)) return false;
+    return (new Date(m.kickoff).getTime() - now) > WINDOW;
+  });
+  const seedNeeded = provisional.some((m) => !m.odds_set);
+
+  if (!toFreeze.length && !provisional.length) return { skipped: true, reason: "niets te bevriezen/voorlopig op te halen", thawed };
+
+  // Cadans van de externe call:
+  //  • justCrossed (binnen 48u, net over de grens) → meteen (verse 48u-odd).
+  //  • due-binnen-48u zonder markt, óf net-bekend-geworden voorlopige wedstrijd
+  //    (default-odds) → 30-min throttle: snel echte odds, maar geen credit-burn.
+  //  • puur voorlopig verversen (al echte odds, >48u) → 6u throttle: odds bewegen mee
+  //    met minimale credits.
   const justCrossed = toFreeze.some((m) => (new Date(m.kickoff).getTime() - now) / 3_600_000 > 48 - 2 / 60);
-  // Anders (al langer due maar bookmaker had nog geen markt): throttled retry, niet elke minuut.
+  const cadence = (toFreeze.length || seedNeeded) ? THROTTLE : PROV_THROTTLE;
   let throttleOk = true;
   const lock = await dbGet(`settings?key=eq.odds_fetch_lock&select=value`);
-  if (lock.length && lock[0].value) throttleOk = (now - new Date(lock[0].value).getTime()) > THROTTLE;
-  if (!justCrossed && !throttleOk) return { skipped: true, reason: "wacht op throttle voor retry" };
+  if (lock.length && lock[0].value) throttleOk = (now - new Date(lock[0].value).getTime()) > cadence;
+  if (!justCrossed && !throttleOk) return { skipped: true, reason: "wacht op throttle" };
 
   const r = await fetchOdds(M, region, frozen);
   if (r.error) return { error: r.error };
@@ -210,7 +231,7 @@ async function doOddsAuto(force = false, region = "eu") {
   const filled = new Set(r.ids || []);
   let froze = 0;
   for (const m of toFreeze) if (filled.has(m.id)) { await setSetting(`odds_frozen_m${m.id}`, `${m.kickoff}|${m.home_team}|${m.away_team}`); froze++; }
-  return { ok: true, dueCount: toFreeze.length, updated: r.count, froze, thawed };
+  return { ok: true, dueCount: toFreeze.length, provCount: provisional.length, updated: r.count, froze, thawed, seeded: seedNeeded };
 }
 
 // ── Bracket-logica (port van index.html updateBracket/calcGroupStandings) ──
