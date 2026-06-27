@@ -3149,18 +3149,26 @@ const FD = (() => {
   // updateBracket/fillThirds volledig. Groep-teams blijven ongemoeid (al getipt, oriëntatie
   // gelijk aan FD). Odds worden NIET aangeraakt. Retourneert {newResults, updated}.
   const KO_PHASES=['r32','r16','qf','sf','third','final'];
-  // Is de BRON van een placeholder-label al definitief? Pas dán nemen we het FD-team over —
-  // zo grijpen we geen door FD geprojecteerde (nog niet besliste) teams, en flikkert er niks.
-  function groupComplete(M,g){const gm=M.filter(m=>m.phase==='group'&&m.group_name===g);return gm.length>0&&gm.every(m=>m.result);}
-  function sourceFinal(label,M){
-    if(!label)return false;let m;
-    if(m=label.match(/^(?:1st|2nd) Group (.+)$/))return groupComplete(M,m[1]);
-    if(/^Best 3rd/i.test(label)){const gm=M.filter(x=>x.phase==='group');return gm.length>0&&gm.every(x=>x.result);}
-    if(m=label.match(/^Winner M(\d+)$/i)){const s=M.find(x=>x.match_number===+m[1]);return !!(s&&s.result);}
+  // Los een placeholder-label op naar het echte team — ALLEEN als de bron definitief is
+  // (groep volledig gespeeld / voedende KO-wedstrijd heeft uitslag). Anders → placeholder
+  // (zelf-opruimend, geen projectie). Deterministisch uit eigen data; FD niet nodig, behalve
+  // voor de beste-3e (voorlopig uit FD tot eigen FIFA-tabel volgt).
+  function resolveSlot(label,fdTeam){
+    if(!label)return label;let m;
+    if(m=label.match(/^(1st|2nd) Group (.+)$/)){
+      const gm=matches.filter(x=>x.phase==='group'&&x.group_name===m[2]);
+      if(gm.length&&gm.every(x=>x.result)){const s=calcGroupStandings(m[2]);return (m[1]==='1st'?s[0]:s[1])?.name||label;}
+      return label;
+    }
+    if(/^Best 3rd/i.test(label)){
+      const gm=matches.filter(x=>x.phase==='group');
+      return (gm.length&&gm.every(x=>x.result)&&fdTeam)?fdTeam:label; // beste-3e: voorlopig uit FD
+    }
+    if(m=label.match(/^Winner M(\d+)$/i)){const s=matches.find(x=>x.match_number===+m[1]);return (s&&s.result)?(s.result==='home'?s.home_team:s.away_team):label;}
     const ph={R32:'r32',R16:'r16',QF:'qf',SF:'sf'};
-    if(m=label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)){const s=M.find(x=>x.phase===ph[m[1].toUpperCase()]&&x.bracket_pos===+m[2]);return !!(s&&s.result);}
-    if(m=label.match(/^Loser SF-(\d+)$/i)){const s=M.find(x=>x.phase==='sf'&&x.bracket_pos===+m[1]);return !!(s&&s.result);}
-    return false;
+    if(m=label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)){const s=matches.find(x=>x.phase===ph[m[1].toUpperCase()]&&x.bracket_pos===+m[2]);return (s&&s.result)?(s.result==='home'?s.home_team:s.away_team):label;}
+    if(m=label.match(/^Loser SF-(\d+)$/i)){const s=matches.find(x=>x.phase==='sf'&&x.bracket_pos===+m[1]);return (s&&s.result)?(s.result==='home'?s.away_team:s.home_team):label;}
+    return label;
   }
   async function syncMatches(fmatches){
     let newResults=0,updated=0;
@@ -3173,16 +3181,14 @@ const FD = (() => {
       if(!ours)continue;
       const home=canon(fm.homeTeam&&fm.homeTeam.name), away=canon(fm.awayTeam&&fm.awayTeam.name);
       const upd={};
-      // KO-teams: bron definitief (groep volledig gespeeld / voedende KO-wedstrijd heeft
-      // uitslag) → FD-team overnemen. Bron NIET definitief → slot hoort placeholder te zijn,
-      // dus terugzetten (ruimt door FD geprojecteerde teams op). Flikker-vrij want bron-status
-      // loopt alleen vooruit. Live/afgelopen nooit terugzetten. Vervangt updateBracket/fillThirds.
-      if(KO_PHASES.includes(ours.phase)){
+      // KO-teams deterministisch uit eigen data afleiden (groep-posities uit standen, KO-winnaars
+      // uit uitslagen) zodra de bron definitief is; anders placeholder (zelf-opruimend, geen
+      // projectie). Beste-3e voorlopig uit FD. Afgelopen wedstrijden nooit aanpassen.
+      if(KO_PHASES.includes(ours.phase)&&!ours.result){
         const lbl=slotLabels.get(`${ours.phase}:${ours.bracket_pos}`)||{};
-        if(sourceFinal(lbl.home_label,matches)){if(home&&home!==ours.home_team)upd.home_team=home;}
-        else if(!ours.result&&lbl.home_label&&ours.home_team!==lbl.home_label)upd.home_team=lbl.home_label;
-        if(sourceFinal(lbl.away_label,matches)){if(away&&away!==ours.away_team)upd.away_team=away;}
-        else if(!ours.result&&lbl.away_label&&ours.away_team!==lbl.away_label)upd.away_team=lbl.away_label;
+        const nh=resolveSlot(lbl.home_label,home), na=resolveSlot(lbl.away_label,away);
+        if(nh&&nh!==ours.home_team)upd.home_team=nh;
+        if(na&&na!==ours.away_team)upd.away_team=na;
       }
       if(fm.utcDate&&(!ours.kickoff||Math.abs(new Date(fm.utcDate)-new Date(ours.kickoff))>60000))upd.kickoff=fm.utcDate;
       if(fm.venue&&fm.venue!==ours.venue)upd.venue=fm.venue;

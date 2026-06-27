@@ -352,18 +352,23 @@ async function doSync() {
   // Canonieke placeholder-labels per (fase, bracket_pos) — bepaalt of de bron al klaar is.
   const bs = await dbGet("bracket_slots?select=phase,slot,home_label,away_label");
   const slotLabels = new Map<string, any>(bs.map((r: any) => [`${r.phase}:${r.slot}`, r]));
-  // Is de bron van een placeholder definitief? Pas dán nemen we het FD-team over (zo grijpen
-  // we geen door FD geprojecteerde, nog niet besliste teams).
-  const groupComplete = (g: string) => { const gm = M.filter((m: any) => m.phase === "group" && m.group_name === g); return gm.length > 0 && gm.every((m: any) => m.result); };
-  const sourceFinal = (label: string): boolean => {
-    if (!label) return false; let m;
-    if (m = label.match(/^(?:1st|2nd) Group (.+)$/)) return groupComplete(m[1]);
-    if (/^Best 3rd/i.test(label)) { const gm = M.filter((x: any) => x.phase === "group"); return gm.length > 0 && gm.every((x: any) => x.result); }
-    if (m = label.match(/^Winner M(\d+)$/i)) { const s = M.find((x: any) => x.match_number === +m[1]); return !!(s && s.result); }
+  // Los een placeholder-label op naar het echte team — ALLEEN als de bron definitief is
+  // (groep volledig gespeeld / voedende KO-wedstrijd heeft uitslag); anders → placeholder
+  // (zelf-opruimend, geen projectie). Deterministisch uit eigen data; FD niet nodig, behalve
+  // de beste-3e (voorlopig uit FD). fdTeam = FD's team voor deze kant (alleen voor beste-3e).
+  const resolveSlot = (label: string, fdTeam: string | null): string => {
+    if (!label) return label; let m;
+    if (m = label.match(/^(1st|2nd) Group (.+)$/)) {
+      const gm = M.filter((x: any) => x.phase === "group" && x.group_name === m[2]);
+      if (gm.length && gm.every((x: any) => x.result)) { const s = calcGroupStandings(M, m[2]) as any[]; return (m[1] === "1st" ? s[0] : s[1])?.name || label; }
+      return label;
+    }
+    if (/^Best 3rd/i.test(label)) { const gm = M.filter((x: any) => x.phase === "group"); return (gm.length && gm.every((x: any) => x.result) && fdTeam) ? fdTeam : label; }
+    if (m = label.match(/^Winner M(\d+)$/i)) { const s = M.find((x: any) => x.match_number === +m[1]); return (s && s.result) ? (s.result === "home" ? s.home_team : s.away_team) : label; }
     const ph: Record<string, string> = { R32: "r32", R16: "r16", QF: "qf", SF: "sf" };
-    if (m = label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)) { const s = M.find((x: any) => x.phase === ph[m[1].toUpperCase()] && x.bracket_pos === +m[2]); return !!(s && s.result); }
-    if (m = label.match(/^Loser SF-(\d+)$/i)) { const s = M.find((x: any) => x.phase === "sf" && x.bracket_pos === +m[1]); return !!(s && s.result); }
-    return false;
+    if (m = label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)) { const s = M.find((x: any) => x.phase === ph[m[1].toUpperCase()] && x.bracket_pos === +m[2]); return (s && s.result) ? (s.result === "home" ? s.home_team : s.away_team) : label; }
+    if (m = label.match(/^Loser SF-(\d+)$/i)) { const s = M.find((x: any) => x.phase === "sf" && x.bracket_pos === +m[1]); return (s && s.result) ? (s.result === "home" ? s.away_team : s.home_team) : label; }
+    return label;
   };
   let newResults = 0, liveUpdates = 0, teamFills = 0;
   for (const fm of fmatches) {
@@ -372,17 +377,15 @@ async function doSync() {
     const ft = fm.score?.fullTime;
     const home = canon(fm.homeTeam?.name), away = canon(fm.awayTeam?.name);
 
-    // KO-teams: bron definitief (groep volledig gespeeld / voedende KO-wedstrijd heeft
-    // uitslag) → FD-team overnemen. Bron NIET definitief → slot hoort placeholder te zijn,
-    // dus terugzetten (ruimt door FD geprojecteerde teams op). Flikker-vrij want bron-status
-    // loopt alleen vooruit. Live/afgelopen nooit terugzetten. Vervangt updateBracket/fillThirds.
-    if (KO.includes(our.phase)) {
+    // KO-teams deterministisch uit eigen data afleiden (groep-posities uit standen, KO-winnaars
+    // uit uitslagen) zodra de bron definitief is; anders placeholder (zelf-opruimend, geen
+    // projectie). Beste-3e voorlopig uit FD. Afgelopen wedstrijden nooit aanpassen.
+    if (KO.includes(our.phase) && !our.result) {
       const lbl = slotLabels.get(`${our.phase}:${our.bracket_pos}`) || {};
+      const nh = resolveSlot(lbl.home_label, home), na = resolveSlot(lbl.away_label, away);
       const tu: any = {};
-      if (sourceFinal(lbl.home_label)) { if (home && home !== our.home_team) tu.home_team = home; }
-      else if (!our.result && lbl.home_label && our.home_team !== lbl.home_label) tu.home_team = lbl.home_label;
-      if (sourceFinal(lbl.away_label)) { if (away && away !== our.away_team) tu.away_team = away; }
-      else if (!our.result && lbl.away_label && our.away_team !== lbl.away_label) tu.away_team = lbl.away_label;
+      if (nh && nh !== our.home_team) tu.home_team = nh;
+      if (na && na !== our.away_team) tu.away_team = na;
       if (Object.keys(tu).length) { await dbPatch(`matches?id=eq.${our.id}`, tu); Object.assign(our, tu); teamFills++; }
     }
 
