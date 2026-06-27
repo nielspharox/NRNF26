@@ -349,10 +349,22 @@ async function doSync() {
 
   // Koppelen op fd_match_id (de bron van waarheid). Vervangt het matchen op teampaar.
   const byFd = new Map<number, any>(M.filter((m: any) => m.fd_match_id != null).map((m: any) => [m.fd_match_id, m]));
-  // Canonieke placeholder-labels per (fase, bracket_pos) — om KO-slots terug te zetten als
-  // FD een (eerder geprojecteerd) team weer op null zet.
+  // Canonieke placeholder-labels per (fase, bracket_pos) — bepaalt of de bron al klaar is.
   const bs = await dbGet("bracket_slots?select=phase,slot,home_label,away_label");
   const slotLabels = new Map<string, any>(bs.map((r: any) => [`${r.phase}:${r.slot}`, r]));
+  // Is de bron van een placeholder definitief? Pas dán nemen we het FD-team over (zo grijpen
+  // we geen door FD geprojecteerde, nog niet besliste teams).
+  const groupComplete = (g: string) => { const gm = M.filter((m: any) => m.phase === "group" && m.group_name === g); return gm.length > 0 && gm.every((m: any) => m.result); };
+  const sourceFinal = (label: string): boolean => {
+    if (!label) return false; let m;
+    if (m = label.match(/^(?:1st|2nd) Group (.+)$/)) return groupComplete(m[1]);
+    if (/^Best 3rd/i.test(label)) { const gm = M.filter((x: any) => x.phase === "group"); return gm.length > 0 && gm.every((x: any) => x.result); }
+    if (m = label.match(/^Winner M(\d+)$/i)) { const s = M.find((x: any) => x.match_number === +m[1]); return !!(s && s.result); }
+    const ph: Record<string, string> = { R32: "r32", R16: "r16", QF: "qf", SF: "sf" };
+    if (m = label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)) { const s = M.find((x: any) => x.phase === ph[m[1].toUpperCase()] && x.bracket_pos === +m[2]); return !!(s && s.result); }
+    if (m = label.match(/^Loser SF-(\d+)$/i)) { const s = M.find((x: any) => x.phase === "sf" && x.bracket_pos === +m[1]); return !!(s && s.result); }
+    return false;
+  };
   let newResults = 0, liveUpdates = 0, teamFills = 0;
   for (const fm of fmatches) {
     const our = byFd.get(fm.id);
@@ -360,20 +372,14 @@ async function doSync() {
     const ft = fm.score?.fullTime;
     const home = canon(fm.homeTeam?.name), away = canon(fm.awayTeam?.name);
 
-    // KO-slots: volledig FD spiegelen. Team bekend → overnemen (FD-oriëntatie). Team null én
-    // wedstrijd nog niet begonnen/geen uitslag → terug naar canonieke placeholder (lost
-    // geprojecteerde teams op die FD later weer wist). Live/afgelopen nooit wissen.
-    // Vervangt updateBracket/fillThirds volledig.
+    // KO-teams uit FD overnemen, maar ALLEEN als de bron definitief is (groep volledig
+    // gespeeld / voedende KO-wedstrijd heeft uitslag). Nooit terug naar placeholder wissen
+    // (FD is soms tijdelijk leeg → geen geflikker). Vervangt updateBracket/fillThirds.
     if (KO.includes(our.phase)) {
-      const k = our.kickoff ? new Date(our.kickoff).getTime() : 0;
-      const started = !!k && k <= now && (now - k) < 3 * 3600 * 1000;
-      const safe = !our.result && !started;
       const lbl = slotLabels.get(`${our.phase}:${our.bracket_pos}`) || {};
       const tu: any = {};
-      if (home) { if (home !== our.home_team) tu.home_team = home; }
-      else if (safe && lbl.home_label && our.home_team !== lbl.home_label) tu.home_team = lbl.home_label;
-      if (away) { if (away !== our.away_team) tu.away_team = away; }
-      else if (safe && lbl.away_label && our.away_team !== lbl.away_label) tu.away_team = lbl.away_label;
+      if (home && home !== our.home_team && sourceFinal(lbl.home_label)) tu.home_team = home;
+      if (away && away !== our.away_team && sourceFinal(lbl.away_label)) tu.away_team = away;
       if (Object.keys(tu).length) { await dbPatch(`matches?id=eq.${our.id}`, tu); Object.assign(our, tu); teamFills++; }
     }
 
