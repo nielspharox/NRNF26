@@ -1113,6 +1113,7 @@ function isLocked(m){return m.kickoff?new Date(m.kickoff)<=new Date():false}
 function getPhaseLabel(p){return{warmup:t('tips_phase_label_warmup'),group:t('tips_phase_label_group'),r32:t('tips_phase_label_r32'),r16:t('tips_phase_label_r16'),qf:t('tips_phase_label_qf'),sf:t('tips_phase_label_sf'),third:t('tips_phase_label_third'),final:t('tips_phase_label_final')}[p]||p;}
 const koPhases=['r32','r16','qf','sf','third','final'];
 const teamShort={'Netherlands':'NED','DR Congo':'DRC','Saudi Arabia':'SAU','Cape Verde':'CPV','Czech Republic':'CZE','New Zealand':'NZL','Ivory Coast':'CIV','South Korea':'KOR','South Africa':'RSA','El Salvador':'SAL','Costa Rica':'CRC','Northern Ireland':'NIR','Australia':'AUS','Austria':'AUT','Iran':'IRN','Iraq':'IRQ'};
+window.teamShort=teamShort; // bracket.js leest window.teamShort voor 3-letter codes (const is niet automatisch op window)
 
 function getStreakInfo(n){
   let info=null;
@@ -1366,6 +1367,7 @@ async function loadAll(){
     sb.from('complot_invites').select('*'),
   ]);
   matches=mr||[];allTips=tr||[];allProfiles=pr||[];
+  window.matches=matches; // bracket.js leest window.matches (let is niet automatisch op window)
   complotGroups=cgr.data||[];complotMembers=cmr.data||[];
   // Openstaande uitnodigingen voor mij (tabel kan nog ontbreken → veilig leeg).
   myInvites=(civ.data||[]).filter(i=>i.invitee_id===currentUser.id&&i.status==='pending');
