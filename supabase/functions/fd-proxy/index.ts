@@ -372,14 +372,17 @@ async function doSync() {
     const ft = fm.score?.fullTime;
     const home = canon(fm.homeTeam?.name), away = canon(fm.awayTeam?.name);
 
-    // KO-teams uit FD overnemen, maar ALLEEN als de bron definitief is (groep volledig
-    // gespeeld / voedende KO-wedstrijd heeft uitslag). Nooit terug naar placeholder wissen
-    // (FD is soms tijdelijk leeg → geen geflikker). Vervangt updateBracket/fillThirds.
+    // KO-teams: bron definitief (groep volledig gespeeld / voedende KO-wedstrijd heeft
+    // uitslag) → FD-team overnemen. Bron NIET definitief → slot hoort placeholder te zijn,
+    // dus terugzetten (ruimt door FD geprojecteerde teams op). Flikker-vrij want bron-status
+    // loopt alleen vooruit. Live/afgelopen nooit terugzetten. Vervangt updateBracket/fillThirds.
     if (KO.includes(our.phase)) {
       const lbl = slotLabels.get(`${our.phase}:${our.bracket_pos}`) || {};
       const tu: any = {};
-      if (home && home !== our.home_team && sourceFinal(lbl.home_label)) tu.home_team = home;
-      if (away && away !== our.away_team && sourceFinal(lbl.away_label)) tu.away_team = away;
+      if (sourceFinal(lbl.home_label)) { if (home && home !== our.home_team) tu.home_team = home; }
+      else if (!our.result && lbl.home_label && our.home_team !== lbl.home_label) tu.home_team = lbl.home_label;
+      if (sourceFinal(lbl.away_label)) { if (away && away !== our.away_team) tu.away_team = away; }
+      else if (!our.result && lbl.away_label && our.away_team !== lbl.away_label) tu.away_team = lbl.away_label;
       if (Object.keys(tu).length) { await dbPatch(`matches?id=eq.${our.id}`, tu); Object.assign(our, tu); teamFills++; }
     }
 

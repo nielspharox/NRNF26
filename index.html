@@ -3171,13 +3171,16 @@ const FD = (() => {
       if(!ours)continue;
       const home=canon(fm.homeTeam&&fm.homeTeam.name), away=canon(fm.awayTeam&&fm.awayTeam.name);
       const upd={};
-      // KO-teams uit FD overnemen, maar ALLEEN als de bron definitief is (groep volledig
-      // gespeeld / voedende KO-wedstrijd heeft uitslag). Nooit terug naar placeholder wissen
-      // (FD is soms tijdelijk leeg → geen geflikker). Vervangt updateBracket/fillThirds.
+      // KO-teams: bron definitief (groep volledig gespeeld / voedende KO-wedstrijd heeft
+      // uitslag) → FD-team overnemen. Bron NIET definitief → slot hoort placeholder te zijn,
+      // dus terugzetten (ruimt door FD geprojecteerde teams op). Flikker-vrij want bron-status
+      // loopt alleen vooruit. Live/afgelopen nooit terugzetten. Vervangt updateBracket/fillThirds.
       if(KO_PHASES.includes(ours.phase)){
         const lbl=slotLabels.get(`${ours.phase}:${ours.bracket_pos}`)||{};
-        if(home&&home!==ours.home_team&&sourceFinal(lbl.home_label,matches))upd.home_team=home;
-        if(away&&away!==ours.away_team&&sourceFinal(lbl.away_label,matches))upd.away_team=away;
+        if(sourceFinal(lbl.home_label,matches)){if(home&&home!==ours.home_team)upd.home_team=home;}
+        else if(!ours.result&&lbl.home_label&&ours.home_team!==lbl.home_label)upd.home_team=lbl.home_label;
+        if(sourceFinal(lbl.away_label,matches)){if(away&&away!==ours.away_team)upd.away_team=away;}
+        else if(!ours.result&&lbl.away_label&&ours.away_team!==lbl.away_label)upd.away_team=lbl.away_label;
       }
       if(fm.utcDate&&(!ours.kickoff||Math.abs(new Date(fm.utcDate)-new Date(ours.kickoff))>60000))upd.kickoff=fm.utcDate;
       if(fm.venue&&fm.venue!==ours.venue)upd.venue=fm.venue;
