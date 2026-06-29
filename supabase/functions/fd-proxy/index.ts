@@ -35,6 +35,7 @@ const NAME_ALIAS: Record<string, string> = {
   "IR Iran": "Iran", "United States": "USA", "Czechia": "Czech Republic", "Curaçao": "Curacao",
   "Türkiye": "Turkey", "Cabo Verde": "Cape Verde", "Cape Verde Islands": "Cape Verde",
   "Congo DR": "DR Congo", "Bosnia-Herzegovina": "Bosnia",
+  "Bosnia & Herzegovina": "Bosnia", "Bosnia and Herzegovina": "Bosnia", // the-odds-api gebruikt "&"
 };
 const canon = (n?: string | null) => (n ? (NAME_ALIAS[n] || n) : null);
 const STAGE_PHASE: Record<string, string> = {
@@ -445,21 +446,6 @@ Deno.serve(async (req) => {
       const secret = Deno.env.get("CRON_SECRET");
       if (!secret || body.secret !== secret) return json({ error: "unauthorized" }, 403);
       return json(await doOddsAuto(body.force === true, body.region || "eu"));
-    }
-
-    // Diagnose (read-only): welke WK-wedstrijden listet the-odds-api, en onder welke namen?
-    // Geen odds-waarden, geen key in de respons. Kost 1 the-odds-api credit per call.
-    // Tijdelijk hulpmiddel om naam-mismatches op te sporen — kan daarna weg.
-    if (body.mode === "oddslist") {
-      const key = await getOddsKey();
-      if (!key) return json({ error: "geen odds_api_key" }, 400);
-      const r = await fetch(`${ODDS_BASE}?apiKey=${key}&regions=${body.region || "eu"}&markets=h2h&oddsFormat=decimal`);
-      if (!r.ok) return json({ error: "the-odds-api " + r.status }, 502);
-      const data = await r.json();
-      const events = Array.isArray(data)
-        ? data.map((e: any) => ({ home: e.home_team, away: e.away_team, t: e.commence_time, books: (e.bookmakers || []).length }))
-        : data;
-      return json({ count: Array.isArray(events) ? events.length : 0, events });
     }
 
     // Modus 1: proxy
