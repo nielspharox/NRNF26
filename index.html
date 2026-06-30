@@ -3150,6 +3150,11 @@ const FD = (() => {
   // updateBracket/fillThirds volledig. Groep-teams blijven ongemoeid (al getipt, oriëntatie
   // gelijk aan FD). Odds worden NIET aangeraakt. Retourneert {newResults, updated}.
   const KO_PHASES=['r32','r16','qf','sf','third','final'];
+  // Wie ging er door / wie verloor? Gebruik advance_team (penalty-winnaar telt hier wél),
+  // val terug op result voor niet-penalty wedstrijden. Bij een 'draw' zonder advance_team
+  // (penalty-uitslag nog niet verwerkt) → null, zodat het slot placeholder blijft.
+  const koWinner=s=>!s||!s.result?null:(s.advance_team||(s.result==='home'?s.home_team:s.result==='away'?s.away_team:null));
+  const koLoser=s=>{const w=koWinner(s);return w?(w===s.home_team?s.away_team:s.home_team):null;};
   // Los een placeholder-label op naar het echte team — ALLEEN als de bron definitief is
   // (groep volledig gespeeld / voedende KO-wedstrijd heeft uitslag). Anders → placeholder
   // (zelf-opruimend, geen projectie). Deterministisch uit eigen data; FD niet nodig, behalve
@@ -3165,10 +3170,10 @@ const FD = (() => {
       const gm=matches.filter(x=>x.phase==='group');
       return (gm.length&&gm.every(x=>x.result)&&fdTeam)?fdTeam:label; // beste-3e: voorlopig uit FD
     }
-    if(m=label.match(/^Winner M(\d+)$/i)){const s=matches.find(x=>x.match_number===+m[1]);return (s&&s.result)?(s.result==='home'?s.home_team:s.away_team):label;}
+    if(m=label.match(/^Winner M(\d+)$/i)){return koWinner(matches.find(x=>x.match_number===+m[1]))||label;}
     const ph={R32:'r32',R16:'r16',QF:'qf',SF:'sf'};
-    if(m=label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)){const s=matches.find(x=>x.phase===ph[m[1].toUpperCase()]&&x.bracket_pos===+m[2]);return (s&&s.result)?(s.result==='home'?s.home_team:s.away_team):label;}
-    if(m=label.match(/^Loser SF-(\d+)$/i)){const s=matches.find(x=>x.phase==='sf'&&x.bracket_pos===+m[1]);return (s&&s.result)?(s.result==='home'?s.away_team:s.home_team):label;}
+    if(m=label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)){return koWinner(matches.find(x=>x.phase===ph[m[1].toUpperCase()]&&x.bracket_pos===+m[2]))||label;}
+    if(m=label.match(/^Loser SF-(\d+)$/i)){return koLoser(matches.find(x=>x.phase==='sf'&&x.bracket_pos===+m[1]))||label;}
     return label;
   }
   async function syncMatches(fmatches){
@@ -3193,12 +3198,22 @@ const FD = (() => {
       }
       if(fm.utcDate&&(!ours.kickoff||Math.abs(new Date(fm.utcDate)-new Date(ours.kickoff))>60000))upd.kickoff=fm.utcDate;
       if(fm.venue&&fm.venue!==ours.venue)upd.venue=fm.venue;
-      const r=resultOf(fm);
-      if(fm.status==='FINISHED'&&r){
-        const hs=fm.score.fullTime.home, as=fm.score.fullTime.away;
-        if(ours.result!==r||ours.home_score!==hs||ours.away_score!==as){
-          upd.result=r;upd.home_score=hs;upd.away_score=as;
-          if(ours.result!==r)newResults++;
+      if(fm.status==='FINISHED'){
+        const sc=fm.score||{}, ft=sc.fullTime||{};
+        if(ft.home!=null&&ft.away!=null){
+          // Stand na 120 min — penalty's tellen NIET mee voor de tip-uitslag (KO-regel).
+          let fhs,fas,advHome;
+          if(sc.duration==='PENALTY_SHOOTOUT'){const rt=sc.regularTime||{},et=sc.extraTime||{};fhs=(rt.home||0)+(et.home||0);fas=(rt.away||0)+(et.away||0);advHome=(ft.home||0)>(ft.away||0);}
+          else{fhs=ft.home;fas=ft.away;advHome=ft.home>ft.away;}
+          const aligned=ours.home_team===home;
+          const hs=aligned?fhs:fas, as=aligned?fas:fhs;
+          const r=hs>as?'home':as>hs?'away':'draw';
+          const adv=KO_PHASES.includes(ours.phase)?(advHome?home:away):null;
+          if(ours.result!==r||ours.home_score!==hs||ours.away_score!==as||(adv&&ours.advance_team!==adv)){
+            upd.result=r;upd.home_score=hs;upd.away_score=as;
+            if(adv)upd.advance_team=adv;
+            if(ours.result!==r)newResults++;
+          }
         }
       }
       if(Object.keys(upd).length){

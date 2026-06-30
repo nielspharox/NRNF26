@@ -121,6 +121,7 @@
 
   function winTeam(m) {
     if (!m || !m.result) return null;
+    if (m.advance_team) return m.advance_team; // penalty-winnaar gaat door (result kan 'draw' zijn)
     if (m.result === 'home') return m.home_team;
     if (m.result === 'away') return m.away_team;
     return null;

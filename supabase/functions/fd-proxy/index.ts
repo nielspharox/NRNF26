@@ -353,6 +353,10 @@ async function doSync() {
   // Canonieke placeholder-labels per (fase, bracket_pos) — bepaalt of de bron al klaar is.
   const bs = await dbGet("bracket_slots?select=phase,slot,home_label,away_label");
   const slotLabels = new Map<string, any>(bs.map((r: any) => [`${r.phase}:${r.slot}`, r]));
+  // Wie ging er door / wie verloor? advance_team (penalty-winnaar) heeft voorrang; val terug
+  // op result voor niet-penalty wedstrijden. 'draw' zonder advance_team → null (placeholder).
+  const koWinner = (s: any) => !s || !s.result ? null : (s.advance_team || (s.result === "home" ? s.home_team : s.result === "away" ? s.away_team : null));
+  const koLoser = (s: any) => { const w = koWinner(s); return w ? (w === s.home_team ? s.away_team : s.home_team) : null; };
   // Los een placeholder-label op naar het echte team — ALLEEN als de bron definitief is
   // (groep volledig gespeeld / voedende KO-wedstrijd heeft uitslag); anders → placeholder
   // (zelf-opruimend, geen projectie). Deterministisch uit eigen data; FD niet nodig, behalve
@@ -365,10 +369,10 @@ async function doSync() {
       return label;
     }
     if (/^Best 3rd/i.test(label)) { const gm = M.filter((x: any) => x.phase === "group"); return (gm.length && gm.every((x: any) => x.result) && fdTeam) ? fdTeam : label; }
-    if (m = label.match(/^Winner M(\d+)$/i)) { const s = M.find((x: any) => x.match_number === +m[1]); return (s && s.result) ? (s.result === "home" ? s.home_team : s.away_team) : label; }
+    if (m = label.match(/^Winner M(\d+)$/i)) { return koWinner(M.find((x: any) => x.match_number === +m[1])) || label; }
     const ph: Record<string, string> = { R32: "r32", R16: "r16", QF: "qf", SF: "sf" };
-    if (m = label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)) { const s = M.find((x: any) => x.phase === ph[m[1].toUpperCase()] && x.bracket_pos === +m[2]); return (s && s.result) ? (s.result === "home" ? s.home_team : s.away_team) : label; }
-    if (m = label.match(/^Loser SF-(\d+)$/i)) { const s = M.find((x: any) => x.phase === "sf" && x.bracket_pos === +m[1]); return (s && s.result) ? (s.result === "home" ? s.away_team : s.home_team) : label; }
+    if (m = label.match(/^Winner (R32|R16|QF|SF)-(\d+)$/i)) { return koWinner(M.find((x: any) => x.phase === ph[m[1].toUpperCase()] && x.bracket_pos === +m[2])) || label; }
+    if (m = label.match(/^Loser SF-(\d+)$/i)) { return koLoser(M.find((x: any) => x.phase === "sf" && x.bracket_pos === +m[1])) || label; }
     return label;
   };
   let newResults = 0, liveUpdates = 0, teamFills = 0;
@@ -403,17 +407,24 @@ async function doSync() {
       continue;
     }
 
-    // Eindstand.
+    // Eindstand. Stand na 120 min — penalty's tellen NIET mee voor de tip-uitslag (KO-regel);
+    // de penalty-winnaar wordt apart als advance_team bewaard voor de bracket.
     if (fm.status === "FINISHED") {
       if (!ft || ft.home == null || ft.away == null) continue;
-      const hs = our.home_team === home ? ft.home : ft.away;
-      const as = our.home_team === home ? ft.away : ft.home;
+      const sc = fm.score || {};
+      let fhs, fas, advHome;
+      if (sc.duration === "PENALTY_SHOOTOUT") { const rt = sc.regularTime || {}, et = sc.extraTime || {}; fhs = (rt.home || 0) + (et.home || 0); fas = (rt.away || 0) + (et.away || 0); advHome = (ft.home || 0) > (ft.away || 0); }
+      else { fhs = ft.home; fas = ft.away; advHome = ft.home > ft.away; }
+      const aligned = our.home_team === home;
+      const hs = aligned ? fhs : fas, as = aligned ? fas : fhs;
       const result = hs > as ? "home" : as > hs ? "away" : "draw";
-      // Resultaat bepalen op teamnaam (volgorde-onafhankelijk). Live-velden wissen.
-      if (our.result !== result || our.home_score !== hs || our.away_score !== as || our.live_home != null) {
-        await dbPatch(`matches?id=eq.${our.id}`, { home_score: hs, away_score: as, result, live_home: null, live_away: null, minute: null });
+      const adv = KO.includes(our.phase) ? (advHome ? home : away) : null;
+      if (our.result !== result || our.home_score !== hs || our.away_score !== as || our.live_home != null || (adv && our.advance_team !== adv)) {
+        const patch: any = { home_score: hs, away_score: as, result, live_home: null, live_away: null, minute: null };
+        if (adv) patch.advance_team = adv;
+        await dbPatch(`matches?id=eq.${our.id}`, patch);
         if (our.result !== result) newResults++;
-        our.home_score = hs; our.away_score = as; our.result = result; our.live_home = null; our.live_away = null; our.minute = null;
+        our.home_score = hs; our.away_score = as; our.result = result; our.live_home = null; our.live_away = null; our.minute = null; if (adv) our.advance_team = adv;
       }
     }
   }
