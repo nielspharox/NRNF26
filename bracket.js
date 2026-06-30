@@ -275,20 +275,26 @@
     h += lbl('R16',    Xr[2], CW);
     h += lbl('R32',    Xr[3], CW);
 
-    // Left R32 (bracket_pos 1–8)
+    // BOOM-VOLGORDE per kolom — terug-geredeneerd vanuit de finale via de bracket_slots-
+    // feeders, zodat de twee voeders van elke wedstrijd visueel onder elkaar staan en de
+    // verbindingslijnen kloppen. (De slot-nummers zijn vast voor WK 2026.)
+    const L_R32 = [2,5,1,3,11,12,9,10], L_R16 = [1,2,5,6], L_QF = [1,2];
+    const R_R32 = [4,6,7,8,14,16,13,15], R_R16 = [3,4,7,8], R_QF = [3,4];
+
+    // Left R32
     for (let i = 0; i < 8; i++) {
-      const pos = i + 1;
+      const pos = L_R32[i];
       h += card(gm('r32', pos), Xl[0], Y + yc(8,i) - CH/2, CW, 'r32', false, R32_LABELS[pos]);
     }
-    // Left R16 (bracket_pos 1–4)
+    // Left R16
     for (let i = 0; i < 4; i++) {
-      h += card(gm('r16', i+1), Xl[1], Y + yc(4,i) - CH/2, CW, 'r16', false);
+      h += card(gm('r16', L_R16[i]), Xl[1], Y + yc(4,i) - CH/2, CW, 'r16', false);
     }
-    // Left QF (bracket_pos 1–2)
+    // Left QF
     for (let i = 0; i < 2; i++) {
-      h += card(gm('qf', i+1), Xl[2], Y + yc(2,i) - CH/2, CW, 'qf', false);
+      h += card(gm('qf', L_QF[i]), Xl[2], Y + yc(2,i) - CH/2, CW, 'qf', false);
     }
-    // Left SF (bracket_pos 1)
+    // Left SF (slot 1)
     h += card(gm('sf', 1), Xl[3], Y + yc(1,0) - CH/2, CW, 'sf', false);
 
     // Final (bracket_pos 1)
@@ -299,19 +305,19 @@
     h += `<div style="position:absolute;left:${FX}px;top:${thY-14}px;width:${FW}px;text-align:center;font-family:var(--pixel);font-size:5px;color:var(--muted);letter-spacing:.12em">3E PLAATS</div>`;
     h += card(gm('third', 1), FX, thY, FW, 'third', false);
 
-    // Right SF (bracket_pos 2)
+    // Right SF (slot 2)
     h += card(gm('sf', 2), Xr[0], Y + yc(1,0) - CH/2, CW, 'sf', false);
-    // Right QF (bracket_pos 3–4)
+    // Right QF
     for (let i = 0; i < 2; i++) {
-      h += card(gm('qf', i+3), Xr[1], Y + yc(2,i) - CH/2, CW, 'qf', false);
+      h += card(gm('qf', R_QF[i]), Xr[1], Y + yc(2,i) - CH/2, CW, 'qf', false);
     }
-    // Right R16 (bracket_pos 5–8)
+    // Right R16
     for (let i = 0; i < 4; i++) {
-      h += card(gm('r16', i+5), Xr[2], Y + yc(4,i) - CH/2, CW, 'r16', false);
+      h += card(gm('r16', R_R16[i]), Xr[2], Y + yc(4,i) - CH/2, CW, 'r16', false);
     }
-    // Right R32 (bracket_pos 9–16)
+    // Right R32
     for (let i = 0; i < 8; i++) {
-      const pos = i + 9;
+      const pos = R_R32[i];
       h += card(gm('r32', pos), Xr[3], Y + yc(8,i) - CH/2, CW, 'r32', false, R32_LABELS[pos]);
     }
 
